@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>学习资料 - BigPRC 分类检索</title>
+<meta name="keywords" content="BigPRC,夸克网盘资源,免费软件下载,高清影视转存,破解资源聚合">
+<meta name="description" content="BigPRC是一个无广告、极速加载的纯净资源分享湾，提供全网最新优质资源的免费提取与网盘转存服务。">
+<style>
+    body { font-family: 'Courier New', Courier, monospace, sans-serif; background: #ffffff; color: #333; margin: 0; padding: 15px; font-size: 13px; }
+    .header { text-align: center; margin-bottom: 20px; }
+    .header h1 { font-size: 26px; margin: 10px 0; color: #222; letter-spacing: 1px; font-weight: normal; }
+    .header p { font-size: 12px; color: #888; margin-top: 5px; margin-bottom: 20px; }
+    
+    .tags-nav { text-align: center; margin-bottom: 25px; font-size: 13px; }
+    .tag-link { display: inline-block; margin: 4px; padding: 6px 14px; background: #fff; border: 1px solid #ddd; color: #555; text-decoration: none; border-radius: 2px; transition: all 0.2s; }
+    .tag-link:hover { background: #f4f6f8; border-color: #cce0ff; color: #1a365d; }
+    .tag-link.active { background: #1a365d; color: #fff; border-color: #1a365d; font-weight: bold; }
+    
+    .search-box { text-align: center; margin-bottom: 30px; padding: 0 10px; }
+    .search-box input { padding: 12px 15px; width: 100%; max-width: 350px; box-sizing: border-box; border: 1px solid #ddd; font-family: inherit; font-size: 13px; outline: none; text-align: center; border-radius: 2px; }
+    .search-box input:focus { border-color: #1a365d; }
+    .table-wrapper { width: 100%; overflow-x: auto; }
+    table { width: 100%; max-width: 850px; margin: 0 auto; border-collapse: collapse; font-size: 13px; min-width: 320px; }
+    th { background: #fbfbfb; border-bottom: 1px solid #ddd; padding: 12px 5px; text-align: center; color: #555; font-weight: normal; }
+    td { padding: 12px 5px; border-bottom: 1px solid #f0f0f0; text-align: center; word-break: break-word; }
+    tr:hover { background-color: #f8f9fa; }
+    a { color: #1a365d; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .action-btn { font-weight: bold; color: #1a365d; display: inline-block; padding: 5px; }
+    .tag-badge { background: #f4f6f8; border: 1px solid #dce4ec; color: #5c7080; padding: 2px 6px; font-size: 11px; border-radius: 2px; text-decoration: none; display: inline-block; vertical-align: middle; margin-right: 6px; }
+    .tag-badge:hover { background: #e4e9f0; }
+    
+    /* 分页按钮专用样式 */
+    .page-btn { display: inline-block; padding: 6px 15px; background: #fff; border: 1px solid #ddd; color: #1a365d; text-decoration: none; border-radius: 2px; cursor: pointer; font-size: 13px; margin: 0 5px; font-family: inherit; }
+    .page-btn:hover { background: #f4f6f8; border-color: #1a365d; }
+    .page-btn:disabled { color: #ccc; border-color: #eee; cursor: not-allowed; background: #fafafa; }
+    #pageInfo { font-size: 13px; color: #666; margin: 0 15px; display: inline-block; vertical-align: middle; }
+</style>
+</head>
+<body>
+<div class="header">
+    <h1>BigPRC 资源湾</h1>
+    <p>无广告 · 极速加载 · 纯净分享</p>
+    <div class="tags-nav">
+<a href="/" class="tag-link ">全部资源</a><a href="/tag_movie.html" class="tag-link ">高清影视</a><a href="/tag_geek.html" class="tag-link ">极客工具</a><a href="/tag_edu.html" class="tag-link active">学习资料</a><a href="/tag_other.html" class="tag-link ">综合资源</a><a href="https://qm.qq.com/q/AUuCkMlNDO" target="_blank" class="tag-link" style="color: #d46b08; border-color: #ffd591; background: #fff7e6; font-weight: bold; margin-left: 15px;">[ 代找资源/加群 ]</a>
+</div>
+</div>
+<div class="search-box">
+    <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="输入关键词，实时瞬间过滤...">
+</div>
+<div class="table-wrapper">
+<table id="resourceTable">
+    <thead>
+        <tr>
+            <th width="50%">资源名称</th>
+            <th width="20%">文件大小</th>
+            <th width="30%">操作</th>
+        </tr>
+    </thead>
+    <tbody>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p702' style='vertical-align: middle;'>淘宝-开店系列教程</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p702' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p714' style='vertical-align: middle;'>咸鱼-2023闲鱼无货源超详细保姆级教程</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p714' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p725' style='vertical-align: middle;'>抖音超清60帧视频教程+素材+插件</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p725' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p738' style='vertical-align: middle;'>剪辑必备音效剪辑思维课</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p738' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p746' style='vertical-align: middle;'>剪辑师个人ip流量思维与运营策略课</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p746' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p748' style='vertical-align: middle;'>剪辑思维</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p748' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p749' style='vertical-align: middle;'>剪辑思维+达芬奇调色+拍摄技巧</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p749' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p750' style='vertical-align: middle;'>剪辑思维训练营</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p750' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p756' style='vertical-align: middle;'>剪映保姆级创作教程</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p756' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p779' style='vertical-align: middle;'>影视剧本前期构思教程</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p779' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p781' style='vertical-align: middle;'>【001】斑马思维全集【60.4G】</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p781' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p784' style='vertical-align: middle;'>【001】儿童拼音启蒙</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p784' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p785' style='vertical-align: middle;'>【001】儿童拼音幼小衔接 《22天搞定拼音》</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p785' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p793' style='vertical-align: middle;'>【002】小学-100集唐诗动画</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p793' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p794' style='vertical-align: middle;'>【002】小学-1500个东方典故大全集【读本】</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p794' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p795' style='vertical-align: middle;'>【002】小学-地理-1-6年级通用-认识地球-走遍中国-体验世界</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p795' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p796' style='vertical-align: middle;'>【002】小学-大语文课《影响世界的100个名人》</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p796' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p797' style='vertical-align: middle;'>【002】小学-古诗词-欧丽娟</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p797' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p798' style='vertical-align: middle;'>【002】小学-国学科普动画片《中国成语故事365》</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p798' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p799' style='vertical-align: middle;'>【002】小学-快乐成语【200集全】</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p799' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p800' style='vertical-align: middle;'>【002】小学-科学实验-1-6年级通用</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p800' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p801' style='vertical-align: middle;'>【002】小学-培养孩子强大阅读力的48堂必修课</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p801' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p802' style='vertical-align: middle;'>【002】小学-启蒙科学实验</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p802' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p803' style='vertical-align: middle;'>【002】小学-少年得到【中小学分级阅读完结版】含音频MP3和讲义</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p803' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p804' style='vertical-align: middle;'>【002】小学-数学</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p804' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p805' style='vertical-align: middle;'>【002】小学-唐诗12讲</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p805' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p806' style='vertical-align: middle;'>【002】小学-唐诗宋词诵读合集（MP3)</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p806' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p807' style='vertical-align: middle;'>【002】小学-小学生心理能力成长视频课</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p807' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p808' style='vertical-align: middle;'>【002】小学-语文</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p808' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p809' style='vertical-align: middle;'>【002】小学-语文综合动画课</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p809' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p810' style='vertical-align: middle;'>【002】小学-英语</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p810' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p811' style='vertical-align: middle;'>【002】小学-自然-1-6年级通用</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p811' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p812' style='vertical-align: middle;'>【002】小学-中小学数学要义&数学本源&厘清脉络思想</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p812' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p813' style='vertical-align: middle;'>【002】小学-《孙子兵法》100集动画</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p813' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p814' style='vertical-align: middle;'>【002】小学-《小学+初中国学必备读本》（共18册）</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p814' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p815' style='vertical-align: middle;'>【002】小学-《一分钟科学实验》</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p815' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p816' style='vertical-align: middle;'>【002】小学-《中小学语文新课标必读丛书.最新版》[全30册]</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p816' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p842' style='vertical-align: middle;'>【005】拓展-公开课-少年得到《10种数独游戏启发数学思维》</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p842' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p849' style='vertical-align: middle;'>【005】拓展-【视频】琴、棋、书、画教程</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p849' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p932' style='vertical-align: middle;'>【007】-书籍-《梅花易数白话解》象数思维的智慧</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p932' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p958' style='vertical-align: middle;'>【视频】编头发教程合集</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p958' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p968' style='vertical-align: middle;'>【视频】SIKANA视频课堂《急救教程》</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p968' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p970' style='vertical-align: middle;'>【视频】职场生存思维+360职场沟通</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p970' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p1145' style='vertical-align: middle;'>24格摄影教程</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p1145' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p1152' style='vertical-align: middle;'>自由职业摄影师实用学习教程</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p1152' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p1247' style='vertical-align: middle;'>识人锦囊面相学简明入门教程</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p1247' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+<tr><td style='text-align: left; padding-left: 15px;'><a href='/tag_edu.html' class='tag-badge'>学习资料</a><a href='/go/p1249' style='vertical-align: middle;'>微信公众号排版实战视频教程</a></td><td><span style='color:#666;'>N/A</span></td><td><a href='/go/p1249' title='提取资源' class='action-btn'>[ 提取 ]</a></td></tr>
+
+    </tbody>
+</table>
+</div>
+
+<div id="pagination" style="text-align: center; margin-top: 25px;">
+    <button class="page-btn" id="prevBtn" onclick="prevPage()">上一页</button>
+    <span id="pageInfo"></span>
+    <button class="page-btn" id="nextBtn" onclick="nextPage()">下一页</button>
+</div>
+
+<div style="text-align: center; margin-top: 60px; font-size: 12px; color: #aaa;">
+    &copy; 2026 BigPRC | 本站内容全自动抓取，与服务器无关
+</div>
+
+<script>
+    var currentPage = 1;
+    var rowsPerPage = 30; // 操盘手配置：每页显示的资源数量，随时可改
+    var table = document.getElementById("resourceTable");
+    var tr = table.getElementsByTagName("tr");
+    var totalRows = tr.length - 1; // 减去表头
+    var totalPages = Math.ceil(totalRows / rowsPerPage);
+
+    function displayTable(page) {
+        if (totalRows === 0) return;
+        var start = (page - 1) * rowsPerPage + 1;
+        var end = start + rowsPerPage - 1;
+
+        for (var i = 1; i < tr.length; i++) {
+            if (i >= start && i <= end) {
+                tr[i].style.display = "";
+            } else {
+                tr[i].style.display = "none";
+            }
+        }
+        
+        document.getElementById("pageInfo").innerText = "第 " + page + " 页 / 共 " + totalPages + " 页";
+        document.getElementById("prevBtn").disabled = (page === 1);
+        document.getElementById("nextBtn").disabled = (page === totalPages || totalPages === 0);
+    }
+
+    function prevPage() {
+        if (currentPage > 1) {
+            currentPage--;
+            displayTable(currentPage);
+            window.scrollTo(0, 0); // 翻页后自动回到顶部
+        }
+    }
+
+    function nextPage() {
+        if (currentPage < totalPages) {
+            currentPage++;
+            displayTable(currentPage);
+            window.scrollTo(0, 0); // 翻页后自动回到顶部
+        }
+    }
+
+    function filterTable() {
+        var input = document.getElementById("searchInput");
+        var filter = input.value.toLowerCase();
+        
+        // 如果搜索框清空，恢复分页状态
+        if (filter === "") {
+            document.getElementById("pagination").style.display = "block";
+            displayTable(currentPage);
+            return;
+        }
+        
+        // 如果正在搜索，隐藏分页条，展示所有符合条件的结果
+        document.getElementById("pagination").style.display = "none";
+        for (var i = 1; i < tr.length; i++) {
+            var td = tr[i].getElementsByTagName("td")[0];
+            if (td) {
+                var txtValue = td.textContent || td.innerText;
+                if (txtValue.toLowerCase().indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }       
+        }
+    }
+
+    // 网页加载时初始化第一页
+    window.onload = function() {
+        if (totalRows > 0) {
+            displayTable(currentPage);
+        } else {
+            document.getElementById("pagination").style.display = "none";
+        }
+    };
+</script>
+</body>
+</html>

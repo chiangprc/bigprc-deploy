@@ -1,0 +1,161 @@
+{% extends "layout.html" %}
+
+{% block title %}BigPRC - 全网硬核资源共享湾{% endblock %}
+
+{% block extra_css %}
+    body { font-family: 'Courier New', Courier, monospace, sans-serif; font-size: 13px; }
+    .header { text-align: center; margin-bottom: 25px; }
+    .header h1 { font-size: 26px; color: #222; }
+    .search-box { text-align: center; margin-bottom: 30px; }
+    .search-box input { padding: 12px 15px; width: 100%; max-width: 350px; border: 1px solid #ddd; outline: none; border-radius: 2px;}
+    .search-box input:focus { border-color: #1a365d; }
+    table { width: 100%; max-width: 850px; margin: 0 auto; border-collapse: collapse; min-width: 320px;}
+    th { background: #fbfbfb; border-bottom: 1px solid #ddd; padding: 12px 5px; cursor: pointer; user-select: none; }
+    td { padding: 12px 5px; border-bottom: 1px solid #f0f0f0; text-align: center; }
+    tr:hover { background-color: #f8f9fa; }
+    .th-content { display: inline-flex; align-items: center; justify-content: center; }
+    .sort-svg { width: 10px; height: 12px; margin-left: 6px; }
+    .sort-up, .sort-down { fill: #ccc; }
+    .state-asc .sort-up { fill: #1a365d; }
+    .state-desc .sort-down { fill: #1a365d; }
+    
+    .page-btn { padding: 6px 12px; background: #fff; border: 1px solid #ddd; color: #1a365d; border-radius: 2px; cursor: pointer; font-size: 13px; margin: 0 3px; }
+    .page-btn:hover:not(:disabled) { background: #f4f6f8; border-color: #1a365d; }
+    .page-btn:disabled { color: #ccc; cursor: not-allowed; background: #fafafa; }
+    #pageInfo { font-size: 13px; color: #666; margin: 0 10px; }
+    .jump-input { width: 45px; padding: 4px; text-align: center; border: 1px solid #ddd; outline: none; margin: 0 4px; }
+
+    .dark-mode .header h1 { color: #eee; }
+    .dark-mode th, .dark-mode td { background: #121212; border-color: #333; color: #ccc; }
+    .dark-mode th { background: #2a2a2a; }
+    .dark-mode tr:hover { background-color: #252525; }
+    .dark-mode .search-box input { background: #2a2a2a; color: #eee; border-color: #444; }
+    .dark-mode .page-btn { background: #2a2a2a; border-color: #444; color: #ccc; }
+    .dark-mode .jump-input { background: #2a2a2a; color: #eee; border-color: #444; }
+{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>BigPRC 资源湾</h1>
+    <p>无广告 · 极速加载 · 纯净分享</p>
+</div>
+<div class="search-box">
+    <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="输入关键词，实时瞬间过滤...">
+</div>
+<div class="table-wrapper">
+<table id="resourceTable">
+    <thead>
+        <tr>
+            <th width="60%" onclick="sortByName()">
+                <div class="th-content">资源名称<svg id="nameSortIcon" class="sort-svg" viewBox="0 0 10 12"><polygon class="sort-up" points="5,0 10,4 0,4"/><polygon class="sort-down" points="5,12 0,8 10,8"/></svg></div>
+            </th>
+            <th width="20%" onclick="sortBySize()">
+                <div class="th-content">大小<svg id="sizeSortIcon" class="sort-svg" viewBox="0 0 10 12"><polygon class="sort-up" points="5,0 10,4 0,4"/><polygon class="sort-down" points="5,12 0,8 10,8"/></svg></div>
+            </th>
+            <th width="20%">操作</th>
+        </tr>
+    </thead>
+    <tbody id="tableBody">
+        {% for res in resources %}
+        <tr>
+            <td style='text-align: left; padding-left: 15px;'><a href='/go/{{ res.res_id }}'>{{ res.title }}</a></td>
+            <td><span style='color:#666;'>{{ res.size }}</span></td>
+            <td><a href='/go/{{ res.res_id }}' style='font-weight: bold;' target='_blank'>获取</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+<div id="pagination" style="text-align: center; margin-top: 25px;">
+    <button class="page-btn" id="firstBtn" onclick="firstPage()">首页</button>
+    <button class="page-btn" id="prevBtn" onclick="prevPage()">上一页</button>
+    <span id="pageInfo"></span>
+    <button class="page-btn" id="nextBtn" onclick="nextPage()">下一页</button>
+    <button class="page-btn" id="lastBtn" onclick="lastPage()">尾页</button>
+    <span style="margin-left: 10px; color: #666; font-size: 13px;">
+        跳至<input type="number" id="jumpInput" class="jump-input" min="1">页
+        <button class="page-btn" onclick="jumpToPage()" style="padding: 4px 10px;">跳转</button>
+    </span>
+</div>
+
+<script>
+    var currentPage = 1, rowsPerPage = 30, totalRows = 0, totalPages = 0;
+    var tbody = document.getElementById("tableBody");
+    var dataRows = [], originalRows = [];
+    var nameSortState = 0, sizeSortState = 0;
+
+    window.onload = function() {
+        var trs = tbody.getElementsByTagName("tr");
+        for (var i = 0; i < trs.length; i++) { dataRows.push(trs[i]); originalRows.push(trs[i]); }
+        updatePagination();
+        displayTable();
+    };
+
+    function updatePagination() {
+        totalRows = dataRows.length;
+        totalPages = Math.ceil(totalRows / rowsPerPage) || 1;
+    }
+
+    function parseSize(s) {
+        var m = s.trim().match(/([\d\.]+)\s*([KMGTP]?B)/i);
+        if (!m) return 0;
+        var p = {'B':1, 'KB':1024, 'MB':1048576, 'GB':1073741824, 'TB':1099511627776};
+        return parseFloat(m[1]) * (p[m[2].toUpperCase()] || 1);
+    }
+
+    function renderRows(arr) {
+        dataRows = arr;
+        for (var i = 0; i < dataRows.length; i++) tbody.appendChild(dataRows[i]);
+        currentPage = 1; filterTable();
+    }
+
+    function sortByName() {
+        sizeSortState = 0; document.getElementById("sizeSortIcon").className.baseVal = "sort-svg";
+        nameSortState = (nameSortState + 1) % 2;
+        var icon = document.getElementById("nameSortIcon");
+        if (nameSortState === 0) {
+            icon.className.baseVal = "sort-svg"; renderRows(originalRows.slice());
+        } else {
+            icon.className.baseVal = "sort-svg state-desc";
+            renderRows(dataRows.slice().sort((a,b) => a.cells[0].innerText.localeCompare(b.cells[0].innerText, 'zh-CN')));
+        }
+    }
+
+    function sortBySize() {
+        nameSortState = 0; document.getElementById("nameSortIcon").className.baseVal = "sort-svg";
+        sizeSortState = (sizeSortState + 1) % 3;
+        var states = ["sort-svg", "sort-svg state-desc", "sort-svg state-asc"];
+        document.getElementById("sizeSortIcon").className.baseVal = states[sizeSortState];
+        if (sizeSortState === 0) renderRows(originalRows.slice());
+        else renderRows(dataRows.slice().sort((a,b) => sizeSortState === 1 ? parseSize(b.cells[1].innerText) - parseSize(a.cells[1].innerText) : parseSize(a.cells[1].innerText) - parseSize(b.cells[1].innerText)));
+    }
+
+    function displayTable() {
+        var start = (currentPage - 1) * rowsPerPage, end = start + rowsPerPage - 1;
+        for (var i = 0; i < dataRows.length; i++) dataRows[i].style.display = (i >= start && i <= end) ? "" : "none";
+        document.getElementById("pageInfo").innerText = "第 " + currentPage + " / " + totalPages + " 页";
+        document.getElementById("firstBtn").disabled = document.getElementById("prevBtn").disabled = (currentPage === 1);
+        document.getElementById("nextBtn").disabled = document.getElementById("lastBtn").disabled = (currentPage === totalPages);
+    }
+
+    function firstPage() { if(currentPage>1){ currentPage=1; displayTable(); window.scrollTo(0,0);} }
+    function prevPage() { if(currentPage>1){ currentPage--; displayTable(); window.scrollTo(0,0);} }
+    function nextPage() { if(currentPage<totalPages){ currentPage++; displayTable(); window.scrollTo(0,0);} }
+    function lastPage() { if(currentPage<totalPages){ currentPage=totalPages; displayTable(); window.scrollTo(0,0);} }
+    function jumpToPage() {
+        var v = parseInt(document.getElementById("jumpInput").value);
+        if (v >= 1 && v <= totalPages) { currentPage = v; displayTable(); window.scrollTo(0,0); }
+    }
+
+    function filterTable() {
+        var filter = document.getElementById("searchInput").value.toLowerCase();
+        if (filter === "") { document.getElementById("pagination").style.display = "block"; displayTable(); return; }
+        document.getElementById("pagination").style.display = "none";
+        for (var i = 0; i < dataRows.length; i++) {
+            var text = dataRows[i].cells[0].innerText.toLowerCase();
+            dataRows[i].style.display = text.indexOf(filter) > -1 ? "" : "none";
+        }
+    }
+</script>
+{% endblock %}

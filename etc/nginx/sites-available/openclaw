@@ -1,0 +1,52 @@
+# ======================
+# ������ 主域名：bigprc.com (控制台 + 强力跳转)
+# ======================
+
+# HTTP 入口 (80端口)
+server {
+    listen 80;
+    server_name bigprc.com;
+
+    # 1. 发现找 ai001.html，直接送往 www 的正确页面
+    location = /ai001.html {
+        return 301 https://www.bigprc.com/static/page/ai001.html;
+    }
+
+    # 2. 其他所有请求，强转 HTTPS 保护控制台
+    location / {
+        return 301 https://bigprc.com$request_uri;
+    }
+}
+
+# HTTPS 入口 (443端口)
+server {
+    listen 443 ssl;
+    server_name bigprc.com;
+    
+    charset utf-8; # 防止意外乱码
+
+    # SSL 证书配置
+    ssl_certificate /etc/letsencrypt/live/bigprc.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/bigprc.com/privkey.pem;
+
+    # 3. HTTPS 下访问 ai001.html 也要跳到 www 站的中转页
+    location = /ai001.html {
+        return 301 https://www.bigprc.com/static/page/ai001.html;
+    }
+
+    # 4. 龙虾控制台反向代理 (3000端口)
+    location / {
+        proxy_pass http://127.0.0.1:18789;
+        
+        # === 🚀 WebSocket 通道放行补丁 ===
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        # ================================
+
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}

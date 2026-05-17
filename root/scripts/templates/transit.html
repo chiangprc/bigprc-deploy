@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+
+{% block title %}安全传输中 - {{ title }}{% endblock %}
+
+{% block extra_css %}
+    .transit-box { max-width: 600px; margin: 80px auto; text-align: center; padding: 40px 20px; background: #fdfdfd; border: 1px solid #eee; border-radius: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    .spinner { margin: 0 auto 20px auto; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #1a365d; border-radius: 50%; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .countdown-num { font-size: 48px; font-weight: bold; color: #1a365d; margin: 20px 0; }
+    .tips { color: #666; font-size: 14px; line-height: 1.8; }
+    .manual-link { display: none; margin-top: 30px; padding: 10px 20px; background: #1a365d; color: #fff; text-decoration: none; border-radius: 2px; }
+    
+    .dark-mode .transit-box { background: #1e1e1e; border-color: #333; box-shadow: none; }
+    .dark-mode .spinner { border-color: #333; border-top-color: #5c9ce6; }
+    .dark-mode .countdown-num { color: #5c9ce6; }
+    .dark-mode .tips { color: #aaa; }
+{% endblock %}
+
+{% block content %}
+<div class="transit-box">
+    <div class="spinner"></div>
+    <h2 style="margin-bottom: 10px;">引擎正在为您获取资源...</h2>
+    <div class="tips">资源名称：<strong>{{ title }}</strong></div>
+    
+    <div class="countdown-num" id="countdown">5</div>
+    
+    <div class="tips">
+        <p>为保障社区纯净，正在进行底层环境检测与防爆链加密验证<br>感谢您的耐心等待，安全通道即将开启</p>
+    </div>
+    
+    <a href="/jump/{{ jump_id }}" id="manualBtn" class="manual-link" rel="nofollow">验证完毕，点击进入网盘</a>
+</div>
+
+<script>
+    var count = 5;
+    var countdownEl = document.getElementById('countdown');
+    var timer = setInterval(function() {
+        count--;
+        countdownEl.innerText = count;
+        if (count <= 0) {
+            clearInterval(timer);
+            document.getElementById('manualBtn').style.display = 'inline-block';
+            countdownEl.style.display = 'none';
+            // 倒计时结束，执行真正的底层物理跳转！
+            window.location.href = "/jump/{{ jump_id }}";
+        }
+    }, 1000);
+</script>
+{% endblock %}
