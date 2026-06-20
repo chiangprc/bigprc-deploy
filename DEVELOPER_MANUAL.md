@@ -2,7 +2,12 @@
 
 > **站点**: https://www.bigprc.com  
 > **仓库**: https://github.com/chiangprc/bigprc-deploy  
-> **最后更新**: 2025-05-19
+> **最后更新**: 2026-06-21
+
+---
+
+> 🔴 **日常操作看这里 → [WORKFLOW_DAILY.md](WORKFLOW_DAILY.md)**  
+> 本文档是完整的系统架构和配置参考。日常改页面、更新资源、部署上线等操作，请优先查阅《开发者日常工作流》。
 
 ---
 
@@ -679,37 +684,13 @@ ls -la /var/www/site/web/index.html  # 应显示 -rw-r--r--（普通文件）
 
 ---
 
-## 附录 A：一键操作命令速查
+## 附录 A：日常操作
 
-```powershell
-# === 本地开发（Windows PowerShell）===
+> 🔴 **完整版操作指南请查阅 → [WORKFLOW_DAILY.md](WORKFLOW_DAILY.md)**
 
-# 初始化环境（仅首次）
-.\setup.ps1
-
-# 日常更新网站
-.\venv\Scripts\python.exe root\scripts\pantools_sync.py
-.\venv\Scripts\python.exe root\scripts\auto_generate.py
-
-# AI 写 SEO（可选）
-.\venv\Scripts\python.exe root\scripts\ai_seo_writer.py 10
-
-# 预览
-.\preview.ps1
-
-# 提交到 GitHub
-git add -A
-git commit -m "feat: 更新描述"
-git push origin main
-```
-
-```bash
-# === VPS 部署 ===
-
-ssh root@<服务器IP>
-cd /root/bigprc-deploy
-bash deploy.sh
-```
+**本地预览：** `.\preview.ps1`  
+**推送到 GitHub：** `git push origin main`  
+**VPS 部署：** `ssh -p 2222 root@37.27.246.3` → `cd /root/bigprc-deploy && bash deploy.sh`
 
 ---
 
