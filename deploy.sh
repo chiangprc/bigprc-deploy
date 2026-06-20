@@ -7,7 +7,7 @@
 # 安全原则:
 #   - 只用 git pull 更新代码，绝不 cp/rsync 覆盖系统目录
 #   - Nginx 配置通过 ln -sf 软链接生效，源文件留在仓库内
-#   - 绝不触碰 /var/www/ 下的静态页面生成目录
+#   - 手工静态页面通过 ln -sf 软链接到 /var/www/site/web/
 # ============================================================
 set -euo pipefail
 
@@ -20,6 +20,7 @@ SCRIPTS_DIR="/root/scripts"
 TEMPLATES_DIR="/root/scripts/templates"
 OPENCLAW_LOG="/root/openclaw.log"
 OPENCLAW_CMD="openclaw gateway"
+SITE_WEB="/var/www/site/web"
 
 echo "=============================================="
 echo " BigPRC 站点部署开始 (Git + 软链接)"
@@ -30,7 +31,7 @@ echo "=============================================="
 # 1. Git 拉取最新代码
 # ============================================================
 echo ""
-echo "[1/4] git pull 拉取最新代码..."
+echo "[1/6] git pull 拉取最新代码..."
 
 cd "$DEPLOY_ROOT"
 git pull origin main
@@ -41,7 +42,7 @@ echo "  ✅ 仓库已更新到 $(git rev-parse --short HEAD)"
 # 2. Nginx 站点配置 → 软链接到 sites-enabled
 # ============================================================
 echo ""
-echo "[2/4] 部署 Nginx 站点配置（ln -sf）..."
+echo "[2/6] 部署 Nginx 站点配置（ln -sf）..."
 
 if [ -d "$DEPLOY_ROOT/etc/nginx/sites-available" ]; then
     for f in "$DEPLOY_ROOT/etc/nginx/sites-available/"*; do
@@ -57,7 +58,7 @@ fi
 # 3. Nginx snippets（跳过自动生成的 jump_rules.conf）
 # ============================================================
 echo ""
-echo "[3/4] 部署 Nginx snippet（跳过自动生成文件）..."
+echo "[3/6] 部署 Nginx snippet（跳过自动生成文件）..."
 
 if [ -d "$DEPLOY_ROOT/etc/nginx/snippets" ]; then
     mkdir -p "$NGINX_SNIPPETS"
@@ -77,7 +78,7 @@ fi
 # 4. Python 脚本 & 模板 → 软链接
 # ============================================================
 echo ""
-echo "[4/5] 部署 Python 脚本和模板（ln -sf）..."
+echo "[4/6] 部署 Python 脚本和模板（ln -sf）..."
 
 if [ -d "$DEPLOY_ROOT/root/scripts" ]; then
     mkdir -p "$SCRIPTS_DIR" "$TEMPLATES_DIR"
@@ -98,10 +99,27 @@ if [ -d "$DEPLOY_ROOT/root/scripts" ]; then
 fi
 
 # ============================================================
-# 5. 重载服务
+# 5. 手工静态页面 → 软链接到 /var/www/site/web/
 # ============================================================
 echo ""
-echo "[5/5] 重载服务..."
+echo "[5/6] 部署手工静态页面（ln -sf）..."
+
+if [ -d "$DEPLOY_ROOT/root/custom-pages" ]; then
+    mkdir -p "$SITE_WEB"
+    while IFS= read -r -d '' f; do
+        rel="${f#$DEPLOY_ROOT/root/custom-pages/}"
+        target="$SITE_WEB/$rel"
+        mkdir -p "$(dirname "$target")"
+        ln -sf "$f" "$target"
+        echo "  → $rel"
+    done < <(find "$DEPLOY_ROOT/root/custom-pages" -type f -print0)
+fi
+
+# ============================================================
+# 6. 重载服务
+# ============================================================
+echo ""
+echo "[6/6] 重载服务..."
 
 # 5a. Nginx 语法检查 + 热重载
 echo "  → 检查 Nginx 配置语法..."

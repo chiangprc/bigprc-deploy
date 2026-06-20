@@ -1,0 +1,676 @@
+# BigPRC 开发者手册
+
+> **站点**: https://www.bigprc.com  
+> **仓库**: https://github.com/chiangprc/bigprc-deploy  
+> **最后更新**: 2025-05-19
+
+---
+
+## 目录
+
+1. [项目概述](#1-项目概述)
+2. [系统架构](#2-系统架构)
+3. [目录结构](#3-目录结构)
+4. [环境搭建（一次性）](#4-环境搭建一次性)
+5. [日常开发流程](#5-日常开发流程)
+6. [脚本参考](#6-脚本参考)
+7. [Nginx 配置说明](#7-nginx-配置说明)
+8. [部署流程](#8-部署流程)
+9. [模板系统](#9-模板系统)
+10. [环境变量参考](#10-环境变量参考)
+11. [Git 管理策略](#11-git-管理策略)
+12. [常见问题排查](#12-常见问题排查)
+
+---
+
+## 1. 项目概述
+
+BigPRC 是一个**极客资源聚合分享站**——从 Excel 数据源读取资源列表，通过 Python 脚本自动生成全站静态 HTML，部署到 Nginx + Ubuntu VPS 上对外服务。
+
+### 核心技术栈
+
+| 层 | 技术 | 用途 |
+|---|------|------|
+| 数据层 | Excel (.xlsx) → SQLite | 资源数据存储与清洗 |
+| 生成层 | Python 3.12 + Jinja2 | 静态 HTML 页面批量渲染 |
+| AI 辅助 | OpenAI 兼容 API | 自动生成 SEO 描述文案 |
+| 服务器 | Ubuntu + Nginx | 静态站点托管 + 反向代理 |
+| 网关 | OpenClaw (Node.js) | 管理控制台 WebSocket 代理 |
+| 版本控制 | Git + GitHub | 配置与脚本的版本管理 |
+| 部署 | Bash deploy.sh | 软链接 + Nginx 热重载 |
+
+### 页面 URL 路由规则
+
+| URL 模式 | 对应内容 | 实现方式 |
+|----------|---------|---------|
+| `/` | 首页 (index.html) | 静态文件 |
+| `/list.html` | 资源列表页 | Jinja2 生成 |
+| `/go/{res_id}` | 资源详情页（如 `/go/p001`） | Nginx rewrite → `/static/page/p001.html` |
+| `/jump/{res_id}` | 普通链接中转跳转 | Nginx include jump_rules.conf → 302 重定向 |
+| `/jump/{res_id}_short` | 短链中转跳转 | 同上 |
+| `/site/{path}` | 站点静态资源 | try_files 回退 |
+| `/ws` | WebSocket | 反向代理到 OpenClaw :18789 |
+
+### 线上域名体系
+
+```
+bigprc.com        ─── 裸域，301 → www + OpenClaw 反向代理
+www.bigprc.com    ─── 主站（静态资源展示）
+claw.bigprc.com   ─── OpenClaw 管理控制台
+```
+
+---
+
+## 2. 系统架构
+
+### 整体数据流
+
+```
+┌─────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│  Excel 表格  │ ──▶ │  SQLite 数据库 │ ──▶ │  Jinja2 模板  │ ──▶ │  静态 HTML   │
+│  (数据源)    │     │  (中间层)     │     │  (渲染引擎)   │     │  (最终产物)  │
+└─────────────┘     └──────────────┘     └──────────────┘     └──────────────┘
+      │                                                             │
+      │  pantools_sync.py               auto_generate.py            │
+      │                                                             ▼
+┌──────────────┐                                            ┌──────────────┐
+│  AI SEO 引擎  │ ───────────────────────────────────────▶  │    Nginx     │
+│  (可选)       │          ai_seo_writer.py                 │  Web Server  │
+└──────────────┘                                            └──────┬───────┘
+                                                                   │
+                                                             ┌─────▼──────┐
+                                                             │  用户浏览器  │
+                                                             └────────────┘
+```
+
+### 开发→部署流水线
+
+```
+本地电脑                            GitHub                          VPS 服务器
+─────────                         ────────                         ──────────
+1. 编辑 Excel
+2. pantools_sync.py  ─┐
+3. auto_generate.py   ├─▶ git push ──▶ github.com/             ──▶ git pull
+4. preview.ps1 预览   ─┘               chiangprc/bigprc-deploy      bash deploy.sh
+                                                                   (软链接 + 热重载)
+```
+
+---
+
+## 3. 目录结构
+
+```
+bigprc configs/                       ← 项目根目录
+│
+├── deploy.sh                         ← VPS 部署脚本（在服务器上执行）
+├── setup.sh / setup.ps1              ← 本地环境初始化（一次性）
+├── preview.sh / preview.ps1          ← 本地预览服务器启动脚本
+├── local_server.py                   ← 本地 HTTP 服务器（模拟 Nginx rewrite）
+├── .gitignore                        ← 推送排除清单
+│
+├── etc/                              ← 服务器配置文件
+│   ├── nginx/
+│   │   ├── nginx.conf                ← Nginx 主配置
+│   │   ├── sites-available/
+│   │   │   ├── default               ← www.bigprc.com 主站
+│   │   │   ├── claw                  ← claw.bigprc.com 控制台
+│   │   │   └── openclaw              ← bigprc.com 裸域 + 网关代理
+│   │   └── snippets/
+│   │       ├── jump_rules.conf       ← 自动生成的跳转规则（⚠️ 不推送）
+│   │       ├── fastcgi-php.conf
+│   │       └── snakeoil.conf
+│   └── letsencrypt/                  ← SSL 证书配置
+│       ├── cli.ini
+│       ├── options-ssl-nginx.conf
+│       └── ssl-dhparams.pem
+│
+├── root/                             ← VPS 上的 /root 目录内容
+│   ├── bashrc                        ← VPS shell 配置（含 API 密钥）
+│   ├── openclaw.log                  ← OpenClaw 运行日志
+│   └── scripts/                      ← Python 脚本集
+│       ├── .env                      ← 本地开发环境变量
+│       ├── env                       ← API 密钥（New API 地址和 token）
+│       ├── pantools_export.xlsx      ← 📊 资源数据源（Excel）
+│       ├── pantools_export_seo.xlsx  ← AI 生成 SEO 后的输出
+│       ├── pantools_sync.py          ← Excel → SQLite 同步脚本
+│       ├── auto_generate.py          ← 全站静态 HTML 生成引擎
+│       ├── ai_seo_writer.py          ← AI SEO 描述批量生成器
+│       ├── database.db               ← SQLite 数据库（本地不推送）
+│       ├── resources.csv             ← 资源 CSV 备用数据
+│       ├── cron_log.txt              ← 定时任务日志
+│       └── templates/                ← Jinja2 网页模板
+│           ├── layout.html           ← 基础布局（header/footer）
+│           ├── detail.html           ← 资源详情页
+│           ├── list.html             ← 资源列表页
+│           └── transit.html          ← 跳转中转页（倒计时）
+│
+├── var/                              ← 可变数据（⚠️ 整体不推送 Git）
+│   ├── www/
+│   │   ├── site/web/                 ← 生成的静态网站
+│   │   │   ├── index.html            ← 首页
+│   │   │   ├── list.html             ← 资源列表
+│   │   │   ├── sitemap.xml           ← 搜索引擎地图
+│   │   │   ├── static/page/          ← 资源详情 + 中转页
+│   │   │   ├── tools/                ← 工具页面
+│   │   │   └── post/                 ← 博客文章
+│   │   ├── bigprc_site/              ← 站点原始数据/MkDocs 文档
+│   │   ├── html/                     ← 默认 html 目录（空）
+│   │   └── seo_env/                  ← SEO Python 虚拟环境
+│   └── log/                          ← 系统日志快照
+│
+└── venv/                             ← Python 虚拟环境（⚠️ 不推送）
+    ├── Scripts/python.exe            ← Python 解释器
+    └── Lib/site-packages/            ← 已安装的包
+```
+
+---
+
+## 4. 环境搭建（一次性）
+
+### Windows（PowerShell）
+
+```powershell
+cd "Z:\Claudeek\Projects\bigprc configs"
+.\setup.ps1
+```
+
+脚本自动完成：
+1. 检测 Python 是否安装，若无则通过 winget 或 python.org 下载安装 Python 3.12
+2. 在项目根目录创建 `venv` 虚拟环境
+3. 安装依赖包：`jinja2` `python-dotenv` `requests`
+
+### macOS / Linux
+
+```bash
+cd /path/to/bigprc-configs
+bash setup.sh
+```
+
+脚本自动完成：
+1. 检测 Python 是否安装，若无则通过 Homebrew 或 python.org 下载安装
+2. 创建 `venv` 虚拟环境
+3. 安装依赖包
+
+### 手动安装依赖
+
+如果自动脚本失败，可手动执行：
+
+```bash
+# Windows
+python -m venv venv
+.\venv\Scripts\python.exe -m pip install jinja2 python-dotenv requests
+
+# macOS/Linux
+python3 -m venv venv
+venv/bin/python3 -m pip install jinja2 python-dotenv requests
+```
+
+---
+
+## 5. 日常开发流程
+
+### 标准工作流（5 步走）
+
+```
+编辑 Excel ──▶ 同步到数据库 ──▶ 生成静态站点 ──▶ 本地预览 ──▶ 推送 GitHub
+```
+
+#### 第 1 步：编辑资源数据
+
+打开 `root\scripts\pantools_export.xlsx`，维护以下列：
+
+| 列名 | 说明 | 必填 |
+|------|------|------|
+| 文件名 | 资源标题 | ✅ |
+| 链接 | 普通下载链接（网盘地址） | 至少一个 |
+| 短链 | 短链接（可选，用于移动端分享） | 否 |
+| 文件大小 | 如 `2.3GB` | 否 |
+| SEO简介 | 搜索引擎描述文案（可留空由 AI 生成） | 否 |
+
+#### 第 2 步：同步到 SQLite 数据库
+
+```powershell
+.\venv\Scripts\python.exe root\scripts\pantools_sync.py
+```
+
+> 此脚本将 Excel 数据清洗后存入 `database.db`。支持增量更新（UPSERT），重复执行不会产生重复数据。
+
+#### 第 3 步（可选）：AI 批量生成 SEO 描述
+
+```powershell
+# 处理 10 条
+.\venv\Scripts\python.exe root\scripts\ai_seo_writer.py 10
+
+# 处理全部
+.\venv\Scripts\python.exe root\scripts\ai_seo_writer.py all
+```
+
+> 需要确保 `root/scripts/env` 中配置了有效的 API 地址和密钥。模型会自动轮询 fallback 列表：`deepseek-v4-flash` → `deepseek-v4-pro` → `deepseek-v4-pro[1]`。
+
+#### 第 4 步：生成静态网站
+
+```powershell
+.\venv\Scripts\python.exe root\scripts\auto_generate.py
+```
+
+此脚本执行：
+- 从 SQLite 数据库读取全部资源
+- 为每个资源随机关联 4 个"猜你喜欢"（内链蜘蛛网）
+- **多线程并发**（10 workers）渲染详情页、普通中转页、短链中转页
+- 生成列表页 `list.html`
+- 生成 `sitemap.xml`
+- 尝试更新 Nginx 跳转规则（本地环境会自动跳过）
+- 尝试向百度推送新链接（本地环境会自动跳过）
+
+#### 第 5 步：本地预览
+
+```powershell
+.\preview.ps1
+```
+
+- 启动 HTTP 服务器，监听 `127.0.0.1:8765`
+- 自动打开浏览器
+- 完整模拟线上 Nginx URL rewrite 规则
+- `Ctrl+C` 停止
+
+#### 第 6 步：提交到 GitHub
+
+```powershell
+git add -A
+git commit -m "feat: 更新资源数据"
+git push origin main
+```
+
+---
+
+## 6. 脚本参考
+
+### `pantools_sync.py` — Excel → SQLite 同步
+
+| 项目 | 说明 |
+|------|------|
+| 输入 | `root/scripts/pantools_export.xlsx` |
+| 输出 | `root/scripts/database.db` |
+| 依赖 | `openpyxl`, `python-dotenv` |
+| 表结构 | `resources(res_id TEXT PK, title, size, normal_url, short_url, seo_desc, sync_time)` |
+| 行为 | UPSERT（新增或更新），以 `res_id`（如 `p001`）为主键 |
+
+### `auto_generate.py` — 全站静态 HTML 生成引擎
+
+| 项目 | 说明 |
+|------|------|
+| 输入 | SQLite 数据库 + Jinja2 模板 |
+| 输出 | `var/www/site/web/` 下的全部 HTML |
+| 并发 | 10 线程 |
+| 功能 | ① 详情页生成 ② 中转页生成 ③ 列表页生成 ④ sitemap 生成 ⑤ Nginx 规则更新 ⑥ 百度 SEO 推送 |
+| 本地行为 | 百度推送和 Nginx 更新自动跳过（通过 try/except 保护） |
+
+**生成的页面类型：**
+
+| 文件命名 | 内容 | 示例 |
+|---------|------|------|
+| `{res_id}.html` | 资源详情页 | `p001.html` |
+| `{res_id}_transit.html` | 普通链接中转页 | `p001_transit.html` |
+| `{res_id}_short_transit.html` | 短链中转页 | `p001_short_transit.html` |
+
+### `ai_seo_writer.py` — AI SEO 描述批量生成器
+
+| 项目 | 说明 |
+|------|------|
+| 用法 | `python ai_seo_writer.py [数字\|all]` |
+| 输入 | `pantools_export.xlsx` |
+| 输出 | `pantools_export_seo.xlsx` |
+| 依赖 | `openai` SDK, `openpyxl` |
+| 模型轮询 | `deepseek-v4-flash` → `deepseek-v4-pro` → `deepseek-v4-pro[1]` |
+| 缓存 | 已有合格 SEO 描述的条目自动跳过 |
+| 验证 | 字数 ≥300、含 HTML 标签、中文占比 >60%、无违禁品牌词、无 AI 拒绝语 |
+
+### `local_server.py` — 本地预览服务器
+
+| 项目 | 说明 |
+|------|------|
+| 端口 | `8765`（可通过参数修改） |
+| 绑定 | `127.0.0.1`（仅本机可访问，无法从局域网访问） |
+| 模拟的 Nginx 规则 | `/` → index.html，`/go/{id}` → detail page，`/site/{path}` → static file，`/jump/*` → 提示页 |
+
+### `deploy.sh` — VPS 一键部署脚本
+
+| 项目 | 说明 |
+|------|------|
+| 运行位置 | VPS 服务器上 `/root/bigprc-deploy/` |
+| 前提 | 已通过 `git clone` 拉取仓库 |
+| 步骤 | git pull → Nginx 站点配置软链接 → Nginx snippets 软链接 → Python 脚本软链接 → Nginx 语法检查 + 热重载 → OpenClaw 重启 |
+| 安全机制 | Nginx 语法检查失败会阻止重载并报错退出 |
+
+---
+
+## 7. Nginx 配置说明
+
+### 站点配置总览
+
+| 文件 | 域名 | 功能 |
+|------|------|------|
+| `sites-available/default` | `www.bigprc.com` | 主站：静态文件 + WebSocket + 跳转规则 |
+| `sites-available/claw` | `claw.bigprc.com` | OpenClaw 管理控制台代理 |
+| `sites-available/openclaw` | `bigprc.com` | 裸域 HTTPS 转发 + 网关反向代理 |
+
+### 主站配置详解（`default`）
+
+```
+┌─────────────────────────────────────────────────────┐
+│ server block: www.bigprc.com (443 SSL)              │
+│                                                     │
+│  /baidu_verify_codeva-*.html  →  百度验证直出       │
+│  /ws                          →  127.0.0.1:18789   │
+│  /jump/*                       →  include jump_rules.conf │
+│  /                             →  try_files → /index.html │
+│  /go/*                         →  rewrite → /static/page/*.html │
+│  /static/                      →  静态文件目录         │
+└─────────────────────────────────────────────────────┘
+```
+
+### 跳转规则 (`snippets/jump_rules.conf`)
+
+由 `auto_generate.py` 自动生成，格式为：
+
+```nginx
+rewrite ^/jump/p001$ https://pan.baidu.com/s/xxxxx redirect;
+rewrite ^/jump/p001_short$ https://t.cn/xxxxx redirect;
+```
+
+- **每条资源 1-2 条** rewrite 规则（普通链接 + 短链）
+- **由脚本自动管理**，不可手动编辑
+- `deploy.sh` 会跳过此文件（因为它在 VPS 上由 cron/auto_generate.py 管理）
+- 本地预览中 `/jump/*` 请求会返回提示信息（不执行实际跳转）
+
+---
+
+## 8. 部署流程
+
+### 首次部署（VPS 初始化）
+
+```bash
+# 1. SSH 登录 VPS
+ssh root@<服务器IP>
+
+# 2. 克隆仓库
+git clone https://github.com/chiangprc/bigprc-deploy.git /root/bigprc-deploy
+
+# 3. 运行部署
+cd /root/bigprc-deploy
+bash deploy.sh
+```
+
+### 日常更新部署
+
+```bash
+ssh root@<服务器IP>
+cd /root/bigprc-deploy
+bash deploy.sh
+```
+
+### 部署脚本做了什么
+
+```
+deploy.sh 执行流程：
+
+[1/4] git pull origin main             ← 拉取最新配置和脚本
+[2/4] ln -sf Nginx 站点配置             ← 将仓库中的配置软链接到 /etc/nginx/sites-available/
+                                          同时软链接到 /etc/nginx/sites-enabled/
+[3/4] ln -sf Nginx snippets             ← 软链接代码片段（跳过 jump_rules.conf）
+[4/5] ln -sf Python 脚本 & 模板         ← 软链接到 /root/scripts/ 和 /root/scripts/templates/
+[5/5] nginx -t && systemctl reload      ← 语法检查通过后热重载
+      pkill openclaw && nohup 重启      ← 重启 OpenClaw 网关
+```
+
+### 软链接策略说明
+
+仓库内文件与系统目录的映射关系：
+
+```
+仓库路径                                        ──软链接──▶   系统路径
+etc/nginx/sites-available/default              ──▶  /etc/nginx/sites-available/default
+                                                        └──▶ /etc/nginx/sites-enabled/default
+root/scripts/auto_generate.py                  ──▶  /root/scripts/auto_generate.py
+root/scripts/templates/detail.html             ──▶  /root/scripts/templates/detail.html
+```
+
+> **为什么要用软链接？**
+> 1. 修改仓库文件 = 修改生效文件，无需 cp/rsync
+> 2. Nginx 语法检查失败时可以回滚（git checkout）
+> 3. 所有变更受 Git 版本控制
+
+---
+
+## 9. 模板系统
+
+### 模板文件
+
+| 模板 | 用途 | 关键变量 |
+|------|------|---------|
+| `layout.html` | 基础 HTML 框架（head/meta/结构化数据/百度统计/Clarity） | `title`, `canonical_url`, `clarity_id` |
+| `detail.html` | 资源详情页 | `title`, `seo_desc`, `size`, `res_id`, `normal_url`, `short_url`, `drive_name`, `related_resources` |
+| `list.html` | 资源列表页 | `resources[]` |
+| `transit.html` | 跳转中转页（5秒倒计时 + 广告展示） | `title`, `jump_id`, `admin_email` |
+
+### 模板变量说明
+
+**detail.html 接收变量：**
+
+```python
+{
+    "title": "资源标题",
+    "seo_desc": "SEO 描述（HTML 格式）",
+    "size": "2.3GB",
+    "res_id": "p001",
+    "normal_url": "https://pan.baidu.com/s/xxxxx",  # 可能为 None
+    "short_url": "https://t.cn/xxxxx",                # 可能为 None
+    "drive_name": "百度网盘",                          # 自动识别
+    "admin_email": "admin@bigprc.com",
+    "clarity_id": "微软 Clarity 分析 ID",
+    "canonical_url": "https://www.bigprc.com/go/p001",
+    "related_resources": [...]                         # 4 个随机关联资源
+}
+```
+
+### 网盘智能识别引擎
+
+`auto_generate.py` 内置了 **12 种网盘** 的 URL 模式匹配：
+
+| 网盘名称 | 匹配域名 |
+|---------|---------|
+| 夸克网盘 | `quark.cn` |
+| 百度网盘 | `baidu.com` |
+| 阿里云盘 | `alipan.com` / `aliyundrive.com` |
+| 迅雷网盘 | `xunlei.com` |
+| 123 网盘 | `123pan.com` / `123pan.cn` |
+| 天翼云盘 | `189.cn` |
+| 蓝奏云 | `lanzou*.com` |
+| 115 网盘 | `115.com` |
+| UC 网盘 | `uc.cn` |
+| 腾讯微云 | `weiyun.com` |
+| 诚通网盘 | `ctfile.com` |
+| 移动云盘 | `10086.cn` |
+| （默认） | "专属专线" |
+
+---
+
+## 10. 环境变量参考
+
+### 本地 `.env` 文件（`root/scripts/.env`）
+
+```ini
+DB_FILE=root/scripts/database.db
+PAGE_DIR=var/www/site/web/static/page
+INDEX_FILE=var/www/site/web/list.html
+SITEMAP_FILE=var/www/site/web/sitemap.xml
+NGINX_CONF_FILE=var/www/bigprc_site/nginx_redirects.conf
+DOMAIN=https://www.bigprc.com
+BAIDU_TOKEN=local_dev_skip
+DAILY_PUSH_QUOTA=100
+PUSHED_LOG_FILE=root/scripts/pushed_urls.log
+ADMIN_EMAIL=admin@bigprc.com
+CLARITY_ID=local_dev
+```
+
+### API 密钥文件（`root/scripts/env`）
+
+```ini
+API_BASE_URL=http://127.0.0.1:3000/v1
+API_KEY=sk-xxxxxxxx
+```
+
+### VPS 环境变量（`/root/scripts/.env`）
+
+VPS 上需要一个**独立的** `.env` 文件（不推送 Git），包含真实的：
+
+- `BAIDU_TOKEN` — 百度搜索资源平台推送令牌
+- `CLARITY_ID` — 微软 Clarity 分析真实 ID
+- 其他生产环境配置
+
+### VPS Shell 环境（`/root/.bashrc` / 仓库中 `root/bashrc`）
+
+包含多个 AI API 密钥：
+- `GROQ_API_KEY` — Groq
+- `CF_API_TOKEN` / `CF_ACCOUNT_ID` — Cloudflare
+- `GEMINI_API_KEY` — Google Gemini
+- `VOLC_API_KEY` — 火山引擎（豆包）
+- `QWEN_API_KEY` — 阿里云通义千问
+- `DEEPSEEK_API_KEY` — DeepSeek
+
+> ⚠️ 这些密钥在 `.gitignore` 中排除，不会被推送到 GitHub。
+
+---
+
+## 11. Git 管理策略
+
+### 提交规则
+
+| 类型 | 是否推送 | 说明 |
+|------|---------|------|
+| Python 脚本 (`.py`) | ✅ 推送 | 核心逻辑 |
+| Nginx 配置 (`.conf`, `sites-available/*`) | ✅ 推送 | 服务器配置 |
+| Jinja2 模板 (`.html`) | ✅ 推送 | 网站外观 |
+| 部署/设置脚本 (`.sh`, `.ps1`) | ✅ 推送 | 自动化脚本 |
+| 生成的 HTML (`var/www/site/`) | ❌ 不推送 | 自动生成，VPS 上独立生成 |
+| 数据库 (`*.db`) | ❌ 不推送 | 本地数据 |
+| Python 环境 (`venv/`) | ❌ 不推送 | 环境隔离 |
+| `.env` / `env` 文件 | ❌ 不推送 | 含密钥 |
+| `bashrc` | ❌ 不推送 | 含 API 密钥 |
+| SSL 证书 (`etc/letsencrypt/`) | ❌ 不推送 | VPS 上由 Let's Encrypt 管理 |
+| `preview.ps1` | ❌ 不推送 | 仅本地使用 |
+
+### 分支策略
+
+- **main** — 唯一分支，直接推送
+- 仓库地址：`https://github.com/chiangprc/bigprc-deploy`
+
+---
+
+## 12. 常见问题排查
+
+### Q: `.\preview.ps1` 报错 "Generated site not found"
+
+**原因**：还没有生成网站文件。  
+**解决**：先运行 `.\venv\Scripts\python.exe root\scripts\auto_generate.py`
+
+### Q: `pantools_sync.py` 报错 "Excel 读取失败"
+
+**原因**：`pantools_export.xlsx` 不存在或格式错误。  
+**解决**：确认 `root\scripts\pantools_export.xlsx` 存在，第一行是表头（文件名、链接、短链、文件大小、SEO简介）。
+
+### Q: 本地预览时 `/jump/p001` 不跳转
+
+**正常行为**：本地预览中 `/jump/*` 被禁用，会显示提示："External redirect disabled in local preview"。这是为了避免本地调试时误跳转到外部链接。
+
+### Q: `auto_generate.py` 报 "数据库为空"
+
+**原因**：`database.db` 中没有数据。  
+**解决**：先运行 `pantools_sync.py` 导入 Excel 数据。
+
+### Q: 部署后网站不更新
+
+排查步骤：
+1. 确认 `git push` 成功推送到 GitHub
+2. SSH 登录 VPS，`cd /root/bigprc-deploy && git log -1` 查看是否最新提交
+3. 如果 VPS 上代码是旧的：手动 `git pull`
+4. 如果代码已是最新但网站不变：检查 VPS 上的 `auto_generate.py` 是否运行过（可能需要 cron 定时任务触发）
+5. 检查 Nginx 是否正常：`nginx -t && systemctl status nginx`
+
+### Q: 部署后 Nginx 报错
+
+```bash
+# 在 VPS 上检查
+nginx -t                          # 语法检查
+systemctl status nginx            # 服务状态
+tail -f /var/log/nginx/error.log  # 错误日志
+```
+
+### Q: 如何验证线上网站正常
+
+```bash
+curl -I https://www.bigprc.com        # 主站（应返回 200）
+curl -I https://claw.bigprc.com       # 控制台
+curl -I https://www.bigprc.com/go/p001  # 某个资源页面
+```
+
+### Q: VPS 上的 `.env` 如何配置
+
+```bash
+# SSH 登录 VPS 后
+nano /root/scripts/.env
+```
+
+填入真实的生产环境配置（参考第 10 节的变量列表），保存后重新运行 `auto_generate.py`。
+
+---
+
+## 附录 A：一键操作命令速查
+
+```powershell
+# === 本地开发（Windows PowerShell）===
+
+# 初始化环境（仅首次）
+.\setup.ps1
+
+# 日常更新网站
+.\venv\Scripts\python.exe root\scripts\pantools_sync.py
+.\venv\Scripts\python.exe root\scripts\auto_generate.py
+
+# AI 写 SEO（可选）
+.\venv\Scripts\python.exe root\scripts\ai_seo_writer.py 10
+
+# 预览
+.\preview.ps1
+
+# 提交到 GitHub
+git add -A
+git commit -m "feat: 更新描述"
+git push origin main
+```
+
+```bash
+# === VPS 部署 ===
+
+ssh root@<服务器IP>
+cd /root/bigprc-deploy
+bash deploy.sh
+```
+
+---
+
+## 附录 B：依赖清单
+
+| 包名 | 版本要求 | 用途 |
+|------|---------|------|
+| Python | ≥ 3.9（推荐 3.12） | 脚本运行时 |
+| jinja2 | latest | HTML 模板渲染 |
+| python-dotenv | latest | .env 环境变量加载 |
+| requests | latest | HTTP 请求（百度推送） |
+| openpyxl | latest | Excel 文件读写 |
+| openai | latest | AI SEO 生成（仅 ai_seo_writer.py） |
+
+---
+
+> 📝 如有疑问或需要补充，请联系项目维护者或在 GitHub 提 Issue。  
+> 🤖 本文档由 Claude Code 根据项目源代码自动生成。
