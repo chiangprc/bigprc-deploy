@@ -412,14 +412,16 @@ bash deploy.sh
 ### 部署脚本做了什么
 
 ```
-deploy.sh 执行流程：
+deploy.sh 执行流程（共 6 步）：
 
-[1/4] git pull origin main             ← 拉取最新配置和脚本
-[2/4] ln -sf Nginx 站点配置             ← 将仓库中的配置软链接到 /etc/nginx/sites-available/
+[1/6] git pull origin main             ← 拉取最新配置和脚本
+[2/6] ln -sf Nginx 站点配置             ← 将仓库中的配置软链接到 /etc/nginx/sites-available/
                                           同时软链接到 /etc/nginx/sites-enabled/
-[3/4] ln -sf Nginx snippets             ← 软链接代码片段（跳过 jump_rules.conf）
-[4/5] ln -sf Python 脚本 & 模板         ← 软链接到 /root/scripts/ 和 /root/scripts/templates/
-[5/5] nginx -t && systemctl reload      ← 语法检查通过后热重载
+[3/6] ln -sf Nginx snippets             ← 软链接代码片段（跳过 jump_rules.conf）
+[4/6] ln -sf Python 脚本 & 模板         ← 软链接到 /root/scripts/ 和 /root/scripts/templates/
+[5/6] cp 手工静态页面                    ← 复制 root/custom-pages/ 到 /var/www/site/web/
+                                          （用 cp 而非 ln，因为 Nginx www-data 无法穿透 /root/）
+[6/6] nginx -t && systemctl reload      ← 语法检查通过后热重载
       pkill openclaw && nohup 重启      ← 重启 OpenClaw 网关
 ```
 
@@ -552,6 +554,8 @@ VPS 上需要一个**独立的** `.env` 文件（不推送 Git），包含真实
 | Nginx 配置 (`.conf`, `sites-available/*`) | ✅ 推送 | 服务器配置 |
 | Jinja2 模板 (`.html`) | ✅ 推送 | 网站外观 |
 | 部署/设置脚本 (`.sh`, `.ps1`) | ✅ 推送 | 自动化脚本 |
+| 本地服务器 (`local_server.py`) | ✅ 推送 | 本地预览 |
+| 手工静态页面 (`root/custom-pages/`) | ✅ 推送 | 首页、工具页等手工维护的页面 |
 | 生成的 HTML (`var/www/site/`) | ❌ 不推送 | 自动生成，VPS 上独立生成 |
 | 数据库 (`*.db`) | ❌ 不推送 | 本地数据 |
 | Python 环境 (`venv/`) | ❌ 不推送 | 环境隔离 |
@@ -622,6 +626,56 @@ nano /root/scripts/.env
 ```
 
 填入真实的生产环境配置（参考第 10 节的变量列表），保存后重新运行 `auto_generate.py`。
+
+### Q: 网站返回 HTTP 522（Cloudflare 报错）
+
+**原因**：Cloudflare 无法连接到 VPS 源站。  
+**排查步骤**：
+1. 确认 VPS 是否在运行：Ping 服务器 IP
+2. 在 VPS 上验证本地 Nginx 正常：`curl -I -k https://127.0.0.1/ -H "Host: www.bigprc.com"`（应返回 200）
+3. 检查 **Hetzner 云防火墙**（独立于 VPS 内 ufw）：在 Hetzner Cloud Console → Firewalls 中确认已放行 TCP 80 和 443
+4. 检查 Cloudflare DNS A 记录是否指向正确的 VPS IP
+5. 检查 Cloudflare SSL/TLS 模式是否设为 **Full** 或 **Full (strict)**
+
+### Q: 网站返回 HTTP 403（Nginx Permission denied）
+
+**原因**：Nginx worker 进程（www-data 用户）无法访问站点文件。  
+**常见场景**：
+- 文件是软链接指向 `/root/` 路径 → www-data 无法穿透 `/root/`（权限 700）
+- 文件权限设为 600 或目录缺少执行权限
+
+**解决**：
+```bash
+# 检查文件是否为软链接
+ls -la /var/www/site/web/index.html
+# 如果是 lrwxrwxrwx 且指向 /root/，需要改为真实文件
+rm /var/www/site/web/index.html
+cp /root/bigprc-deploy/root/custom-pages/index.html /var/www/site/web/index.html
+
+# 或直接重跑 deploy.sh（v1f826fa+ 已修复为 cp）
+cd /root/bigprc-deploy && git pull && bash deploy.sh
+```
+
+### Q: 从外部无法访问 VPS 但 VPS 本地 curl 正常
+
+**原因**：VPS 提供商可能有独立的云防火墙（如 Hetzner Cloud Firewall、AWS Security Group、阿里云安全组）。  
+**排查**：
+1. `nc -zv <VPS_IP> 443` 在本地测试 TCP 是否可达
+2. `curl -I -k --resolve www.bigprc.com:443:<VPS_IP> https://www.bigprc.com/` 绕开 Cloudflare 直连测试
+3. 如果 TCP 能通但 TLS 握手超时，大概率是云防火墙拦截
+4. 前往 VPS 提供商控制台检查防火墙入站规则
+
+### Q: 部署后手工静态页面没生效
+
+**原因**：
+1. VPS 上旧版本 deploy.sh 用了 `ln -sf`（软链接），www-data 无法穿透 `/root/`
+2. 旧软链接没被清除，`cp` 报 "same file" 错误退出
+
+**解决**：确保 VPS 上 deploy.sh 版本 ≥ `1f826fa`：
+```bash
+cd /root/bigprc-deploy && git pull && bash deploy.sh
+ls -la /var/www/site/web/index.html  # 应显示 -rw-r--r--（普通文件）
+```
 
 ---
 
