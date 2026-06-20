@@ -99,10 +99,12 @@ if [ -d "$DEPLOY_ROOT/root/scripts" ]; then
 fi
 
 # ============================================================
-# 5. 手工静态页面 → 软链接到 /var/www/site/web/
+# 5. 手工静态页面 → 复制到 /var/www/site/web/
+#   (用 cp 而非 ln，因为 Nginx worker 以 www-data 运行，
+#    无法穿透 /root/ 目录跟随软链接)
 # ============================================================
 echo ""
-echo "[5/6] 部署手工静态页面（ln -sf）..."
+echo "[5/6] 部署手工静态页面（cp）..."
 
 if [ -d "$DEPLOY_ROOT/root/custom-pages" ]; then
     mkdir -p "$SITE_WEB"
@@ -110,7 +112,7 @@ if [ -d "$DEPLOY_ROOT/root/custom-pages" ]; then
         rel="${f#$DEPLOY_ROOT/root/custom-pages/}"
         target="$SITE_WEB/$rel"
         mkdir -p "$(dirname "$target")"
-        ln -sf "$f" "$target"
+        cp "$f" "$target"
         echo "  → $rel"
     done < <(find "$DEPLOY_ROOT/root/custom-pages" -type f -print0)
 fi
