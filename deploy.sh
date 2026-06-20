@@ -112,6 +112,7 @@ if [ -d "$DEPLOY_ROOT/root/custom-pages" ]; then
         rel="${f#$DEPLOY_ROOT/root/custom-pages/}"
         target="$SITE_WEB/$rel"
         mkdir -p "$(dirname "$target")"
+        rm -f "$target"
         cp "$f" "$target"
         echo "  → $rel"
     done < <(find "$DEPLOY_ROOT/root/custom-pages" -type f -print0)
