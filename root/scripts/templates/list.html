@@ -60,7 +60,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="content" style="padding-top: 20px;">
+<div class="content" style="padding-top: 20px; text-align: center;">
 
     <h1>BigPRC 资源列表</h1>
     <p class="subtitle">
@@ -77,6 +77,7 @@
                placeholder="搜索...">
     </div>
 
+    <div style="text-align: left;">
     <table id="resourceTable">
         <thead>
             <tr>
@@ -102,6 +103,7 @@
             跳至<input type="number" id="jumpInput" class="jump-input" min="1">页
             <button class="page-btn" id="jumpBtn" style="padding:4px 10px;">GO</button>
         </span>
+    </div>
     </div>
 
     <noscript>
