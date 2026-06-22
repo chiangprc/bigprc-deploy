@@ -58,9 +58,10 @@ server {
         return 302 https://www.bigprc.com;
     }
 
-    # 首页（SPA 防吞路径）
+    # 首页 (index.html auto-served via index directive)
+    # Non-existent paths → 404 → custom 404.html
     location / {
-        try_files $uri $uri/ /index.html;
+        try_files $uri $uri/ =404;
     }
 
     # 静态目录 (longer cache: generated pages change infrequently)
