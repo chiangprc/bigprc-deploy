@@ -69,6 +69,24 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self._send_404("Site file not found")
             return
 
+        # ---- /tools/*  →  root/custom-pages/tools/ ----
+        if path.startswith("/tools/"):
+            subpath = path[len("/tools/"):]
+            filepath = os.path.join(CUSTOM_PAGES, "tools", subpath)
+            if os.path.isfile(filepath):
+                ctype, _ = mimetypes.guess_type(filepath)
+                return self._serve_file(filepath, ctype or "application/octet-stream")
+            self._send_404("Tool page not found")
+            return
+
+        # ---- /sitemap.xml  →  var/www/site/web/sitemap.xml ----
+        if path == "/sitemap.xml":
+            filepath = os.path.join(SITE_DIR, "sitemap.xml")
+            if os.path.isfile(filepath):
+                return self._serve_file(filepath, "application/xml; charset=utf-8")
+            self._send_404("Sitemap not generated yet")
+            return
+
         # ---- /jump/*  →  disabled in local preview ----
         if _JUMP_RE.match(path):
             return self._serve_html(
