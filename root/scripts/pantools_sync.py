@@ -32,7 +32,8 @@ def init_db():
     ''')
     # Add new columns to existing tables (ignore if already exist)
     for col, col_type in [('category', 'TEXT'), ('platform', 'TEXT'),
-                          ('version', 'TEXT'), ('password', 'TEXT'), ('rating', 'TEXT')]:
+                          ('version', 'TEXT'), ('password', 'TEXT'), ('rating', 'TEXT'),
+                          ('ai_generated', 'INTEGER DEFAULT 0')]:
         try:
             cursor.execute(f'ALTER TABLE resources ADD COLUMN {col} {col_type}')
         except sqlite3.OperationalError:
@@ -81,6 +82,10 @@ def sync_excel_to_db(conn):
         password = safe_str("解压密码")
         rating = safe_str("推荐星级")
 
+        # AI generated flag (1 if AI-generated, 0 otherwise)
+        ai_val = row[header.get("AI生成")] if "AI生成" in header else None
+        ai_generated = 1 if ai_val and str(ai_val).strip().lower() in ["1", "yes", "是", "true"] else 0
+
         if normal_url == "None": normal_url = None
         if short_url == "None": short_url = None
         if not normal_url and not short_url: continue
@@ -89,8 +94,8 @@ def sync_excel_to_db(conn):
         
         # 尝试插入或更新数据 (UPSERT 语法，极速排重)
         cursor.execute('''
-            INSERT INTO resources (res_id, title, size, normal_url, short_url, seo_desc, category, platform, version, password, rating)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO resources (res_id, title, size, normal_url, short_url, seo_desc, category, platform, version, password, rating, ai_generated)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(res_id) DO UPDATE SET
                 title=excluded.title,
                 size=excluded.size,
@@ -102,8 +107,9 @@ def sync_excel_to_db(conn):
                 version=excluded.version,
                 password=excluded.password,
                 rating=excluded.rating,
+                ai_generated=excluded.ai_generated,
                 sync_time=CURRENT_TIMESTAMP
-        ''', (res_id, title_str, size, normal_url, short_url, seo_desc, category, platform, version, password, rating))
+        ''', (res_id, title_str, size, normal_url, short_url, seo_desc, category, platform, version, password, rating, ai_generated))
         
         if cursor.rowcount == 1:
             insert_count += 1

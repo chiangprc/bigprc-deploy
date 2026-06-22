@@ -135,6 +135,9 @@
     <div class="details">
         <div class="desc-box">
             <strong>[ 资源档案 ]</strong><br>{{ seo_desc|safe }}
+            {% if ai_generated %}
+            <p style="font-size: 11px; color: #999; margin-top: 10px; text-align: right;">ⓘ 内容由 AI 辅助生成，仅供参考</p>
+            {% endif %}
         </div>
 
         <div class="feedback-row" style="text-align: center; margin-top: 15px; font-size: 11px; color: #bbb;">
@@ -166,6 +169,25 @@
     <div style="text-align: center; margin-top: 30px;">
         <a href="/list.html" class="back">&lt;&lt; 返回资源总表</a>
     </div>
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "{{ title }}",
+        "description": "{{ seo_desc|striptags|truncate(200, true) if seo_desc else title }}",
+        "url": "{{ canonical_url }}",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "{{ platform|default('Windows, macOS, Linux') }}",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "CNY"
+        },
+        "fileSize": "{{ size|default('') }}"
+    }
+    </script>
 </div>
 
 <script>

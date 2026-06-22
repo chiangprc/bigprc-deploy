@@ -9,7 +9,20 @@
     {% if canonical_url %}
     <link rel="canonical" href="{{ canonical_url }}">
     {% endif %}
-    
+
+    <!-- Favicon (inline SVG) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏴‍☠️</text></svg>">
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}BigPRC 极客资源湾 — 无广告、极速加载的纯净资源分享站{% endblock %}">
+    <meta property="og:url" content="{{ canonical_url or 'https://www.bigprc.com' }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="BigPRC 极客资源湾">
+    <meta property="og:locale" content="zh_CN">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+
     <script type="text/javascript">
         (function(c,l,a,r,i,t,y){
             c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};

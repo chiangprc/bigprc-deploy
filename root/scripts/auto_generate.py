@@ -6,7 +6,9 @@ import requests
 import time
 import random
 import re
+import json
 from datetime import datetime
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from jinja2 import Environment, FileSystemLoader
 from dotenv import load_dotenv
@@ -117,7 +119,8 @@ def render_single_page(res):
         canonical_url=f"{DOMAIN}/go/{res['res_id']}",
         related_resources=res.get('related', []),
         category=res.get('category'), platform=res.get('platform'),
-        version=res.get('version'), password=res.get('password'), rating=res.get('rating')
+        version=res.get('version'), password=res.get('password'), rating=res.get('rating'),
+        ai_generated=res.get('ai_generated', False)
     )
     with open(os.path.join(PAGE_DIR, f"{res['res_id']}.html"), "w", encoding="utf-8") as f:
         f.write(html_content)
@@ -156,10 +159,45 @@ def build_static_site(resources):
     with ThreadPoolExecutor(max_workers=10) as executor:
         executor.map(render_single_page, resources)
     
-    # 2. 生成列表页
-    list_html = list_template.render(resources=resources, admin_email=ADMIN_EMAIL, clarity_id=CLARITY_ID)
+    # 2. 生成列表页 (JSON data for client-side pagination)
+    json_rows = []
+    for res in resources:
+        json_rows.append({
+            'id': res['res_id'],
+            'title': res['title'],
+            'size': res.get('size', '-'),
+            'category': res.get('category', ''),
+            'drive': identify_drive(res.get('short_url') or res.get('normal_url'))
+        })
+    json_data = json.dumps(json_rows, ensure_ascii=False)
+    list_html = list_template.render(
+        resources=resources, json_data=json_data,
+        admin_email=ADMIN_EMAIL, clarity_id=CLARITY_ID
+    )
     with open(INDEX_FILE, "w", encoding="utf-8") as f:
         f.write(list_html)
+
+    # 3. 生成分类标签页
+    categories = Counter(r.get('category') for r in resources if r.get('category'))
+    if categories:
+        tag_dir = os.path.join(os.path.dirname(INDEX_FILE))
+        for cat, count in categories.most_common():
+            cat_slug = cat.strip().lower().replace(' ', '_').replace('/', '_')
+            cat_resources = [r for r in resources if r.get('category', '').strip() == cat.strip()]
+            tag_html = list_template.render(
+                resources=cat_resources, json_data=json.dumps([
+                    {'id': r['res_id'], 'title': r['title'], 'size': r.get('size', '-'),
+                     'category': r.get('category', ''), 'drive': identify_drive(r.get('short_url') or r.get('normal_url'))}
+                    for r in cat_resources
+                ], ensure_ascii=False),
+                admin_email=ADMIN_EMAIL, clarity_id=CLARITY_ID,
+                filter_category=cat
+            )
+            tag_path = os.path.join(tag_dir, f'tag_{cat_slug}.html')
+            with open(tag_path, 'w', encoding='utf-8') as f:
+                f.write(tag_html)
+            print(f"  🏷 {cat}: {count} 条 → {tag_path}")
+
     print("✅ 全站纯静态 HTML 矩阵生成完毕！(已注入 5 秒防刷与内链蜘蛛网)")
 
 # ================= 5. SEO 地图与 API 推送 =================

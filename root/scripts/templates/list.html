@@ -59,10 +59,16 @@
 {% block content %}
 <div class="header">
     <h1>BigPRC 资源湾</h1>
-    <p>无广告 · 极速加载 · 纯净分享</p>
+    <p>无广告 · 极速加载 · 纯净分享{% if filter_category %} — {{ filter_category }}{% endif %}</p>
 </div>
+
+<!-- Category tag filter buttons -->
+<div id="tagFilters" style="text-align:center; margin-bottom:15px; display:flex; flex-wrap:wrap; justify-content:center; gap:6px;">
+    <a href="/list.html" style="padding:5px 14px; border-radius:14px; font-size:12px; text-decoration:none; border:1px solid #1a365d; background:#1a365d; color:#fff;">全部</a>
+</div>
+
 <div class="search-box">
-    <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="输入关键词，实时瞬间过滤...">
+    <input type="text" id="searchInput" placeholder="输入关键词，实时瞬间过滤... (共 <span id='totalCount'>0</span> 条)">
 </div>
 <div class="table-wrapper">
 <table id="resourceTable">
@@ -77,15 +83,7 @@
             <th width="20%">操作</th>
         </tr>
     </thead>
-    <tbody id="tableBody">
-        {% for res in resources %}
-        <tr>
-            <td style='text-align: left; padding-left: 15px;'><a href='/go/{{ res.res_id }}?from=list'>{{ res.title }}</a></td>
-            <td><span style='color:#666;'>{{ res.size }}</span></td>
-            <td><a href='/go/{{ res.res_id }}?from=list' style='font-weight: bold;' target='_blank'>获取</a></td>
-        </tr>
-        {% endfor %}
-    </tbody>
+    <tbody id="tableBody"></tbody>
 </table>
 
 <div id="noResult" style="display:none; text-align:center; margin-top:40px; color:#999; font-size:14px;">
@@ -105,104 +103,145 @@
     </span>
 </div>
 
+<script id="resourceData" type="application/json">{{ json_data|safe }}</script>
+
 <script>
-    var currentPage = 1, rowsPerPage = 30, totalRows = 0, totalPages = 0;
-    var tbody = document.getElementById("tableBody");
-    var dataRows = [], originalRows = [];
-    var nameSortState = 0, sizeSortState = 0;
+(function() {
+    var ROWS_PER_PAGE = 30;
+    var currentPage = 1, totalPages = 1;
+    var allItems = [], filteredItems = [];
+    var nameSortDir = 0, sizeSortDir = 0;
 
-    window.onload = function() {
-        var trs = tbody.getElementsByTagName("tr");
-        for (var i = 0; i < trs.length; i++) { dataRows.push(trs[i]); originalRows.push(trs[i]); }
-        updatePagination();
-        displayTable();
-    };
+    // Parse JSON data
+    try {
+        var raw = document.getElementById('resourceData').textContent;
+        allItems = JSON.parse(raw);
+    } catch(e) { allItems = []; }
+    filteredItems = allItems.slice();
+    document.getElementById('totalCount').textContent = allItems.length;
 
-    function updatePagination() {
-        totalRows = dataRows.length;
-        totalPages = Math.ceil(totalRows / rowsPerPage) || 1;
-    }
+    // Build tag filter buttons
+    var cats = {};
+    allItems.forEach(function(r) { if (r.category) cats[r.category] = (cats[r.category]||0)+1; });
+    var tf = document.getElementById('tagFilters');
+    Object.keys(cats).sort().forEach(function(c) {
+        var a = document.createElement('a');
+        a.href = '/list.html'; a.textContent = c + ' (' + cats[c] + ')';
+        a.style.cssText = 'padding:5px 14px;border-radius:14px;font-size:12px;text-decoration:none;border:1px solid #ddd;color:#666;';
+        a.onclick = function(e) { e.preventDefault(); filterByCategory(c); };
+        tf.appendChild(a);
+    });
 
     function parseSize(s) {
-        var m = s.trim().match(/([\d\.]+)\s*([KMGTP]?B)/i);
+        if (!s) return 0;
+        var m = String(s).match(/([\d\.]+)\s*([KMGTP]?B)/i);
         if (!m) return 0;
-        var p = {'B':1, 'KB':1024, 'MB':1048576, 'GB':1073741824, 'TB':1099511627776};
-        return parseFloat(m[1]) * (p[m[2].toUpperCase()] || 1);
+        var p = {'B':1,'KB':1024,'MB':1048576,'GB':1073741824,'TB':1099511627776};
+        return parseFloat(m[1]) * (p[m[2].toUpperCase()]||1);
     }
 
-    function renderRows(arr) {
-        dataRows = arr;
-        for (var i = 0; i < dataRows.length; i++) tbody.appendChild(dataRows[i]);
-        currentPage = 1; filterTable();
+    function renderRows() {
+        var tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        var start = (currentPage-1) * ROWS_PER_PAGE;
+        var end = Math.min(start + ROWS_PER_PAGE, filteredItems.length);
+        for (var i = start; i < end; i++) {
+            var r = filteredItems[i];
+            var tr = document.createElement('tr');
+            tr.innerHTML = '<td style="text-align:left;padding-left:15px;"><a href="/go/'+r.id+'?from=list">'+r.title+'</a></td>' +
+                '<td><span style="color:#666;">'+(r.size||'-')+'</span></td>' +
+                '<td><a href="/go/'+r.id+'?from=list" style="font-weight:bold;" target="_blank">获取</a></td>';
+            tbody.appendChild(tr);
+        }
+        totalPages = Math.ceil(filteredItems.length / ROWS_PER_PAGE) || 1;
+        document.getElementById('pageInfo').textContent = '第 ' + currentPage + ' / ' + totalPages + ' 页 (' + filteredItems.length + '条)';
+        document.getElementById('firstBtn').disabled = document.getElementById('prevBtn').disabled = (currentPage === 1);
+        document.getElementById('nextBtn').disabled = document.getElementById('lastBtn').disabled = (currentPage === totalPages);
+        document.getElementById('jumpInput').max = totalPages;
+    }
+
+    function applyFilter(filterText) {
+        if (!filterText) {
+            filteredItems = allItems.slice();
+            document.getElementById('pagination').style.display = 'block';
+            document.getElementById('noResult').style.display = 'none';
+        } else {
+            var q = filterText.toLowerCase();
+            filteredItems = allItems.filter(function(r) { return r.title.toLowerCase().indexOf(q) > -1; });
+            document.getElementById('pagination').style.display = filteredItems.length > ROWS_PER_PAGE ? 'block' : 'none';
+            document.getElementById('noResult').style.display = filteredItems.length === 0 ? 'block' : 'none';
+        }
+        currentPage = 1;
+        renderRows();
     }
 
     function sortByName() {
-        sizeSortState = 0; document.getElementById("sizeSortIcon").className.baseVal = "sort-svg";
-        nameSortState = (nameSortState + 1) % 2;
-        var icon = document.getElementById("nameSortIcon");
-        if (nameSortState === 0) {
-            icon.className.baseVal = "sort-svg"; renderRows(originalRows.slice());
+        sizeSortDir = 0; document.getElementById('sizeSortIcon').className.baseVal = 'sort-svg';
+        nameSortDir = (nameSortDir + 1) % 2;
+        var icon = document.getElementById('nameSortIcon');
+        if (nameSortDir === 0) {
+            icon.className.baseVal = 'sort-svg';
+            filteredItems.sort(function(a,b) { return allItems.indexOf(a) - allItems.indexOf(b); });
         } else {
-            icon.className.baseVal = "sort-svg state-desc";
-            renderRows(dataRows.slice().sort((a,b) => a.cells[0].innerText.localeCompare(b.cells[0].innerText, 'zh-CN')));
+            icon.className.baseVal = 'sort-svg state-desc';
+            filteredItems.sort(function(a,b) { return a.title.localeCompare(b.title, 'zh-CN'); });
         }
+        currentPage = 1; renderRows();
     }
 
     function sortBySize() {
-        nameSortState = 0; document.getElementById("nameSortIcon").className.baseVal = "sort-svg";
-        sizeSortState = (sizeSortState + 1) % 3;
-        var states = ["sort-svg", "sort-svg state-desc", "sort-svg state-asc"];
-        document.getElementById("sizeSortIcon").className.baseVal = states[sizeSortState];
-        if (sizeSortState === 0) renderRows(originalRows.slice());
-        else renderRows(dataRows.slice().sort((a,b) => sizeSortState === 1 ? parseSize(b.cells[1].innerText) - parseSize(a.cells[1].innerText) : parseSize(a.cells[1].innerText) - parseSize(b.cells[1].innerText)));
+        nameSortDir = 0; document.getElementById('nameSortIcon').className.baseVal = 'sort-svg';
+        sizeSortDir = (sizeSortDir + 1) % 3;
+        var states = ['sort-svg', 'sort-svg state-desc', 'sort-svg state-asc'];
+        document.getElementById('sizeSortIcon').className.baseVal = states[sizeSortDir];
+        if (sizeSortDir === 0) filteredItems.sort(function(a,b) { return allItems.indexOf(a) - allItems.indexOf(b); });
+        else if (sizeSortDir === 1) filteredItems.sort(function(a,b) { return parseSize(b.size) - parseSize(a.size); });
+        else filteredItems.sort(function(a,b) { return parseSize(a.size) - parseSize(b.size); });
+        currentPage = 1; renderRows();
     }
 
-    function displayTable() {
-        var start = (currentPage - 1) * rowsPerPage, end = start + rowsPerPage - 1;
-        for (var i = 0; i < dataRows.length; i++) dataRows[i].style.display = (i >= start && i <= end) ? "" : "none";
-        document.getElementById("pageInfo").innerText = "第 " + currentPage + " / " + totalPages + " 页";
-        document.getElementById("firstBtn").disabled = document.getElementById("prevBtn").disabled = (currentPage === 1);
-        document.getElementById("nextBtn").disabled = document.getElementById("lastBtn").disabled = (currentPage === totalPages);
+    function filterByCategory(cat) {
+        document.getElementById('searchInput').value = '';
+        allItems.forEach(function(r) { r._match = !cat || r.category === cat; });
+        filteredItems = cat ? allItems.filter(function(r) { return r.category === cat; }) : allItems.slice();
+        document.getElementById('pagination').style.display = 'block';
+        document.getElementById('noResult').style.display = 'none';
+        currentPage = 1; renderRows();
+        // Update tag button styles
+        var links = document.getElementById('tagFilters').querySelectorAll('a');
+        links.forEach(function(a) {
+            if (a.textContent.indexOf(cat)===0) { a.style.background='#1a365d'; a.style.color='#fff'; a.style.borderColor='#1a365d'; }
+            else { a.style.background=''; a.style.color='#666'; a.style.borderColor='#ddd'; }
+        });
     }
 
-    function firstPage() { if(currentPage>1){ currentPage=1; displayTable(); window.scrollTo(0,0);} }
-    function prevPage() { if(currentPage>1){ currentPage--; displayTable(); window.scrollTo(0,0);} }
-    function nextPage() { if(currentPage<totalPages){ currentPage++; displayTable(); window.scrollTo(0,0);} }
-    function lastPage() { if(currentPage<totalPages){ currentPage=totalPages; displayTable(); window.scrollTo(0,0);} }
-    function jumpToPage() {
-        var v = parseInt(document.getElementById("jumpInput").value);
-        if (v >= 1 && v <= totalPages) { currentPage = v; displayTable(); window.scrollTo(0,0); }
-    }
+    // Expose to global scope for onclick handlers
+    window.firstPage = function() { if(currentPage>1){ currentPage=1; renderRows(); window.scrollTo(0,0); } };
+    window.prevPage = function() { if(currentPage>1){ currentPage--; renderRows(); window.scrollTo(0,0); } };
+    window.nextPage = function() { if(currentPage<totalPages){ currentPage++; renderRows(); window.scrollTo(0,0); } };
+    window.lastPage = function() { if(currentPage<totalPages){ currentPage=totalPages; renderRows(); window.scrollTo(0,0); } };
+    window.jumpToPage = function() {
+        var v = parseInt(document.getElementById('jumpInput').value);
+        if (v >= 1 && v <= totalPages) { currentPage = v; renderRows(); window.scrollTo(0,0); }
+    };
 
-    function filterTable() {
-        var filter = document.getElementById("searchInput").value.toLowerCase();
-        var noResult = document.getElementById("noResult");
-        if (filter === "") {
-            document.getElementById("pagination").style.display = "block";
-            noResult.style.display = "none";
-            displayTable();
-            return;
-        }
-        document.getElementById("pagination").style.display = "none";
-        var matchCount = 0;
-        for (var i = 0; i < dataRows.length; i++) {
-            var text = dataRows[i].cells[0].innerText.toLowerCase();
-            if (text.indexOf(filter) > -1) {
-                dataRows[i].style.display = "";
-                matchCount++;
-            } else {
-                dataRows[i].style.display = "none";
+    // Search handler
+    var searchInput = document.getElementById('searchInput');
+    var searchTimer;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimer);
+        var self = this;
+        searchTimer = setTimeout(function() {
+            applyFilter(self.value);
+            if (window.clarity && self.value.length >= 2) {
+                try { clarity('event', 'search', self.value); } catch(e) {}
             }
-        }
-        noResult.style.display = matchCount === 0 ? "block" : "none";
+        }, 300);
+    });
+    searchInput.addEventListener('keydown', function(e) { if (e.key === 'Escape') { this.value = ''; applyFilter(''); } });
 
-        // Clarity search event (throttled via setTimeout)
-        if (window.clarity && filter.length >= 2) {
-            clearTimeout(window._searchTimer);
-            window._searchTimer = setTimeout(function() {
-                clarity("event", "search", filter);
-            }, 1500);
-        }
-    }
+    // Initial render
+    renderRows();
+})();
 </script>
 {% endblock %}
