@@ -59,6 +59,7 @@
         if(count <= 0){
             clearInterval(timer);
             countdownEl.style.display = 'none';
+            document.querySelector('h2').textContent = '验证已通过';
             document.querySelector('.progress-wrap').style.display = 'none';
             document.getElementById('enterBtn').classList.add('shown');
         }
