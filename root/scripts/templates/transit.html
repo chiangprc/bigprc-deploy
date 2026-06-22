@@ -11,6 +11,14 @@
     .progress-bar { width: 0; height: 1px; background: var(--primary); animation: pbar 5s linear forwards; }
     @keyframes pbar { to { width: 100%; } }
 
+    .cta-button {
+        display: none; padding: 14px 36px; font-size: 15px; font-weight: 600;
+        background: var(--cta); color: #fff; border: none; border-radius: 4px;
+        cursor: pointer; text-decoration: none; transition: opacity 0.15s;
+    }
+    .cta-button:hover { opacity: 0.9; color: #fff; text-decoration: none; }
+    .cta-button.shown { display: inline-block; }
+
     .resource-name { font-size: 13px; color: var(--secondary); margin-bottom: 20px; }
     .transit-feedback { font-size: 12px; color: var(--secondary); margin-top: 32px; }
     .transit-feedback a { color: var(--secondary); }
@@ -26,7 +34,7 @@
 
     <p class="resource-name">{{ title }}</p>
 
-    <p class="resource-name" id="redirectHint" style="display:none;">正在跳转...</p>
+    <a href="/jump/{{ jump_id }}" id="enterBtn" class="cta-button" rel="nofollow">进入网盘</a>
 
     <div class="transit-feedback">
         页面无法跳转？<a href="mailto:{{ admin_email }}?subject=%5B%E8%B7%B3%E8%BD%AC%E5%A4%B1%E6%95%88%5D%20{{ title }}%20({{ jump_id }})">反馈问题</a>
@@ -45,10 +53,13 @@
         if(count <= 0){
             clearInterval(timer);
             countdownEl.style.display = 'none';
-            document.getElementById('redirectHint').style.display = 'block';
-            trackEvent('redirect_complete', '{{ jump_id }}');
-            window.location.href = '/jump/{{ jump_id }}';
+            document.getElementById('enterBtn').classList.add('shown');
         }
     }, 1000);
+
+    document.getElementById('enterBtn').addEventListener('click', function(){
+        trackEvent('download_click', '{{ jump_id }}');
+        trackEvent('redirect_complete', '{{ jump_id }}');
+    });
 </script>
 {% endblock %}
