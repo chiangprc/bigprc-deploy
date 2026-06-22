@@ -507,6 +507,37 @@ BigPRC 通过 [UptimeRobot](https://uptimerobot.com)（免费版）进行外部�
 - 如果 UptimeRobot 报告宕机但你自己能访问，可能是 Cloudflare 回源问题 → 检查 VPS 状态
 - 如果持续宕机 → SSH 登录 VPS 检查：`systemctl status nginx`
 
+### Cloudflare 缓存规则
+
+Cloudflare 作为 BigPRC 的反向代理/CDN，需要针对不同 URL 类型配置差异化缓存策略。
+
+**Cache Rules 配置**（Cloudflare Dashboard → Rules → Cache Rules）：
+
+| URL 模式 | 缓存行为 | Edge TTL | 说明 |
+|---------|---------|---------|------|
+| `www.bigprc.com/static/page/*` | Eligible for Cache | 2 hours | 资源详情页，变化不频繁 |
+| `www.bigprc.com/list.html` | Eligible for Cache | 30 minutes | 列表页需更频繁更新 |
+| `www.bigprc.com/go/*` | Bypass Cache | — | 走 Nginx rewrite，不缓存 |
+| `www.bigprc.com/jump/*` | Bypass Cache | — | 302 跳转，不缓存 |
+| `www.bigprc.com/*.html` | Eligible for Cache | 1 hour | 其他 HTML 页面 |
+
+**Speed 优化**（Cloudflare Dashboard → Speed → Optimization）：
+
+- **Auto Minify**: 开启 JavaScript / CSS / HTML（删除空白和注释）
+- **Brotli**: 开启（比 gzip 压缩率高 15-20%）
+- **Early Hints**: 开启（提前推送关键资源链接）
+
+**缓存清除**：
+如果更新了网站内容需要立即生效：
+```bash
+# 方法 1: Cloudflare Dashboard → Caching → Purge Cache → Purge Everything
+# 方法 2: 使用 API
+curl -X POST "https://api.cloudflare.com/client/v4/zones/{zone_id}/purge_cache" \
+     -H "Authorization: Bearer {api_token}" \
+     -H "Content-Type: application/json" \
+     --data '{"purge_everything":true}'
+```
+
 ---
 
 ## 9. 部署流程

@@ -84,6 +84,21 @@
             var btn = document.getElementById("backToTopBtn");
             btn.style.display = (document.documentElement.scrollTop > 300) ? "block" : "none";
         });
+
+        // Analytics: shared Clarity event helper
+        function trackEvent(name, data) {
+            if (window.clarity) {
+                try { clarity("event", name, data); } catch(e) {}
+            }
+        }
+
+        // Read ?from= source parameter for funnel tracking
+        (function() {
+            var m = location.search.match(/[?&]from=([^&]+)/);
+            if (m && window.clarity) {
+                try { clarity("set", "source_page", m[1]); } catch(e) {}
+            }
+        })();
     </script>
     {% block extra_js %}{% endblock %}
 </body>

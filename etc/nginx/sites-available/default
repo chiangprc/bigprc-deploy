@@ -51,9 +51,24 @@ server {
         proxy_set_header Host $host;
     }
 
-    # ������ 自动化跳转规则
+    # ������ 自动化跳转规则 (轻量防盗链: 拒绝外部 Referer)
     location /jump/ {
         limit_req zone=jump_zone burst=20 nodelay;
+
+        # Block requests with external referer (lightweight anti-hotlink)
+        # Allows: no referer (direct/bookmarks), referer from bigprc.com
+        # Blocks: referer from other domains
+        set $allow_jump 1;
+        if ($http_referer) {
+            set $allow_jump 0;
+        }
+        if ($http_referer ~* ^https?://(www\.)?bigprc\.com) {
+            set $allow_jump 1;
+        }
+        if ($allow_jump = 0) {
+            return 403;
+        }
+
         include /etc/nginx/snippets/jump_rules.conf;
         return 302 https://www.bigprc.com;
     }

@@ -22,9 +22,21 @@ def init_db():
             normal_url TEXT,
             short_url TEXT,
             seo_desc TEXT,
+            category TEXT,
+            platform TEXT,
+            version TEXT,
+            password TEXT,
+            rating TEXT,
             sync_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    # Add new columns to existing tables (ignore if already exist)
+    for col, col_type in [('category', 'TEXT'), ('platform', 'TEXT'),
+                          ('version', 'TEXT'), ('password', 'TEXT'), ('rating', 'TEXT')]:
+        try:
+            cursor.execute(f'ALTER TABLE resources ADD COLUMN {col} {col_type}')
+        except sqlite3.OperationalError:
+            pass  # column already exists
     conn.commit()
     return conn
 
@@ -58,6 +70,17 @@ def sync_excel_to_db(conn):
         if not seo_desc or str(seo_desc).strip() in ["None", ""]:
             seo_desc = "极客精选优质资源，全网稀缺，无广告纯净版，推荐直接转存。"
 
+        # New optional metadata columns (gracefully handle missing headers)
+        def safe_str(idx_key):
+            v = row[header.get(idx_key)] if idx_key in header else None
+            return str(v).strip() if v and str(v).strip().lower() not in ["none", "", "-"] else None
+
+        category = safe_str("资源类型")
+        platform = safe_str("适用平台")
+        version = safe_str("版本号")
+        password = safe_str("解压密码")
+        rating = safe_str("推荐星级")
+
         if normal_url == "None": normal_url = None
         if short_url == "None": short_url = None
         if not normal_url and not short_url: continue
@@ -66,16 +89,21 @@ def sync_excel_to_db(conn):
         
         # 尝试插入或更新数据 (UPSERT 语法，极速排重)
         cursor.execute('''
-            INSERT INTO resources (res_id, title, size, normal_url, short_url, seo_desc)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO resources (res_id, title, size, normal_url, short_url, seo_desc, category, platform, version, password, rating)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(res_id) DO UPDATE SET
                 title=excluded.title,
                 size=excluded.size,
                 normal_url=excluded.normal_url,
                 short_url=excluded.short_url,
                 seo_desc=excluded.seo_desc,
+                category=excluded.category,
+                platform=excluded.platform,
+                version=excluded.version,
+                password=excluded.password,
+                rating=excluded.rating,
                 sync_time=CURRENT_TIMESTAMP
-        ''', (res_id, title_str, size, normal_url, short_url, seo_desc))
+        ''', (res_id, title_str, size, normal_url, short_url, seo_desc, category, platform, version, password, rating))
         
         if cursor.rowcount == 1:
             insert_count += 1

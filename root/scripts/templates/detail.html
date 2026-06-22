@@ -6,16 +6,50 @@
 
 {% block extra_css %}
     .container { max-width: 850px; margin: 0 auto; padding: 20px 0 40px 0; text-align: center; }
-    h1 { font-size: 22px; color: #1a365d; border-bottom: 2px solid #f0f0f0; padding-bottom: 20px; margin-bottom: 30px; }
+    h1 { font-size: 22px; color: #1a365d; border-bottom: 2px solid #f0f0f0; padding-bottom: 20px; margin-bottom: 25px; }
     .details { margin: 30px 0; line-height: 1.8; font-size: 15px; text-align: left; color: #444; }
-    
+
+    /* CTA 下载按钮 — 高对比度强调色 */
+    .btn-main {
+        display: inline-block;
+        background: linear-gradient(135deg, #ff6b35, #e74c3c);
+        color: #fff !important;
+        padding: 18px 40px;
+        font-size: 17px;
+        font-weight: bold;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(231, 76, 60, 0.35);
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    .btn-main:hover {
+        transform: scale(1.03);
+        box-shadow: 0 6px 22px rgba(231, 76, 60, 0.5);
+    }
+    .btn-sub {
+        display: inline-block;
+        padding: 8px 16px;
+        font-size: 12px;
+        border: 1px solid #ddd;
+        color: #666 !important;
+        border-radius: 4px;
+        margin-top: 12px;
+        transition: background 0.2s;
+    }
+    .btn-sub:hover { background: #f5f5f5; }
+
+    .download-box { padding: 30px 20px; border: 1px solid #eee; margin-bottom: 25px; text-align: center; background: #fdfdfd; border-radius: 6px; }
+
+    /* 信息卡片网格 */
+    .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 20px; }
+    .info-item { background: #f8f9fa; padding: 10px 12px; border-radius: 4px; text-align: center; font-size: 13px; color: #555; }
+    .info-item .label { font-size: 11px; color: #999; display: block; margin-bottom: 2px; }
+    .info-item .value { font-weight: 600; color: #333; }
+
     .desc-box { padding:15px; border-left:4px solid #1a365d; margin-bottom:20px; background: #f8f9fa; }
-    .download-box { padding: 30px 20px; border: 1px solid #eee; margin-top: 25px; text-align: center; background: #fdfdfd; }
-    .btn-main { display: inline-block; background: #1a365d; color: #fff !important; padding: 14px 28px; font-size: 15px; font-weight: bold; border-radius: 2px; }
-    .btn-sub { display: inline-block; padding: 8px 16px; font-size: 12px; border: 1px solid #ddd; color: #666 !important; }
     a.back { background: #f0f4f8; padding: 10px 20px; border-radius: 4px; font-weight: bold; }
 
-    /* ✅ 新增：内部蜘蛛网（相关推荐）样式 */
+    /* 相关推荐 */
     .related-box { margin-top: 40px; text-align: left; border-top: 1px dashed #eee; padding-top: 25px; }
     .related-box h3 { font-size: 16px; color: #1a365d; margin-bottom: 15px; }
     .related-list { list-style: none; padding: 0; margin: 0; }
@@ -24,53 +58,91 @@
     .related-list a { color: #555; text-decoration: none; font-size: 14px; transition: color 0.2s; }
     .related-list a:hover { color: #1a365d; text-decoration: underline; }
 
-    /* 暗黑模式适配 */
+    /* 暗黑模式 */
     .dark-mode h1 { color: #e0e0e0; border-bottom-color: #333; }
     .dark-mode .details { color: #ccc; }
-    .dark-mode .desc-box { background: #222; border-left-color: #5c9ce6; }
     .dark-mode .download-box { background: #2a2a2a; border-color: #444; }
+    .dark-mode .btn-sub { border-color: #555; color: #aaa !important; }
+    .dark-mode .btn-sub:hover { background: #333; }
+    .dark-mode .info-item { background: #222; color: #aaa; }
+    .dark-mode .info-item .value { color: #ddd; }
+    .dark-mode .desc-box { background: #222; border-left-color: #5c9ce6; }
     .dark-mode a.back { background: #222; }
     .dark-mode .feedback-row { color: #666 !important; }
     .dark-mode .feedback-row a { color: #666 !important; }
-    
-    /* ✅ 新增：内部蜘蛛网（相关推荐）暗黑模式适配 */
     .dark-mode .related-box { border-top-color: #333; }
     .dark-mode .related-box h3 { color: #e0e0e0; }
     .dark-mode .related-list li::before { color: #5c9ce6; }
     .dark-mode .related-list a { color: #aaa; }
     .dark-mode .related-list a:hover { color: #5c9ce6; }
+
+    /* 移动端: 信息卡片改为 2 列 */
+    @media (max-width: 480px) {
+        .info-grid { grid-template-columns: repeat(2, 1fr); }
+        .btn-main { padding: 14px 24px; font-size: 15px; }
+        h1 { font-size: 18px; }
+    }
 {% endblock %}
 
 {% block content %}
 <div class="container">
     <h1>{{ title }}</h1>
+
+    <!-- CTA 下载按钮 — 首屏第一视觉焦点 -->
+    <div class="download-box">
+        {% if short_url %}
+        <a href="/go/{{ res_id }}_short_transit" class="btn-main" target="_blank" rel="nofollow">⚡ {{ drive_name }}极速通道</a>
+        <p style="font-size: 12px; color: #888; margin: 12px 0 0;">手机浏览器体验最佳，推荐使用</p>
+        <a href="/go/{{ res_id }}_transit" class="btn-sub" target="_blank" rel="nofollow">💻 电脑端普通通道</a>
+        {% elif normal_url %}
+        <a href="/go/{{ res_id }}_transit" class="btn-main" target="_blank" rel="nofollow">⚡ {{ drive_name }}提取通道</a>
+        {% else %}
+        <p style="color: #999; font-size: 14px; margin: 0 0 10px;">📭 该资源暂无可用下载链接</p>
+        <p style="font-size: 12px; color: #aaa;">
+            链接待更新，<a href="mailto:{{ admin_email }}?subject=%5B%E9%93%BE%E6%8E%A5%E7%BC%BA%E5%A4%B1%5D%20{{ title }}%20({{ res_id }})" style="color: #999;">点此反馈</a>
+        </p>
+        {% endif %}
+    </div>
+
+    <!-- 信息卡片 -->
+    <div class="info-grid">
+        <div class="info-item">
+            <span class="label">📦 格式</span>
+            <span class="value">{{ category|default('-') }}</span>
+        </div>
+        <div class="info-item">
+            <span class="label">💻 平台</span>
+            <span class="value">{{ platform|default('-') }}</span>
+        </div>
+        <div class="info-item">
+            <span class="label">🔑 密码</span>
+            <span class="value">{{ password|default('无') }}</span>
+        </div>
+        <div class="info-item">
+            <span class="label">📏 大小</span>
+            <span class="value">{{ size|default('-') }}</span>
+        </div>
+        <div class="info-item">
+            <span class="label">📅 版本</span>
+            <span class="value">{{ version|default('-') }}</span>
+        </div>
+        <div class="info-item">
+            <span class="label">⭐ 推荐</span>
+            <span class="value">{{ rating|default('-') }}</span>
+        </div>
+    </div>
+
     <div class="details">
         <div class="desc-box">
             <strong>[ 资源档案 ]</strong><br>{{ seo_desc|safe }}
         </div>
-        文件名称：{{ title }}<br>文件体积：{{ size }}<br>收录状态：正常
-        
-        <div class="download-box">
-            {% if short_url %}
-            <p style="color:#555; font-size: 13px;">[ 资源提取通道已就绪 ]</p>
-            <a href="/go/{{ res_id }}_short_transit" class="btn-main" target="_blank" rel="nofollow">{{ drive_name }}极速通道 (防失效)</a>
-            <p style="font-size: 12px; color: #888; margin: 15px 0;">推荐使用手机浏览器点击上方极速通道，速度最快</p>
-            <a href="/go/{{ res_id }}_transit" class="btn-sub" target="_blank" rel="nofollow">电脑端普通通道</a>
-            {% elif normal_url %}
-            <a href="/go/{{ res_id }}_transit" class="btn-main" target="_blank" rel="nofollow">{{ drive_name }}提取通道</a>
-            {% else %}
-            <p style="color: #999; font-size: 14px; margin: 0 0 10px;">📭 该资源暂无可用下载链接</p>
-            <p style="font-size: 12px; color: #aaa;">
-                链接待更新，<a href="mailto:{{ admin_email }}?subject=%5B%E9%93%BE%E6%8E%A5%E7%BC%BA%E5%A4%B1%5D%20{{ title }}%20({{ res_id }})" style="color: #999;">点此反馈</a>
-            </p>
-            {% endif %}
-        </div>
+
         <div class="feedback-row" style="text-align: center; margin-top: 15px; font-size: 11px; color: #bbb;">
             ⚠ 链接失效？<a href="mailto:{{ admin_email }}?subject=%5B%E5%A4%B1%E6%95%88%E5%8F%8D%E9%A6%88%5D%20{{ title }}%20({{ res_id }})" style="color: #bbb;">点此反馈</a>
         </div>
 
         <div style="font-size: 12px; color: #999; margin-top: 15px; text-align: center;">免责声明：本站仅为技术索引，不存储任何实质资源文件</div>
-        
+
         {% if related_resources %}
         <div class="related-box">
             <h3 style="display: flex; align-items: center;">
@@ -83,16 +155,37 @@
             <ul class="related-list">
                 {% for item in related_resources %}
                 <li>
-                    <a href="/go/{{ item.res_id }}" title="{{ item.title }}">{{ item.title }}</a>
+                    <a href="/go/{{ item.res_id }}?from=related" title="{{ item.title }}">{{ item.title }}</a>
                 </li>
                 {% endfor %}
             </ul>
         </div>
         {% endif %}
-        
     </div>
+
     <div style="text-align: center; margin-top: 30px;">
-        <a href="/list.html" class="back">&lt;&lt; 返回资源总表</a> 
+        <a href="/list.html" class="back">&lt;&lt; 返回资源总表</a>
     </div>
 </div>
+
+<script>
+    // Funnel step 2: detail page view
+    trackEvent('detail_view', {id:'{{ res_id }}', drive:'{{ drive_name }}'});
+
+    // Funnel step 3: download button click
+    document.addEventListener('DOMContentLoaded', function() {
+        var mainBtn = document.querySelector('.btn-main');
+        if (mainBtn) {
+            mainBtn.addEventListener('click', function() {
+                trackEvent('download_click', {id:'{{ res_id }}', drive:'{{ drive_name }}', via:'main'});
+            });
+        }
+        var subBtn = document.querySelector('.btn-sub');
+        if (subBtn) {
+            subBtn.addEventListener('click', function() {
+                trackEvent('download_click', {id:'{{ res_id }}', drive:'{{ drive_name }}', via:'sub'});
+            });
+        }
+    });
+</script>
 {% endblock %}

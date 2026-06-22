@@ -25,6 +25,9 @@
     #pageInfo { font-size: 13px; color: #666; margin: 0 10px; }
     .jump-input { width: 45px; padding: 4px; text-align: center; border: 1px solid #ddd; outline: none; margin: 0 4px; }
 
+    /* 表格行淡入淡出 */
+    tbody tr { transition: opacity 0.15s ease; }
+
     .dark-mode .header h1 { color: #eee; }
     .dark-mode th, .dark-mode td { background: #121212; border-color: #333; color: #ccc; }
     .dark-mode th { background: #2a2a2a; }
@@ -32,6 +35,25 @@
     .dark-mode .search-box input { background: #2a2a2a; color: #eee; border-color: #444; }
     .dark-mode .page-btn { background: #2a2a2a; border-color: #444; color: #ccc; }
     .dark-mode .jump-input { background: #2a2a2a; color: #eee; border-color: #444; }
+    .dark-mode #noResult { color: #888; }
+
+    /* 移动端适配 */
+    @media (max-width: 600px) {
+        body { padding: 8px; }
+        table { font-size: 12px; min-width: 280px; }
+        th, td { padding: 8px 3px; }
+        td a {
+            display: inline-block;
+            padding: 6px 8px;
+            min-width: 44px;
+            min-height: 44px;
+            line-height: 32px;
+            box-sizing: border-box;
+        }
+        .page-btn { padding: 10px 14px; font-size: 14px; min-height: 44px; margin: 0 2px; }
+        .jump-input { height: 40px; min-width: 50px; font-size: 14px; }
+        .search-box input { font-size: 16px; } /* 防止 iOS 缩放 */
+    }
 {% endblock %}
 
 {% block content %}
@@ -58,13 +80,17 @@
     <tbody id="tableBody">
         {% for res in resources %}
         <tr>
-            <td style='text-align: left; padding-left: 15px;'><a href='/go/{{ res.res_id }}'>{{ res.title }}</a></td>
+            <td style='text-align: left; padding-left: 15px;'><a href='/go/{{ res.res_id }}?from=list'>{{ res.title }}</a></td>
             <td><span style='color:#666;'>{{ res.size }}</span></td>
-            <td><a href='/go/{{ res.res_id }}' style='font-weight: bold;' target='_blank'>获取</a></td>
+            <td><a href='/go/{{ res.res_id }}?from=list' style='font-weight: bold;' target='_blank'>获取</a></td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+
+<div id="noResult" style="display:none; text-align:center; margin-top:40px; color:#999; font-size:14px;">
+    未找到匹配的资源，试试其他关键词
+</div>
 </div>
 
 <div id="pagination" style="text-align: center; margin-top: 25px;">
@@ -150,11 +176,32 @@
 
     function filterTable() {
         var filter = document.getElementById("searchInput").value.toLowerCase();
-        if (filter === "") { document.getElementById("pagination").style.display = "block"; displayTable(); return; }
+        var noResult = document.getElementById("noResult");
+        if (filter === "") {
+            document.getElementById("pagination").style.display = "block";
+            noResult.style.display = "none";
+            displayTable();
+            return;
+        }
         document.getElementById("pagination").style.display = "none";
+        var matchCount = 0;
         for (var i = 0; i < dataRows.length; i++) {
             var text = dataRows[i].cells[0].innerText.toLowerCase();
-            dataRows[i].style.display = text.indexOf(filter) > -1 ? "" : "none";
+            if (text.indexOf(filter) > -1) {
+                dataRows[i].style.display = "";
+                matchCount++;
+            } else {
+                dataRows[i].style.display = "none";
+            }
+        }
+        noResult.style.display = matchCount === 0 ? "block" : "none";
+
+        // Clarity search event (throttled via setTimeout)
+        if (window.clarity && filter.length >= 2) {
+            clearTimeout(window._searchTimer);
+            window._searchTimer = setTimeout(function() {
+                clarity("event", "search", filter);
+            }, 1500);
         }
     }
 </script>

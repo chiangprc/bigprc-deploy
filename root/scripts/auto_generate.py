@@ -115,7 +115,9 @@ def render_single_page(res):
         res_id=res['res_id'], normal_url=res.get('normal_url'), short_url=res.get('short_url'),
         drive_name=res['drive_name'], admin_email=ADMIN_EMAIL, clarity_id=CLARITY_ID,
         canonical_url=f"{DOMAIN}/go/{res['res_id']}",
-        related_resources=res.get('related', []) 
+        related_resources=res.get('related', []),
+        category=res.get('category'), platform=res.get('platform'),
+        version=res.get('version'), password=res.get('password'), rating=res.get('rating')
     )
     with open(os.path.join(PAGE_DIR, f"{res['res_id']}.html"), "w", encoding="utf-8") as f:
         f.write(html_content)
@@ -124,7 +126,8 @@ def render_single_page(res):
     if res.get('normal_url'):
         transit_html = transit_template.render(
             title=res['title'], jump_id=res['res_id'],
-            admin_email=ADMIN_EMAIL, clarity_id=CLARITY_ID
+            admin_email=ADMIN_EMAIL, clarity_id=CLARITY_ID,
+            canonical_url=f"{DOMAIN}/go/{res['res_id']}"
         )
         with open(os.path.join(PAGE_DIR, f"{res['res_id']}_transit.html"), "w", encoding="utf-8") as f:
             f.write(transit_html)
@@ -133,7 +136,8 @@ def render_single_page(res):
     if res.get('short_url'):
         transit_html_short = transit_template.render(
             title=res['title'], jump_id=f"{res['res_id']}_short",
-            admin_email=ADMIN_EMAIL, clarity_id=CLARITY_ID
+            admin_email=ADMIN_EMAIL, clarity_id=CLARITY_ID,
+            canonical_url=f"{DOMAIN}/go/{res['res_id']}"
         )
         with open(os.path.join(PAGE_DIR, f"{res['res_id']}_short_transit.html"), "w", encoding="utf-8") as f:
             f.write(transit_html_short)

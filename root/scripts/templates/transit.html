@@ -38,6 +38,9 @@
 </div>
 
 <script>
+    // Funnel step 4: transit page loaded
+    trackEvent('transit_loaded', '{{ jump_id }}');
+
     var count = 5;
     var countdownEl = document.getElementById('countdown');
     var timer = setInterval(function() {
@@ -47,9 +50,16 @@
             clearInterval(timer);
             document.getElementById('manualBtn').style.display = 'inline-block';
             countdownEl.style.display = 'none';
+            // Funnel step 5: redirect complete
+            trackEvent('redirect_complete', '{{ jump_id }}');
             // 倒计时结束，执行真正的底层物理跳转！
             window.location.href = "/jump/{{ jump_id }}";
         }
     }, 1000);
+
+    // Track manual click on the button (before auto-redirect fires)
+    document.getElementById('manualBtn').addEventListener('click', function() {
+        trackEvent('download_click', '{{ jump_id }}');
+    });
 </script>
 {% endblock %}
