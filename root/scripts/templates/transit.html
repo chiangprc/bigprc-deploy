@@ -12,12 +12,18 @@
     @keyframes pbar { to { width: 100%; } }
 
     .cta-button {
-        display: none; padding: 14px 36px; font-size: 15px; font-weight: 600;
+        padding: 14px 36px; font-size: 15px; font-weight: 600;
         background: var(--cta); color: #fff; border: none; border-radius: 4px;
-        cursor: pointer; text-decoration: none; transition: opacity 0.15s;
+        cursor: pointer; text-decoration: none;
+        opacity: 0; transform: translateY(6px);
+        transition: opacity 0.4s ease, transform 0.4s ease;
+        pointer-events: none;
     }
     .cta-button:hover { opacity: 0.9; color: #fff; text-decoration: none; }
-    .cta-button.shown { display: inline-block; }
+    .cta-button.shown {
+        opacity: 1; transform: translateY(0);
+        pointer-events: auto;
+    }
 
     .resource-name { font-size: 13px; color: var(--secondary); margin-bottom: 20px; }
     .transit-feedback { font-size: 12px; color: var(--secondary); margin-top: 32px; }
@@ -53,6 +59,7 @@
         if(count <= 0){
             clearInterval(timer);
             countdownEl.style.display = 'none';
+            document.querySelector('.progress-wrap').style.display = 'none';
             document.getElementById('enterBtn').classList.add('shown');
         }
     }, 1000);
