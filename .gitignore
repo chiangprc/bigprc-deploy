@@ -91,3 +91,4 @@ Thumbs.db
 .vscode/
 .idea/
 *.sublime-*
+._*
