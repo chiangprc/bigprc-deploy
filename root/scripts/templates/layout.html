@@ -2,117 +2,161 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <script>
+    (function(){
+        var t=localStorage.getItem('theme');
+        if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches)){
+            document.documentElement.setAttribute('data-theme','dark');
+        }
+    })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}BigPRC 极客资源湾{% endblock %}</title>
-    <meta name="keywords" content="{% block keywords %}BigPRC,夸克网盘资源,免费软件下载,高清影视转存,破解资源聚合{% endblock %}">
-    <meta name="description" content="{% block description %}BigPRC是一个无广告、极速加载的纯净资源分享湾。{% endblock %}">
+    <title>{% block title %}BigPRC 极客资源索引{% endblock %}</title>
+    <meta name="description" content="{% block description %}BigPRC 极客资源技术索引引擎 — 不存储文件，仅索引公开链接{% endblock %}">
     {% if canonical_url %}
     <link rel="canonical" href="{{ canonical_url }}">
     {% endif %}
-
-    <!-- Favicon (inline SVG) -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏴‍☠️</text></svg>">
-
+    <link rel="search" type="application/opensearchdescription+xml" href="/opensearch.xml" title="BigPRC 资源索引">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%E2%9A%93</text></svg>">
     <!-- Open Graph -->
     <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}">
-    <meta property="og:description" content="{% block og_description %}BigPRC 极客资源湾 — 无广告、极速加载的纯净资源分享站{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}BigPRC 极客资源技术索引引擎{% endblock %}">
     <meta property="og:url" content="{{ canonical_url or 'https://www.bigprc.com' }}">
     <meta property="og:type" content="website">
-    <meta property="og:site_name" content="BigPRC 极客资源湾">
+    <meta property="og:site_name" content="BigPRC">
     <meta property="og:locale" content="zh_CN">
-    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary">
 
-    <script type="text/javascript">
-        (function(c,l,a,r,i,t,y){
-            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-        })(window, document, "clarity", "script", "{{ clarity_id }}");
-    </script>
-
     <style>
-        /* 全局基础样式 */
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #ffffff; color: #333; margin: 0; padding: 15px; transition: background 0.3s, color 0.3s; }
-        a { color: #1a365d; text-decoration: none; }
-        
-        /* 悬浮按钮通用样式 */
-        .float-btn { position: fixed; top: 20px; z-index: 999; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; border: 1px solid #ddd; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center; color: #555; text-decoration: none; transition: all 0.3s; }
-        .float-btn:hover { box-shadow: 0 4px 10px rgba(0,0,0,0.12); transform: scale(1.05); }
-        .home-btn { left: 20px; font-size: 16px; }
-        .theme-btn { right: 20px; }
+        :root {
+            --bg: #ffffff;
+            --text: #1a1a1a;
+            --secondary: #666666;
+            --border: #e5e5e5;
+            --primary: #1a365d;
+            --cta: #c0392b;
+            --card-bg: #fafafa;
+        }
+        [data-theme="dark"] {
+            --bg: #121212;
+            --text: #e0e0e0;
+            --secondary: #999999;
+            --border: #2a2a2a;
+            --primary: #5c9ce6;
+            --cta: #e74c3c;
+            --card-bg: #1a1a1a;
+        }
 
-        /* 全局底部 */
-        .footer { text-align: center; margin-top: 60px; padding-top: 25px; border-top: 1px dashed #eee; font-size: 12px; color: #999; line-height: 1.8; padding-bottom: 20px; }
-        .email-icon { color: #888; margin-left: 6px; transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: #f4f6f8; border: 1px solid #eee; border-radius: 50%; text-decoration: none; vertical-align: middle; }
-        .email-icon:hover { color: #1a365d; border-color: #1a365d; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        #backToTopBtn { display: none; position: fixed; bottom: 30px; right: 30px; z-index: 99; font-size: 16px; border: none; outline: none; background-color: #1a365d; color: white; cursor: pointer; padding: 10px 16px; border-radius: 4px; opacity: 0.7; transition: all 0.3s; }
-        #backToTopBtn:hover { background-color: #0f2547; opacity: 1; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+            background: var(--bg); color: var(--text);
+            line-height: 1.6; padding: 0;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+        a { color: var(--primary); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 2px; }
 
-        /* 暗黑模式核心规则 */
-        body.dark-mode { background: #121212; color: #e0e0e0; }
-        .dark-mode a { color: #5c9ce6; }
-        .dark-mode .float-btn { background: #2a2a2a; color: #e0e0e0; border-color: #444; }
-        .dark-mode .footer { border-top-color: #333; }
-        .dark-mode .email-icon { background: #2a2a2a; border-color: #444; }
-        .dark-mode #backToTopBtn { background-color: #2a2a2a; border: 1px solid #444; color: #ccc; }
-        
+        /* scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+        [data-theme="dark"] ::-webkit-scrollbar-thumb { background: #444; }
+        * { scrollbar-width: thin; scrollbar-color: #ccc transparent; }
+        [data-theme="dark"] * { scrollbar-color: #444 transparent; }
+
+        /* top bar */
+        nav.topbar {
+            position: sticky; top: 0; z-index: 100;
+            display: flex; justify-content: space-between; align-items: center;
+            height: 48px; background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            padding: 0;
+        }
+        nav.topbar a, nav.topbar button {
+            padding: 12px 20px; font-size: 14px; line-height: 24px;
+            color: var(--text); text-decoration: none;
+            background: none; border: none; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        nav.topbar a:active, nav.topbar button:active {
+            background: var(--card-bg); transition: background 0.1s;
+        }
+
+        .content { max-width: 860px; margin: 0 auto; padding: 40px 20px 60px; }
+        .footer {
+            text-align: center; padding: 30px 20px; font-size: 12px; color: var(--secondary);
+            border-top: 1px solid var(--border);
+        }
+        .footer a { color: var(--secondary); }
+
         {% block extra_css %}{% endblock %}
+
+        /* print */
+        @media print {
+            nav.topbar, .search-section, button, .cta-button, .download-box,
+            .feedback-row, .related-box, .pagination, .footer {
+                display: none !important;
+            }
+            body { color: #000; background: #fff; font-size: 12pt; line-height: 1.5; }
+            a { text-decoration: underline; color: #000; }
+            article a[href^="/"]::after {
+                content: " (bigprc.com" attr(href) ")";
+                font-size: 0.85em; color: #666;
+            }
+            h1 { font-size: 18pt; page-break-after: avoid; }
+            .desc-box { border-left: 1px solid #ccc; background: none; padding-left: 12px; }
+            @page { margin: 2cm; }
+        }
     </style>
 </head>
 <body>
-    <a href="/" class="float-btn home-btn" title="返回主页">
-        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
-    </a>
-    <button id="themeToggleBtn" class="float-btn theme-btn" onclick="toggleTheme()" title="切换亮暗色"></button>
 
-    {% block content %}{% endblock %}
+<nav class="topbar">
+    <a href="/">BigPRC</a>
+    <button id="themeToggle" onclick="toggleTheme()">亮色</button>
+</nav>
 
-    <div class="footer">
-        <p>本站资源索引均由系统自动抓取自公开互联网，仅供学习交流与技术研究<br>BigPRC 不提供任何资源的直接存储服务</p>
-        <p style="margin-top: 12px; display: flex; align-items: center; justify-content: center;">
-            侵权删除 / 商务合作：
-            <a href="mailto:{{ admin_email }}" class="email-icon">
-                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-            </a>
-        </p>
-        <p>&copy; 2026 BigPRC</p>
-    </div>
-    <button id="backToTopBtn" onclick="window.scrollTo({top: 0, behavior: 'smooth'});" title="回到顶部">▲</button>
+{% block content %}{% endblock %}
 
-    <script>
-        var sunSvg = '<svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>';
-        var moonSvg = '<svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>';
-        if(localStorage.getItem("theme") === "dark") document.body.classList.add("dark-mode");
-        
-        function toggleTheme() {
-            document.body.classList.toggle("dark-mode");
-            var isDark = document.body.classList.contains("dark-mode");
-            localStorage.setItem("theme", isDark ? "dark" : "light");
-            document.getElementById("themeToggleBtn").innerHTML = isDark ? sunSvg : moonSvg;
+<div class="footer">
+    <p>BigPRC 极客资源技术索引引擎</p>
+    <p>不存储任何实质文件 · 所有链接来自公开互联网 · <a href="mailto:{{ admin_email }}">DMCA / 商务合作</a></p>
+    <p>&copy; 2026 BigPRC</p>
+</div>
+
+<script>
+(function(){
+    var btn = document.getElementById('themeToggle');
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    btn.textContent = isDark ? '暗色' : '亮色';
+    btn.addEventListener('click', function() {
+        var d = document.documentElement;
+        var dark = d.getAttribute('data-theme') === 'dark';
+        if (dark) {
+            d.removeAttribute('data-theme');
+            btn.textContent = '亮色';
+            localStorage.setItem('theme','light');
+        } else {
+            d.setAttribute('data-theme','dark');
+            btn.textContent = '暗色';
+            localStorage.setItem('theme','dark');
         }
-        document.getElementById("themeToggleBtn").innerHTML = document.body.classList.contains("dark-mode") ? sunSvg : moonSvg;
+    });
+})();
 
-        window.addEventListener('scroll', function() {
-            var btn = document.getElementById("backToTopBtn");
-            btn.style.display = (document.documentElement.scrollTop > 300) ? "block" : "none";
-        });
-
-        // Analytics: shared Clarity event helper
-        function trackEvent(name, data) {
-            if (window.clarity) {
-                try { clarity("event", name, data); } catch(e) {}
-            }
-        }
-
-        // Read ?from= source parameter for funnel tracking
-        (function() {
-            var m = location.search.match(/[?&]from=([^&]+)/);
-            if (m && window.clarity) {
-                try { clarity("set", "source_page", m[1]); } catch(e) {}
-            }
-        })();
-    </script>
-    {% block extra_js %}{% endblock %}
+function trackEvent(name, data) {
+    if (window.clarity) { try { clarity('event', name, data); } catch(e){} }
+}
+(function(){
+    var m = location.search.match(/[?&]from=([^&]+)/);
+    if (m && window.clarity) { try { clarity('set', 'source_page', m[1]); } catch(e){} }
+})();
+</script>
+{% block extra_js %}{% endblock %}
 </body>
 </html>

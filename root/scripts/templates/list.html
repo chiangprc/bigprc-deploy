@@ -1,247 +1,220 @@
 {% extends "layout.html" %}
 
-{% block title %}BigPRC - 全网硬核资源共享湾{% endblock %}
+{% block title %}资源列表 - BigPRC{% endblock %}
+{% block description %}BigPRC 资源索引列表。共收录 {{ resources|length }} 项极客资源。{% endblock %}
 
 {% block extra_css %}
-    body { font-family: 'Courier New', Courier, monospace, sans-serif; font-size: 13px; }
-    .header { text-align: center; margin-bottom: 25px; }
-    .header h1 { font-size: 26px; color: #222; }
-    .search-box { text-align: center; margin-bottom: 30px; }
-    .search-box input { padding: 12px 15px; width: 100%; max-width: 350px; border: 1px solid #ddd; outline: none; border-radius: 2px;}
-    .search-box input:focus { border-color: #1a365d; }
-    table { width: 100%; max-width: 850px; margin: 0 auto; border-collapse: collapse; min-width: 320px;}
-    th { background: #fbfbfb; border-bottom: 1px solid #ddd; padding: 12px 5px; cursor: pointer; user-select: none; }
-    td { padding: 12px 5px; border-bottom: 1px solid #f0f0f0; text-align: center; }
-    tr:hover { background-color: #f8f9fa; }
-    .th-content { display: inline-flex; align-items: center; justify-content: center; }
-    .sort-svg { width: 10px; height: 12px; margin-left: 6px; }
-    .sort-up, .sort-down { fill: #ccc; }
-    .state-asc .sort-up { fill: #1a365d; }
-    .state-desc .sort-down { fill: #1a365d; }
-    
-    .page-btn { padding: 6px 12px; background: #fff; border: 1px solid #ddd; color: #1a365d; border-radius: 2px; cursor: pointer; font-size: 13px; margin: 0 3px; }
-    .page-btn:hover:not(:disabled) { background: #f4f6f8; border-color: #1a365d; }
-    .page-btn:disabled { color: #ccc; cursor: not-allowed; background: #fafafa; }
-    #pageInfo { font-size: 13px; color: #666; margin: 0 10px; }
-    .jump-input { width: 45px; padding: 4px; text-align: center; border: 1px solid #ddd; outline: none; margin: 0 4px; }
+    <link rel="preload" href="/index.json" as="fetch" crossorigin="anonymous">
 
-    /* 表格行淡入淡出 */
-    tbody tr { transition: opacity 0.15s ease; }
+    h1 { font-size: 22px; font-weight: 600; margin-bottom: 4px; text-align: center; }
+    .subtitle { font-size: 13px; color: var(--secondary); text-align: center; margin-bottom: 24px; }
 
-    .dark-mode .header h1 { color: #eee; }
-    .dark-mode th, .dark-mode td { background: #121212; border-color: #333; color: #ccc; }
-    .dark-mode th { background: #2a2a2a; }
-    .dark-mode tr:hover { background-color: #252525; }
-    .dark-mode .search-box input { background: #2a2a2a; color: #eee; border-color: #444; }
-    .dark-mode .page-btn { background: #2a2a2a; border-color: #444; color: #ccc; }
-    .dark-mode .jump-input { background: #2a2a2a; color: #eee; border-color: #444; }
-    .dark-mode #noResult { color: #888; }
+    .tags { text-align: center; margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+    .tags span {
+        padding: 6px 14px; border-radius: 14px; font-size: 12px; cursor: pointer;
+        border: 1px solid var(--border); color: var(--secondary); background: var(--bg);
+        transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+    }
+    .tags span.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .tags span:hover:not(.active) { border-color: var(--primary); color: var(--primary); }
 
-    /* 移动端适配 */
+    .search-box { text-align: center; margin-bottom: 20px; }
+    .search-box input {
+        width: 100%; max-width: 400px; height: 40px; padding: 0 16px;
+        font-size: 14px; border: 1px solid var(--border); border-radius: 4px;
+        background: var(--bg); color: var(--text); outline: none; font-family: inherit;
+        text-align: center;
+    }
+    .search-box input:focus { border-color: var(--primary); }
+
+    table { width: 100%; max-width: 800px; margin: 0 auto; border-collapse: collapse; }
+    th { background: var(--card-bg); border-bottom: 2px solid var(--border); padding: 10px 8px; font-size: 12px; color: var(--secondary); cursor: pointer; user-select: none; font-weight: 500; }
+    th:hover { color: var(--primary); }
+    td { padding: 10px 8px; border-bottom: 1px solid var(--border); text-align: center; font-size: 13px; }
+    tr:hover td { background: var(--card-bg); }
+    td a { color: var(--text); }
+    td a:hover { color: var(--primary); text-decoration: none; }
+
+    .page-btn {
+        padding: 8px 14px; background: var(--bg); border: 1px solid var(--border);
+        color: var(--text); border-radius: 4px; cursor: pointer; font-size: 13px; margin: 0 2px;
+        min-width: 44px; transition: all 0.15s; font-family: inherit;
+    }
+    .page-btn:hover:not(:disabled) { border-color: var(--primary); }
+    .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    #pageInfo { font-size: 13px; color: var(--secondary); margin: 0 8px; }
+    .jump-input { width: 48px; padding: 6px; text-align: center; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); outline: none; font-family: inherit; }
+    .jump-input:focus { border-color: var(--primary); }
+
+    .no-result { text-align: center; padding: 60px 20px; color: var(--secondary); }
+
     @media (max-width: 600px) {
-        body { padding: 8px; }
-        table { font-size: 12px; min-width: 280px; }
+        body { padding: 0; }
+        table { font-size: 12px; }
         th, td { padding: 8px 3px; }
-        td a {
-            display: inline-block;
-            padding: 6px 8px;
-            min-width: 44px;
-            min-height: 44px;
-            line-height: 32px;
-            box-sizing: border-box;
-        }
-        .page-btn { padding: 10px 14px; font-size: 14px; min-height: 44px; margin: 0 2px; }
-        .jump-input { height: 40px; min-width: 50px; font-size: 14px; }
-        .search-box input { font-size: 16px; } /* 防止 iOS 缩放 */
+        td a { display: inline-block; padding: 6px 2px; min-height: 44px; line-height: 32px; }
+        .page-btn { padding: 10px 12px; font-size: 14px; min-height: 44px; margin: 0 1px; }
+        .search-box input { font-size: 16px; }
+        .jump-input { height: 40px; font-size: 14px; }
     }
 {% endblock %}
 
 {% block content %}
-<div class="header">
-    <h1>BigPRC 资源湾</h1>
-    <p>无广告 · 极速加载 · 纯净分享{% if filter_category %} — {{ filter_category }}{% endif %}</p>
-</div>
+<div class="content" style="padding-top: 20px;">
 
-<!-- Category tag filter buttons -->
-<div id="tagFilters" style="text-align:center; margin-bottom:15px; display:flex; flex-wrap:wrap; justify-content:center; gap:6px;">
-    <a href="/list.html" style="padding:5px 14px; border-radius:14px; font-size:12px; text-decoration:none; border:1px solid #1a365d; background:#1a365d; color:#fff;">全部</a>
-</div>
+    <h1>BigPRC 资源列表</h1>
+    <p class="subtitle">
+        {% if filter_category %}{{ filter_category }}{% else %}共收录资源{% endif %}
+    </p>
 
-<div class="search-box">
-    <input type="text" id="searchInput" placeholder="输入关键词，实时瞬间过滤... (共 <span id='totalCount'>0</span> 条)">
-</div>
-<div class="table-wrapper">
-<table id="resourceTable">
-    <thead>
-        <tr>
-            <th width="60%" onclick="sortByName()">
-                <div class="th-content">资源名称<svg id="nameSortIcon" class="sort-svg" viewBox="0 0 10 12"><polygon class="sort-up" points="5,0 10,4 0,4"/><polygon class="sort-down" points="5,12 0,8 10,8"/></svg></div>
-            </th>
-            <th width="20%" onclick="sortBySize()">
-                <div class="th-content">大小<svg id="sizeSortIcon" class="sort-svg" viewBox="0 0 10 12"><polygon class="sort-up" points="5,0 10,4 0,4"/><polygon class="sort-down" points="5,12 0,8 10,8"/></svg></div>
-            </th>
-            <th width="20%">操作</th>
-        </tr>
-    </thead>
-    <tbody id="tableBody"></tbody>
-</table>
+    <div class="tags" id="tags">
+        <span class="active">加载中...</span>
+    </div>
 
-<div id="noResult" style="display:none; text-align:center; margin-top:40px; color:#999; font-size:14px;">
-    未找到匹配的资源，试试其他关键词
-</div>
-</div>
+    <div class="search-box">
+        <input type="search" id="searchInput" enterkeyhint="search"
+               autocorrect="off" autocapitalize="off" spellcheck="false"
+               placeholder="搜索...">
+    </div>
 
-<div id="pagination" style="text-align: center; margin-top: 25px;">
-    <button class="page-btn" id="firstBtn" onclick="firstPage()">首页</button>
-    <button class="page-btn" id="prevBtn" onclick="prevPage()">上一页</button>
-    <span id="pageInfo"></span>
-    <button class="page-btn" id="nextBtn" onclick="nextPage()">下一页</button>
-    <button class="page-btn" id="lastBtn" onclick="lastPage()">尾页</button>
-    <span style="margin-left: 10px; color: #666; font-size: 13px;">
-        跳至<input type="number" id="jumpInput" class="jump-input" min="1">页
-        <button class="page-btn" onclick="jumpToPage()" style="padding: 4px 10px;">跳转</button>
-    </span>
-</div>
+    <table id="resourceTable">
+        <thead>
+            <tr>
+                <th width="56%">资源名称</th>
+                <th width="20%">大小</th>
+                <th width="24%">操作</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
 
-<script id="resourceData" type="application/json">{{ json_data|safe }}</script>
+    <div id="noResult" class="no-result" style="display:none;">
+        <p>未找到匹配的资源，试试其他关键词</p>
+    </div>
+
+    <div id="pagination" style="text-align:center;margin-top:20px;">
+        <button class="page-btn" id="firstBtn">首页</button>
+        <button class="page-btn" id="prevBtn">上一页</button>
+        <span id="pageInfo"></span>
+        <button class="page-btn" id="nextBtn">下一页</button>
+        <button class="page-btn" id="lastBtn">尾页</button>
+        <span style="margin-left:10px;color:var(--secondary);font-size:13px;">
+            跳至<input type="number" id="jumpInput" class="jump-input" min="1">页
+            <button class="page-btn" id="jumpBtn" style="padding:4px 10px;">GO</button>
+        </span>
+    </div>
+
+    <noscript>
+        <p style="color:var(--secondary);font-size:13px;text-align:center;margin-top:16px;">
+            列表渲染依赖 JavaScript。请启用 JS 后刷新页面。
+        </p>
+    </noscript>
+
+</div>
 
 <script>
-(function() {
-    var ROWS_PER_PAGE = 30;
-    var currentPage = 1, totalPages = 1;
-    var allItems = [], filteredItems = [];
-    var nameSortDir = 0, sizeSortDir = 0;
+(function(){
+    var PER_PAGE = 30;
+    var all = [], items = [];
+    var page = 1, pages = 1;
+    var tbody = document.getElementById('tableBody');
 
-    // Parse JSON data
-    try {
-        var raw = document.getElementById('resourceData').textContent;
-        allItems = JSON.parse(raw);
-    } catch(e) { allItems = []; }
-    filteredItems = allItems.slice();
-    document.getElementById('totalCount').textContent = allItems.length;
-
-    // Build tag filter buttons
-    var cats = {};
-    allItems.forEach(function(r) { if (r.category) cats[r.category] = (cats[r.category]||0)+1; });
-    var tf = document.getElementById('tagFilters');
-    Object.keys(cats).sort().forEach(function(c) {
-        var a = document.createElement('a');
-        a.href = '/list.html'; a.textContent = c + ' (' + cats[c] + ')';
-        a.style.cssText = 'padding:5px 14px;border-radius:14px;font-size:12px;text-decoration:none;border:1px solid #ddd;color:#666;';
-        a.onclick = function(e) { e.preventDefault(); filterByCategory(c); };
-        tf.appendChild(a);
-    });
-
-    function parseSize(s) {
-        if (!s) return 0;
-        var m = String(s).match(/([\d\.]+)\s*([KMGTP]?B)/i);
-        if (!m) return 0;
-        var p = {'B':1,'KB':1024,'MB':1048576,'GB':1073741824,'TB':1099511627776};
-        return parseFloat(m[1]) * (p[m[2].toUpperCase()]||1);
-    }
-
-    function renderRows() {
-        var tbody = document.getElementById('tableBody');
+    function render(){
         tbody.innerHTML = '';
-        var start = (currentPage-1) * ROWS_PER_PAGE;
-        var end = Math.min(start + ROWS_PER_PAGE, filteredItems.length);
-        for (var i = start; i < end; i++) {
-            var r = filteredItems[i];
+        var start = (page-1)*PER_PAGE, end = Math.min(start+PER_PAGE, items.length);
+        for(var i=start; i<end; i++){
+            var r = items[i];
             var tr = document.createElement('tr');
-            tr.innerHTML = '<td style="text-align:left;padding-left:15px;"><a href="/go/'+r.id+'?from=list">'+r.title+'</a></td>' +
-                '<td><span style="color:#666;">'+(r.size||'-')+'</span></td>' +
-                '<td><a href="/go/'+r.id+'?from=list" style="font-weight:bold;" target="_blank">获取</a></td>';
+            tr.innerHTML = '<td style="text-align:left;padding-left:12px;"><a href="/go/'+r.id+'?from=list">'+esc(r.title)+'</a></td>'+
+                '<td><span style="color:var(--secondary);">'+(r.size||'-')+'</span></td>'+
+                '<td><a href="/go/'+r.id+'?from=list" target="_blank">详情</a></td>';
             tbody.appendChild(tr);
         }
-        totalPages = Math.ceil(filteredItems.length / ROWS_PER_PAGE) || 1;
-        document.getElementById('pageInfo').textContent = '第 ' + currentPage + ' / ' + totalPages + ' 页 (' + filteredItems.length + '条)';
-        document.getElementById('firstBtn').disabled = document.getElementById('prevBtn').disabled = (currentPage === 1);
-        document.getElementById('nextBtn').disabled = document.getElementById('lastBtn').disabled = (currentPage === totalPages);
-        document.getElementById('jumpInput').max = totalPages;
+        pages = Math.ceil(items.length/PER_PAGE)||1;
+        document.getElementById('pageInfo').textContent = items.length+' 条 &middot; '+page+'/'+pages;
+        document.getElementById('firstBtn').disabled = document.getElementById('prevBtn').disabled = (page<=1);
+        document.getElementById('nextBtn').disabled = document.getElementById('lastBtn').disabled = (page>=pages);
+        document.getElementById('jumpInput').max = pages;
+        document.getElementById('noResult').style.display = items.length===0?'block':'none';
+        document.getElementById('pagination').style.display = items.length<=PER_PAGE?'none':'block';
     }
 
-    function applyFilter(filterText) {
-        if (!filterText) {
-            filteredItems = allItems.slice();
-            document.getElementById('pagination').style.display = 'block';
-            document.getElementById('noResult').style.display = 'none';
-        } else {
-            var q = filterText.toLowerCase();
-            filteredItems = allItems.filter(function(r) { return r.title.toLowerCase().indexOf(q) > -1; });
-            document.getElementById('pagination').style.display = filteredItems.length > ROWS_PER_PAGE ? 'block' : 'none';
-            document.getElementById('noResult').style.display = filteredItems.length === 0 ? 'block' : 'none';
-        }
-        currentPage = 1;
-        renderRows();
+    function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function filter(q){
+        if(!q){ items = all.slice(); }
+        else { var lq = q.toLowerCase(); items = all.filter(function(r){ return r.title.toLowerCase().indexOf(lq)>-1; }); }
+        page=1; render();
     }
 
-    function sortByName() {
-        sizeSortDir = 0; document.getElementById('sizeSortIcon').className.baseVal = 'sort-svg';
-        nameSortDir = (nameSortDir + 1) % 2;
-        var icon = document.getElementById('nameSortIcon');
-        if (nameSortDir === 0) {
-            icon.className.baseVal = 'sort-svg';
-            filteredItems.sort(function(a,b) { return allItems.indexOf(a) - allItems.indexOf(b); });
-        } else {
-            icon.className.baseVal = 'sort-svg state-desc';
-            filteredItems.sort(function(a,b) { return a.title.localeCompare(b.title, 'zh-CN'); });
-        }
-        currentPage = 1; renderRows();
-    }
+    function go(n){ page=n; render(); window.scrollTo(0,0); }
 
-    function sortBySize() {
-        nameSortDir = 0; document.getElementById('nameSortIcon').className.baseVal = 'sort-svg';
-        sizeSortDir = (sizeSortDir + 1) % 3;
-        var states = ['sort-svg', 'sort-svg state-desc', 'sort-svg state-asc'];
-        document.getElementById('sizeSortIcon').className.baseVal = states[sizeSortDir];
-        if (sizeSortDir === 0) filteredItems.sort(function(a,b) { return allItems.indexOf(a) - allItems.indexOf(b); });
-        else if (sizeSortDir === 1) filteredItems.sort(function(a,b) { return parseSize(b.size) - parseSize(a.size); });
-        else filteredItems.sort(function(a,b) { return parseSize(a.size) - parseSize(b.size); });
-        currentPage = 1; renderRows();
-    }
-
-    function filterByCategory(cat) {
-        document.getElementById('searchInput').value = '';
-        allItems.forEach(function(r) { r._match = !cat || r.category === cat; });
-        filteredItems = cat ? allItems.filter(function(r) { return r.category === cat; }) : allItems.slice();
-        document.getElementById('pagination').style.display = 'block';
-        document.getElementById('noResult').style.display = 'none';
-        currentPage = 1; renderRows();
-        // Update tag button styles
-        var links = document.getElementById('tagFilters').querySelectorAll('a');
-        links.forEach(function(a) {
-            if (a.textContent.indexOf(cat)===0) { a.style.background='#1a365d'; a.style.color='#fff'; a.style.borderColor='#1a365d'; }
-            else { a.style.background=''; a.style.color='#666'; a.style.borderColor='#ddd'; }
+    function buildTags(){
+        var cats={};
+        all.forEach(function(r){ if(r.category) cats[r.category]=(cats[r.category]||0)+1; });
+        var keys = Object.keys(cats).sort();
+        var html = '<span class="active" data-cat="">全部 ('+all.length+')</span>';
+        keys.forEach(function(c){ html += '<span data-cat="'+esc(c)+'">'+esc(c)+' ('+cats[c]+')</span>'; });
+        var el = document.getElementById('tags');
+        el.innerHTML = html;
+        el.querySelectorAll('span').forEach(function(s){
+            s.addEventListener('click', function(){
+                el.querySelectorAll('span').forEach(function(x){ x.className=''; });
+                this.className='active';
+                var cat = this.getAttribute('data-cat');
+                items = cat ? all.filter(function(r){ return r.category===cat; }) : all.slice();
+                document.getElementById('searchInput').value = '';
+                page=1; render();
+            });
         });
     }
 
-    // Expose to global scope for onclick handlers
-    window.firstPage = function() { if(currentPage>1){ currentPage=1; renderRows(); window.scrollTo(0,0); } };
-    window.prevPage = function() { if(currentPage>1){ currentPage--; renderRows(); window.scrollTo(0,0); } };
-    window.nextPage = function() { if(currentPage<totalPages){ currentPage++; renderRows(); window.scrollTo(0,0); } };
-    window.lastPage = function() { if(currentPage<totalPages){ currentPage=totalPages; renderRows(); window.scrollTo(0,0); } };
-    window.jumpToPage = function() {
-        var v = parseInt(document.getElementById('jumpInput').value);
-        if (v >= 1 && v <= totalPages) { currentPage = v; renderRows(); window.scrollTo(0,0); }
-    };
-
-    // Search handler
+    // init: fetch JSON then render
     var searchInput = document.getElementById('searchInput');
-    var searchTimer;
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimer);
-        var self = this;
-        searchTimer = setTimeout(function() {
-            applyFilter(self.value);
-            if (window.clarity && self.value.length >= 2) {
-                try { clarity('event', 'search', self.value); } catch(e) {}
-            }
-        }, 300);
-    });
-    searchInput.addEventListener('keydown', function(e) { if (e.key === 'Escape') { this.value = ''; applyFilter(''); } });
+    fetch('/index.json')
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+            all = data; items = all.slice();
+            buildTags();
+            render();
 
-    // Initial render
-    renderRows();
+            // Check ?q= param
+            var m = location.search.match(/[?&]q=([^&]+)/);
+            if(m){ searchInput.value = decodeURIComponent(m[1]); filter(decodeURIComponent(m[1])); }
+
+            // search handler
+            var timer;
+            searchInput.addEventListener('input', function(){
+                clearTimeout(timer);
+                var self = this;
+                timer = setTimeout(function(){ filter(self.value); }, 250);
+            });
+            searchInput.addEventListener('keydown', function(e){ if(e.key==='Escape'){ this.value=''; filter(''); } });
+        })
+        .catch(function(){
+            document.getElementById('tags').textContent = '加载失败，请刷新页面';
+        });
+
+    // pagination buttons
+    document.getElementById('firstBtn').addEventListener('click', function(){ if(page>1) go(1); });
+    document.getElementById('prevBtn').addEventListener('click', function(){ if(page>1) go(page-1); });
+    document.getElementById('nextBtn').addEventListener('click', function(){ if(page<pages) go(page+1); });
+    document.getElementById('lastBtn').addEventListener('click', function(){ if(page<pages) go(pages); });
+    document.getElementById('jumpBtn').addEventListener('click', function(){
+        var v = parseInt(document.getElementById('jumpInput').value);
+        if(v>=1 && v<=pages) go(v);
+    });
+    document.getElementById('jumpInput').addEventListener('keydown', function(e){ if(e.key==='Enter'){ var v=parseInt(this.value); if(v>=1&&v<=pages) go(v); } });
+
+    // clarity search tracking
+    var _ct;
+    searchInput.addEventListener('input', function(){
+        clearTimeout(_ct);
+        var v = searchInput.value;
+        _ct = setTimeout(function(){
+            if(window.clarity && v.length>=2){ try{clarity('event','search',v);}catch(e){} }
+        }, 1500);
+    });
 })();
 </script>
 {% endblock %}

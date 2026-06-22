@@ -1,114 +1,332 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta name="baidu-site-verification" content="codeva-aoxFXTkapa" />
     <meta charset="UTF-8">
+    <script>
+    (function(){
+        var t=localStorage.getItem('theme');
+        if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches)){
+            document.documentElement.setAttribute('data-theme','dark');
+        }
+    })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BigPRC - 极客数字军火库</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏴‍☠️</text></svg>">
-    <meta property="og:title" content="BigPRC - 极客数字军火库">
-    <meta property="og:description" content="1200+ 极客精选资源。无广告、极速加载的纯净资源分享站。">
+    <meta name="baidu-site-verification" content="codeva-aoxFXTkapa">
+    <title>BigPRC - 极客资源技术索引引擎</title>
+    <link rel="search" type="application/opensearchdescription+xml" href="/opensearch.xml" title="BigPRC 资源索引">
+    <link rel="preload" href="/index.json" as="fetch" crossorigin="anonymous">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%E2%9A%93</text></svg>">
+    <meta property="og:title" content="BigPRC - 极客资源技术索引引擎">
+    <meta property="og:description" content="1267 项极客资源索引。不存储文件，仅索引公开链接。">
     <meta property="og:url" content="https://www.bigprc.com">
     <meta property="og:type" content="website">
-    <meta property="og:site_name" content="BigPRC 极客资源湾">
+    <meta property="og:site_name" content="BigPRC">
     <meta property="og:locale" content="zh_CN">
     <meta name="twitter:card" content="summary">
+
     <style>
-        :root { --primary: #1a365d; --bg: #f8f9fa; --text: #333; --card-bg: #ffffff; --border: rgba(128,128,128,0.15); }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; min-height: 100vh; transition: background 0.3s, color 0.3s; }
-        
-        .float-btn { position: fixed; top: 20px; z-index: 999; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; border: 1px solid #ddd; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: center; color: #555; text-decoration: none; transition: all 0.3s; }
-        .float-btn:hover { box-shadow: 0 4px 10px rgba(0,0,0,0.12); transform: scale(1.05); color: var(--primary); }
-        .home-btn { left: 20px; }
-        .theme-btn { right: 20px; }
+        :root {
+            --bg: #ffffff;
+            --text: #1a1a1a;
+            --secondary: #666666;
+            --border: #e5e5e5;
+            --primary: #1a365d;
+            --cta: #c0392b;
+            --card-bg: #fafafa;
+        }
+        [data-theme="dark"] {
+            --bg: #121212;
+            --text: #e0e0e0;
+            --secondary: #999999;
+            --border: #2a2a2a;
+            --primary: #5c9ce6;
+            --cta: #e74c3c;
+            --card-bg: #1a1a1a;
+        }
 
-        .hero { text-align: center; padding: 100px 20px 60px; background: linear-gradient(to bottom, rgba(26,54,93,0.05), transparent); }
-        .hero h1 { font-size: 3rem; letter-spacing: 3px; color: var(--primary); margin: 0 0 15px; font-weight: 800; }
-        .hero p { opacity: 0.7; font-size: 1.2rem; margin: 0; }
-        
-        .grid-container { max-width: 1000px; margin: 0 auto 60px; padding: 0 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; width: 100%; box-sizing: border-box; }
-        .card { background: var(--card-bg); border: 1px solid var(--border); padding: 40px 30px; border-radius: 12px; text-decoration: none; color: inherit; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; overflow: hidden; }
-        .card:hover { transform: translateY(-8px); border-color: var(--primary); box-shadow: 0 15px 30px rgba(0,0,0,0.1); color: var(--primary); }
-        .card::before { content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: var(--primary); opacity: 0; transition: opacity 0.3s; }
-        .card:hover::before { opacity: 1; }
-        
-        .card .icon { margin-bottom: 25px; display: flex; align-items: center; justify-content: center; transition: color 0.3s; }
-        .card h3 { margin: 0 0 15px; color: var(--primary); font-size: 1.4rem; }
-        .card p { font-size: 0.95rem; opacity: 0.7; line-height: 1.6; margin: 0; color: var(--text); }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+            background: var(--bg); color: var(--text);
+            line-height: 1.6; min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+        a { color: var(--primary); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 2px; }
 
-        .disabled-card { opacity: 0.5; cursor: not-allowed; filter: grayscale(100%); }
-        .disabled-card:hover { transform: none; box-shadow: none; border-color: var(--border); color: inherit; }
-        .disabled-card:hover::before { opacity: 0; }
-        .badge { position: absolute; top: 15px; right: -30px; background: #e74c3c; color: white; font-size: 10px; padding: 4px 30px; transform: rotate(45deg); font-weight: bold; letter-spacing: 1px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+        [data-theme="dark"] ::-webkit-scrollbar-thumb { background: #444; }
+        * { scrollbar-width: thin; scrollbar-color: #ccc transparent; }
+        [data-theme="dark"] * { scrollbar-color: #444 transparent; }
 
-        .footer { margin-top: auto; padding: 30px; text-align: center; font-size: 0.85rem; opacity: 0.5; border-top: 1px solid var(--border); }
+        /* top bar */
+        nav.topbar {
+            position: sticky; top: 0; z-index: 100;
+            display: flex; justify-content: space-between; align-items: center;
+            height: 48px; background: var(--bg);
+            border-bottom: 1px solid var(--border);
+        }
+        nav.topbar a, nav.topbar button {
+            padding: 12px 20px; font-size: 14px; line-height: 24px;
+            color: var(--text); text-decoration: none;
+            background: none; border: none; cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        nav.topbar a:active, nav.topbar button:active {
+            background: var(--card-bg); transition: background 0.1s;
+        }
 
-        body.dark-mode { --bg: #121212; --text: #e0e0e0; --card-bg: #1e1e1e; --primary: #5c9ce6; --border: #333; }
-        .dark-mode .hero { background: linear-gradient(to bottom, rgba(92,156,230,0.05), transparent); }
-        .dark-mode .float-btn { background: #2a2a2a; border-color: #444; color: #e0e0e0; box-shadow: 0 2px 6px rgba(0,0,0,0.5); }
-        .dark-mode .float-btn:hover { color: var(--primary); }
+        main { display: flex; flex-direction: column; align-items: center; padding: 80px 20px 60px; min-height: calc(100vh - 48px); }
+
+        h1 { font-size: 36px; font-weight: 700; letter-spacing: 1px; color: var(--text); }
+        .subtitle { font-size: 14px; color: var(--secondary); margin: 8px 0 32px; }
+
+        /* search */
+        .search-wrap { width: 100%; max-width: 440px; position: relative; }
+        .search-row { display: flex; align-items: center; gap: 0; }
+        .search-row input {
+            flex: 1; height: 44px; padding: 0 16px; font-size: 15px;
+            border: 1px solid var(--border); border-radius: 4px;
+            background: var(--bg); color: var(--text); outline: none;
+            font-family: inherit;
+        }
+        .search-row input:focus { border-color: var(--primary); }
+        .search-row .cancel-btn {
+            display: none; padding: 0 16px; height: 44px; line-height: 44px;
+            font-size: 14px; color: var(--secondary); cursor: pointer;
+            background: none; border: none; white-space: nowrap;
+            -webkit-tap-highlight-color: transparent;
+            font-family: inherit;
+        }
+
+        /* search results dropdown (desktop) / takeover list (mobile) */
+        .results { display: none; }
+        .results.has-items {
+            display: block; position: absolute; top: 48px; left: 0; right: 0;
+            background: var(--bg); border: 1px solid var(--border); border-radius: 0 0 4px 4px;
+            border-top: none; z-index: 50; max-height: 360px; overflow-y: auto;
+        }
+        .results .item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 16px; border-bottom: 1px solid var(--border);
+            cursor: pointer; transition: background 0.1s;
+        }
+        .results .item:last-child { border-bottom: none; }
+        .results .item:hover { background: var(--card-bg); }
+        .results .item .name { font-size: 14px; color: var(--text); }
+        .results .item .meta { font-size: 12px; color: var(--secondary); white-space: nowrap; }
+        .results .empty { padding: 24px 16px; text-align: center; color: var(--secondary); font-size: 13px; }
+
+        /* tags */
+        .tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 24px 0; }
+        .tags a { font-size: 12px; color: var(--secondary); padding: 4px 0; }
+        .tags a:hover { color: var(--primary); text-decoration: none; }
+
+        /* product card */
+        .product-card {
+            border: 1px solid var(--border); border-radius: 4px;
+            padding: 20px 28px; max-width: 440px; width: 100%; margin-top: 32px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .product-card:hover { border-color: var(--primary); }
+        .product-card h2 { font-size: 15px; font-weight: 600; margin: 0 0 4px; color: var(--text); }
+        .product-card p { font-size: 12px; color: var(--secondary); margin: 0; }
+
+        .disclaimer { font-size: 11px; color: var(--secondary); max-width: 440px; text-align: center; margin-top: 40px; line-height: 1.8; }
+        .footer { padding: 24px 20px; font-size: 12px; color: var(--secondary); text-align: center; border-top: 1px solid var(--border); }
+        .footer a { color: var(--secondary); }
+
+        /* mobile search takeover */
+        @media (max-width: 768px) {
+            main { padding: 40px 16px 40px; }
+            h1 { font-size: 28px; }
+            .search-wrap { max-width: 100%; }
+            .is-searching main { padding: 16px; }
+            .is-searching h1, .is-searching .subtitle, .is-searching .tags,
+            .is-searching .product-card, .is-searching .disclaimer { display: none; }
+            .is-searching .search-wrap { position: sticky; top: 48px; background: var(--bg); padding: 12px 0; z-index: 50; }
+            .is-searching .cancel-btn { display: block; }
+            .is-searching .results {
+                display: block; position: static; border: none; max-height: none;
+                min-height: calc(100dvh - 160px);
+            }
+            .is-searching .results .item { padding: 14px 0; }
+        }
+
+        @media print {
+            nav.topbar, .search-wrap, .tags, .product-card, .footer { display: none !important; }
+            body { color: #000; background: #fff; }
+            a { text-decoration: underline; color: #000; }
+            @page { margin: 2cm; }
+        }
     </style>
 </head>
 <body>
-    <a href="/" class="float-btn home-btn" title="返回主页">
-        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+
+<nav class="topbar">
+    <a href="/">BigPRC</a>
+    <button id="themeToggle">亮色</button>
+</nav>
+
+<main>
+    <h1>BigPRC</h1>
+    <p class="subtitle">极客资源技术索引引擎</p>
+
+    <div class="search-wrap" id="searchWrap">
+        <div class="search-row">
+            <input type="search" id="searchInput" enterkeyhint="search"
+                   autocorrect="off" autocapitalize="off" spellcheck="false"
+                   placeholder="搜索 1267 项资源...">
+            <span class="cancel-btn" id="cancelBtn">取消</span>
+        </div>
+        <div class="results" id="results"></div>
+    </div>
+
+    <div class="tags" id="tags"></div>
+
+    <a class="product-card" href="/tools/claudeek.html">
+        <div>
+            <h2>Claudeek</h2>
+            <p>便携 AI 工作站 · 内测特惠 &yen;99 起</p>
+        </div>
+        <span style="font-size:12px;color:var(--secondary);">了解更多</span>
     </a>
-    <button id="themeToggleBtn" class="float-btn theme-btn" onclick="toggleTheme()" title="切换亮暗色"></button>
 
-    <script>
-        var sunSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>';
-        var moonSvg = '<svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>';
-        if(window.localStorage && localStorage.getItem("theme") === "dark") document.body.className += " dark-mode";
-        function toggleTheme() {
-            var body = document.body, btn = document.getElementById("themeToggleBtn");
-            if (body.className.indexOf("dark-mode") > -1) {
-                body.className = body.className.replace("dark-mode", "").trim();
-                btn.innerHTML = moonSvg; if(window.localStorage) localStorage.setItem("theme", "light");
-            } else {
-                body.className += " dark-mode";
-                btn.innerHTML = sunSvg; if(window.localStorage) localStorage.setItem("theme", "dark");
-            }
-        }
-        window.addEventListener('DOMContentLoaded', function() {
-            var btn = document.getElementById("themeToggleBtn");
-            if(btn) btn.innerHTML = document.body.className.indexOf("dark-mode") > -1 ? sunSvg : moonSvg;
+    <p class="disclaimer">
+        本站为资源索引引擎，不存储任何实质文件<br>
+        所有链接均来自公开互联网
+    </p>
+
+    <noscript>
+        <p style="color:var(--secondary);font-size:13px;text-align:center;margin-top:16px;">
+            检索功能依赖 JavaScript。请启用 JS，或直接浏览
+            <a href="/list.html">完整资源列表</a>。
+        </p>
+    </noscript>
+</main>
+
+<div class="footer">
+    <p>BigPRC 极客资源技术索引引擎 · <a href="mailto:admin@bigprc.com">DMCA / 商务合作</a></p>
+    <p>&copy; 2026 BigPRC</p>
+</div>
+
+<script>
+(function(){
+    // theme toggle
+    var btn = document.getElementById('themeToggle');
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    btn.textContent = isDark ? '暗色' : '亮色';
+    btn.addEventListener('click', function(){
+        var d = document.documentElement;
+        var dark = d.getAttribute('data-theme') === 'dark';
+        if(dark){ d.removeAttribute('data-theme'); btn.textContent='亮色'; localStorage.setItem('theme','light'); }
+        else { d.setAttribute('data-theme','dark'); btn.textContent='暗色'; localStorage.setItem('theme','dark'); }
+    });
+
+    // data
+    var allItems = [];
+    var input = document.getElementById('searchInput');
+    var results = document.getElementById('results');
+    var tags = document.getElementById('tags');
+    var wrap = document.getElementById('searchWrap');
+    var cancel = document.getElementById('cancelBtn');
+
+    // fetch index.json
+    fetch('/index.json')
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+            allItems = data;
+            input.placeholder = '搜索 ' + data.length + ' 项资源...';
+            buildTags(data);
+        })
+        .catch(function(){});
+
+    function buildTags(data){
+        var cats = {};
+        data.forEach(function(r){ if(r.category) cats[r.category] = (cats[r.category]||0)+1; });
+        var keys = Object.keys(cats).sort();
+        keys.forEach(function(c){
+            var a = document.createElement('a');
+            a.href = '/list.html'; a.textContent = c + ' (' + cats[c] + ')';
+            a.addEventListener('click', function(e){ e.preventDefault(); window.location='/list.html?q='+encodeURIComponent(c); });
+            tags.appendChild(a);
         });
-    </script>
+    }
 
-    <div class="hero">
-        <h1>BigPRC</h1>
-        <p>构建你的专属数字极客军火库</p>
-    </div>
+    function search(q){
+        if(!q || q.length < 1){ results.className='results'; results.innerHTML=''; return; }
+        var lq = q.toLowerCase();
+        var matches = allItems.filter(function(r){ return r.title.toLowerCase().indexOf(lq) > -1; }).slice(0, 8);
+        results.className = matches.length ? 'results has-items' : 'results';
+        if(matches.length === 0 && q.length >= 2){
+            results.innerHTML = '<div class="empty">未找到匹配项</div>';
+            results.className = 'results has-items';
+            return;
+        }
+        var html = '';
+        matches.forEach(function(r){
+            var meta = [r.size, r.category].filter(Boolean).join(' &middot; ');
+            html += '<a class="item" href="/go/'+r.id+'?from=search"><span class="name">'+esc(r.title)+'</span><span class="meta">'+esc(meta||'')+'</span></a>';
+        });
+        results.innerHTML = html;
+    }
 
-    <div class="grid-container">
-        <a href="/list.html" class="card">
-            <div class="icon">
-                <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
-            </div>
-            <h3>硬核资源分享湾</h3>
-            <p>1200+ 极客精选资源。集成自动化索引与多通道极速转存，全站无广告纯净分发。</p>
-        </a>
+    function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-        <a href="/tools/claudeek.html" class="card">
-            <div class="icon">
-                <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-5"></path><path d="M9 8V2"></path><path d="M15 8V2"></path><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"></path></svg>
-            </div>
-            <h3>Claudeek 工具</h3>
-            <p>Portable AI Workspace — 随身 AI 工作站。内测特惠 ¥99 起。</p>
-        </a>
+    // events
+    var timer;
+    input.addEventListener('input', function(){
+        clearTimeout(timer);
+        var self = this;
+        timer = setTimeout(function(){ search(self.value); }, 200);
+    });
+    input.addEventListener('focus', function(){
+        if(window.innerWidth <= 768){
+            document.body.classList.add('is-searching');
+            window.history.pushState({search:true}, '');
+        }
+        if(this.value) search(this.value);
+    });
+    input.addEventListener('keydown', function(e){ if(e.key==='Escape'){ this.value=''; closeSearch(); } });
 
-        <a href="#" class="card disabled-card" onclick="return false;">
-            <div class="badge">DEV</div>
-            <div class="icon">
-                <svg viewBox="0 0 24 24" width="48" height="48" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
-            </div>
-            <h3>VPS 部署指南</h3>
-            <p>Ubuntu/Docker 生产级环境一键优化脚本，Nginx 高级反向代理与安全防护实战。</p>
-        </a>
-    </div>
+    cancel.addEventListener('click', closeSearch);
 
-    <div class="footer">
-        &copy; 2026 BigPRC | All Rights Reserved
-    </div>
+    function closeSearch(){
+        input.value = ''; results.className = 'results'; results.innerHTML = '';
+        document.body.classList.remove('is-searching');
+        input.blur();
+    }
+
+    window.addEventListener('popstate', function(e){
+        if(document.body.classList.contains('is-searching')){
+            closeSearch();
+            e.preventDefault();
+        }
+    });
+
+    // click outside to close (desktop)
+    document.addEventListener('click', function(e){
+        if(!wrap.contains(e.target) && window.innerWidth > 768){
+            results.className = 'results'; results.innerHTML = '';
+        }
+    });
+
+    // clarity
+    var _ct;
+    input.addEventListener('input', function(){
+        clearTimeout(_ct);
+        var v = input.value;
+        _ct = setTimeout(function(){
+            if(window.clarity && v.length >= 2){ try{clarity('event','search',v);}catch(e){} }
+        }, 1500);
+    });
+})();
+</script>
 </body>
 </html>

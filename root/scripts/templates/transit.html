@@ -1,64 +1,65 @@
 {% extends "layout.html" %}
 
-{% block title %}安全传输中 - {{ title }}{% endblock %}
+{% block title %}安全验证 - {{ title }}{% endblock %}
+{% block description %}正在验证链接安全性，即将跳转到 {{ title }} 的资源页面。{% endblock %}
 
 {% block extra_css %}
-    .transit-box { max-width: 600px; margin: 80px auto; text-align: center; padding: 40px 20px; background: #fdfdfd; border: 1px solid #eee; border-radius: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-    .spinner { margin: 0 auto 20px auto; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #1a365d; border-radius: 50%; animation: spin 1s linear infinite; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .countdown-num { font-size: 48px; font-weight: bold; color: #1a365d; margin: 20px 0; }
-    .tips { color: #666; font-size: 14px; line-height: 1.8; }
-    .manual-link { display: none; margin-top: 30px; padding: 10px 20px; background: #1a365d; color: #fff; text-decoration: none; border-radius: 2px; }
-    
-    .dark-mode .transit-box { background: #1e1e1e; border-color: #333; box-shadow: none; }
-    .dark-mode .spinner { border-color: #333; border-top-color: #5c9ce6; }
-    .dark-mode .countdown-num { color: #5c9ce6; }
-    .dark-mode .tips { color: #aaa; }
-    .dark-mode .transit-feedback { color: #666 !important; }
-    .dark-mode .transit-feedback a { color: #666 !important; }
+    .transit-box { max-width: 400px; margin: 60px auto; text-align: center; padding: 48px 24px; }
+    .transit-box h2 { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 28px; }
+    .countdown-num { font-size: 48px; font-weight: 700; color: var(--primary); margin-bottom: 16px; }
+    .progress-wrap { width: 100%; max-width: 200px; height: 1px; background: var(--border); margin: 0 auto 24px; }
+    .progress-bar { width: 0; height: 1px; background: var(--primary); animation: pbar 5s linear forwards; }
+    @keyframes pbar { to { width: 100%; } }
+
+    .cta-button {
+        display: none; padding: 14px 36px; font-size: 15px; font-weight: 600;
+        background: var(--cta); color: #fff; border: none; border-radius: 4px;
+        cursor: pointer; text-decoration: none; transition: opacity 0.15s;
+    }
+    .cta-button:hover { opacity: 0.9; color: #fff; text-decoration: none; }
+    .cta-button.shown { display: inline-block; }
+
+    .resource-name { font-size: 13px; color: var(--secondary); margin-bottom: 20px; }
+    .transit-feedback { font-size: 12px; color: var(--secondary); margin-top: 32px; }
+    .transit-feedback a { color: var(--secondary); }
 {% endblock %}
 
 {% block content %}
+<div class="content">
 <div class="transit-box">
-    <div class="spinner"></div>
-    <h2 style="margin-bottom: 10px;">引擎正在为您获取资源...</h2>
-    <div class="tips">资源名称：<strong>{{ title }}</strong></div>
-    
-    <div class="countdown-num" id="countdown">5</div>
-    
-    <div class="tips">
-        <p>为保障社区纯净，正在进行底层环境检测与防爆链加密验证<br>感谢您的耐心等待，安全通道即将开启</p>
-    </div>
-    
-    <a href="/jump/{{ jump_id }}" id="manualBtn" class="manual-link" rel="nofollow">验证完毕，点击进入网盘</a>
+    <h2>安全验证中</h2>
 
-    <div class="transit-feedback" style="margin-top: 25px; font-size: 11px; color: #ccc;">
-        页面无法跳转？<a href="mailto:{{ admin_email }}?subject=%5B%E8%B7%B3%E8%BD%AC%E5%A4%B1%E6%95%88%5D%20{{ title }}%20({{ jump_id }})" style="color: #ccc;">反馈问题</a>
+    <div class="countdown-num" id="countdown">5</div>
+    <div class="progress-wrap"><div class="progress-bar"></div></div>
+
+    <p class="resource-name">{{ title }}</p>
+
+    <a href="/jump/{{ jump_id }}" id="manualBtn" class="cta-button" rel="nofollow">进入网盘</a>
+
+    <div class="transit-feedback">
+        页面无法跳转？<a href="mailto:{{ admin_email }}?subject=%5B%E8%B7%B3%E8%BD%AC%E5%A4%B1%E6%95%88%5D%20{{ title }}%20({{ jump_id }})">反馈问题</a>
     </div>
+</div>
 </div>
 
 <script>
-    // Funnel step 4: transit page loaded
     trackEvent('transit_loaded', '{{ jump_id }}');
 
     var count = 5;
     var countdownEl = document.getElementById('countdown');
-    var timer = setInterval(function() {
+    var timer = setInterval(function(){
         count--;
-        countdownEl.innerText = count;
-        if (count <= 0) {
+        countdownEl.textContent = count;
+        if(count <= 0){
             clearInterval(timer);
-            document.getElementById('manualBtn').style.display = 'inline-block';
+            document.getElementById('manualBtn').classList.add('shown');
             countdownEl.style.display = 'none';
-            // Funnel step 5: redirect complete
             trackEvent('redirect_complete', '{{ jump_id }}');
-            // 倒计时结束，执行真正的底层物理跳转！
-            window.location.href = "/jump/{{ jump_id }}";
+            window.location.href = '/jump/{{ jump_id }}';
         }
     }, 1000);
 
-    // Track manual click on the button (before auto-redirect fires)
-    document.getElementById('manualBtn').addEventListener('click', function() {
+    document.getElementById('manualBtn').addEventListener('click', function(){
         trackEvent('download_click', '{{ jump_id }}');
     });
 </script>

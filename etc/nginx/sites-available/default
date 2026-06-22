@@ -86,6 +86,13 @@ server {
         add_header Cache-Control "public, max-age=604800" always;
     }
 
+    # Static assets — immutable cache (1 year)
+    location ~* \.(json|css|js)$ {
+        expires 1y;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        access_log off;
+    }
+
     # go 中转
     location /go/ {
         limit_req zone=go_zone burst=20 nodelay;

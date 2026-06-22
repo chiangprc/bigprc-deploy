@@ -159,7 +159,8 @@ def build_static_site(resources):
     with ThreadPoolExecutor(max_workers=10) as executor:
         executor.map(render_single_page, resources)
     
-    # 2. 生成列表页 (JSON data for client-side pagination)
+    # 2. 生成独立 index.json (异步拉取 + Preload 预加载)
+    web_root = os.path.dirname(INDEX_FILE)  # var/www/site/web
     json_rows = []
     for res in resources:
         json_rows.append({
@@ -169,9 +170,13 @@ def build_static_site(resources):
             'category': res.get('category', ''),
             'drive': identify_drive(res.get('short_url') or res.get('normal_url'))
         })
-    json_data = json.dumps(json_rows, ensure_ascii=False)
+    json_path = os.path.join(web_root, 'index.json')
+    with open(json_path, 'w', encoding='utf-8') as f:
+        json.dump(json_rows, f, ensure_ascii=False)
+    print(f"  index.json: {len(json_rows)} 条资源, {os.path.getsize(json_path)//1024}KB")
+
     list_html = list_template.render(
-        resources=resources, json_data=json_data,
+        resources=resources,
         admin_email=ADMIN_EMAIL, clarity_id=CLARITY_ID
     )
     with open(INDEX_FILE, "w", encoding="utf-8") as f:
@@ -185,11 +190,7 @@ def build_static_site(resources):
             cat_slug = cat.strip().lower().replace(' ', '_').replace('/', '_')
             cat_resources = [r for r in resources if r.get('category', '').strip() == cat.strip()]
             tag_html = list_template.render(
-                resources=cat_resources, json_data=json.dumps([
-                    {'id': r['res_id'], 'title': r['title'], 'size': r.get('size', '-'),
-                     'category': r.get('category', ''), 'drive': identify_drive(r.get('short_url') or r.get('normal_url'))}
-                    for r in cat_resources
-                ], ensure_ascii=False),
+                resources=cat_resources,
                 admin_email=ADMIN_EMAIL, clarity_id=CLARITY_ID,
                 filter_category=cat
             )
