@@ -128,6 +128,8 @@ python3 /root/scripts/auto_generate.py
 | 新增资源没显示 | 没跑 auto_generate.py | VPS 跑 `python3 /root/scripts/auto_generate.py` |
 | 本地 preview 报错 | 没装环境 / 没生成网站 | 先跑 `setup.ps1`，再跑 `auto_generate.py` |
 | push 报认证错误 | GitHub token 过期 | 去 GitHub → Settings → Developer settings → Personal access tokens 换新的 |
+| 部署后网站异常 | 配置/代码有问题 | VPS 跑 `bash deploy.sh rollback` 回滚到上一个版本 |
+| 回滚多版本 | 需回到更早的版本 | VPS 跑 `bash deploy.sh rollback 3`（数字代表回退几个提交） |
 
 ---
 
@@ -149,6 +151,16 @@ ssh -p 2222 root@37.27.246.3
 ```
 
 > ⚠️ SSH 端口是 **2222**，不是默认的 22。Hetzner 云防火墙也只放行了 2222。
+
+### 紧急回滚
+
+```bash
+ssh -p 2222 root@37.27.246.3
+cd /root/bigprc-deploy
+bash deploy.sh rollback     # 回滚到上一个版本
+bash deploy.sh rollback 3   # 回滚 3 个版本
+# 会自动显示最近提交记录，回滚后重新部署并重载 Nginx
+```
 
 ---
 

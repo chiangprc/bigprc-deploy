@@ -12,7 +12,13 @@ from jinja2 import Environment, FileSystemLoader
 from dotenv import load_dotenv
 
 # ================= 1. 加载机密引擎配置 =================
-load_dotenv("/root/scripts/.env")
+script_dir = os.path.dirname(os.path.abspath(__file__))
+env_local = os.path.join(script_dir, ".env")
+env_vps = "/root/scripts/.env"
+if os.path.exists(env_local):
+    load_dotenv(env_local)
+elif os.path.exists(env_vps):
+    load_dotenv(env_vps)
 DB_FILE = os.getenv("DB_FILE")
 PAGE_DIR = os.getenv("PAGE_DIR")
 INDEX_FILE = os.getenv("INDEX_FILE")
@@ -28,7 +34,10 @@ CLARITY_ID = os.getenv("CLARITY_ID")
 os.makedirs(PAGE_DIR, exist_ok=True)
 
 # 初始化 Jinja2 模板引擎
-env = Environment(loader=FileSystemLoader('/root/scripts/templates'))
+_template_dir = os.path.join(script_dir, "templates")
+if not os.path.isdir(_template_dir):
+    _template_dir = "/root/scripts/templates"
+env = Environment(loader=FileSystemLoader(_template_dir))
 detail_template = env.get_template('detail.html')
 list_template = env.get_template('list.html')
 transit_template = env.get_template('transit.html') # ✅ 包含了第二步的中转页模板
@@ -213,8 +222,14 @@ if __name__ == "__main__":
         exit()
         
     build_static_site(data)
-    safe_update_nginx(data)
+    try:
+        safe_update_nginx(data)
+    except Exception as e:
+        print(f"[SKIP] Nginx update skipped (local/dev environment): {e}")
     generate_sitemap(data)
-    smart_push_engine(data)
+    try:
+        smart_push_engine(data)
+    except Exception as e:
+        print(f"[SKIP] Baidu push skipped (local/dev environment): {e}")
     
     print(f"\n🎉 极客引擎全链路执行完毕！总耗时: {time.time() - start_time:.2f} 秒")

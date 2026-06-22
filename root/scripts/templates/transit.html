@@ -14,6 +14,8 @@
     .dark-mode .spinner { border-color: #333; border-top-color: #5c9ce6; }
     .dark-mode .countdown-num { color: #5c9ce6; }
     .dark-mode .tips { color: #aaa; }
+    .dark-mode .transit-feedback { color: #666 !important; }
+    .dark-mode .transit-feedback a { color: #666 !important; }
 {% endblock %}
 
 {% block content %}
@@ -29,6 +31,10 @@
     </div>
     
     <a href="/jump/{{ jump_id }}" id="manualBtn" class="manual-link" rel="nofollow">验证完毕，点击进入网盘</a>
+
+    <div class="transit-feedback" style="margin-top: 25px; font-size: 11px; color: #ccc;">
+        页面无法跳转？<a href="mailto:{{ admin_email }}?subject=%5B%E8%B7%B3%E8%BD%AC%E5%A4%B1%E6%95%88%5D%20{{ title }}%20({{ jump_id }})" style="color: #ccc;">反馈问题</a>
+    </div>
 </div>
 
 <script>

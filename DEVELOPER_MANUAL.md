@@ -20,11 +20,12 @@
 5. [日常开发流程](#5-日常开发流程)
 6. [脚本参考](#6-脚本参考)
 7. [Nginx 配置说明](#7-nginx-配置说明)
-8. [部署流程](#8-部署流程)
-9. [模板系统](#9-模板系统)
-10. [环境变量参考](#10-环境变量参考)
-11. [Git 管理策略](#11-git-管理策略)
-12. [常见问题排查](#12-常见问题排查)
+8. [运维自动化](#8-运维自动化)
+9. [部署流程](#9-部署流程)
+10. [模板系统](#10-模板系统)
+11. [环境变量参考](#11-环境变量参考)
+12. [Git 管理策略](#12-git-管理策略)
+13. [常见问题排查](#13-常见问题排查)
 
 ---
 
@@ -388,9 +389,127 @@ rewrite ^/jump/p001_short$ https://t.cn/xxxxx redirect;
 - `deploy.sh` 会跳过此文件（因为它在 VPS 上由 cron/auto_generate.py 管理）
 - 本地预览中 `/jump/*` 请求会返回提示信息（不执行实际跳转）
 
+### 安全防护配置
+
+#### Nginx Rate Limiting
+
+站点在 Nginx 层配置了双层速率限制：
+
+| 路径 | 限制 | 突发 | 超限返回 |
+|------|------|------|---------|
+| `/go/*` (资源详情) | 10 次/秒/IP | burst 20 | HTTP 429 |
+| `/jump/*` (跳转) | 10 次/秒/IP | burst 20 | HTTP 429 |
+| `/ws` (WebSocket) | 5 次/秒/IP | burst 10 | HTTP 429 |
+
+配置位置：`etc/nginx/nginx.conf` (zone 定义) + `etc/nginx/sites-available/default` (location 调用)
+
+#### Security Headers (CSP)
+
+全站启用以下安全头：
+- `X-Frame-Options: SAMEORIGIN` — 防点击劫持
+- `X-Content-Type-Options: nosniff` — 防 MIME 嗅探
+- `Content-Security-Policy` — 限制脚本/样式/图片来源（因全站内联 CSS/JS，需 `unsafe-inline`）
+- `Referrer-Policy: strict-origin-when-cross-origin` — 控制 Referer 传递
+
+配置位置：`etc/nginx/snippets/security_headers.conf`
+
+#### Cloudflare 补充防护
+
+在 Cloudflare Dashboard 可额外配置：
+
+1. **Rate Limiting Rules** (Security → WAF → Rate Limiting Rules):
+   - 路径 `/go/*`：100 次/10 秒 → JS Challenge
+   - 路径 `/jump/*`：100 次/10 秒 → JS Challenge
+2. **Bot Fight Mode** (Security → Bots)：开启，自动拦截已知爬虫
+3. **Security Level** (Security → Settings)：设为 Medium
+
 ---
 
-## 8. 部署流程
+## 8. 运维自动化
+
+### 数据备份
+
+每日备份通过 cron 定时任务执行，备份以下内容：
+- Excel 资源数据 (`pantools_export.xlsx`)
+- SQLite 数据库 (`database.db`)
+- Nginx 配置文件
+- Jinja2 模板
+- 自定义静态页面
+
+```bash
+# 在 VPS 上首次配置
+ssh -p 2222 root@37.27.246.3
+
+# 添加 crontab 任务
+crontab -e
+# 添加: 0 2 * * * /root/scripts/backup.sh
+```
+
+**备份位置**: `/root/backups/`（保留最近 7 天）  
+**脚本位置**: `/root/scripts/backup.sh`  
+**日志位置**: `/root/scripts/backup.log`
+
+**恢复备份**:
+```bash
+cd /root/backups
+tar xzf bigprc_backup_20260622_020000.tar.gz -C /tmp/restore/
+# 复制需要的文件回原位
+cp /tmp/restore/pantools_export.xlsx /root/scripts/
+cp /tmp/restore/database.db /root/scripts/
+```
+
+**远程备份（可选）**:
+```bash
+# 在 crontab 中配置 rsync 远程同步:
+0 2 * * * REMOTE_UPLOAD="user@backup-server:/backups/bigprc" /root/scripts/backup.sh
+```
+
+### SSL 证书监控
+
+每日检查 Let's Encrypt 证书有效期，剩余不足 14 天时发送邮件告警：
+
+```bash
+# 在 VPS 上首次配置
+crontab -e
+# 添加: 0 9 * * * /root/scripts/check_ssl.sh
+```
+
+**脚本位置**: `/root/scripts/check_ssl.sh`  
+**日志位置**: `/root/scripts/ssl_check.log`
+
+如需邮件告警，先安装 mailutils：
+```bash
+apt install mailutils
+```
+
+### Uptime 监控
+
+BigPRC 通过 [UptimeRobot](https://uptimerobot.com)（免费版）进行外部可用性监控。
+
+**初次设置步骤**：
+
+1. 注册账号：https://uptimerobot.com/signUp
+2. 添加监控项：
+   - **Monitor Type**: HTTP(s)
+   - **Friendly Name**: BigPRC Main Site
+   - **URL**: `https://www.bigprc.com`
+   - **Monitoring Interval**: 5 minutes
+3. 添加第二个监控：
+   - **URL**: `https://claw.bigprc.com`
+   - 同上设置
+4. 配置告警联系方式：
+   - Email: `admin@bigprc.com`
+   - 可选添加 Telegram/Discord Webhook
+
+**免费版限制**：50 个监控、5 分钟检查间隔、3 个月日志保留。对于当前需求完全足够。
+
+**故障排查**：
+- 如果 UptimeRobot 报告宕机但你自己能访问，可能是 Cloudflare 回源问题 → 检查 VPS 状态
+- 如果持续宕机 → SSH 登录 VPS 检查：`systemctl status nginx`
+
+---
+
+## 9. 部署流程
 
 ### 首次部署（VPS 初始化）
 
@@ -449,7 +568,7 @@ root/scripts/templates/detail.html             ──▶  /root/scripts/template
 
 ---
 
-## 9. 模板系统
+## 10. 模板系统
 
 ### 模板文件
 
@@ -502,7 +621,7 @@ root/scripts/templates/detail.html             ──▶  /root/scripts/template
 
 ---
 
-## 10. 环境变量参考
+## 11. 环境变量参考
 
 ### 本地 `.env` 文件（`root/scripts/.env`）
 
@@ -549,7 +668,7 @@ VPS 上需要一个**独立的** `.env` 文件（不推送 Git），包含真实
 
 ---
 
-## 11. Git 管理策略
+## 12. Git 管理策略
 
 ### 提交规则
 
@@ -576,7 +695,7 @@ VPS 上需要一个**独立的** `.env` 文件（不推送 Git），包含真实
 
 ---
 
-## 12. 常见问题排查
+## 13. 常见问题排查
 
 ### Q: `.\preview.ps1` 报错 "Generated site not found"
 
@@ -630,7 +749,7 @@ curl -I https://www.bigprc.com/go/p001  # 某个资源页面
 nano /root/scripts/.env
 ```
 
-填入真实的生产环境配置（参考第 10 节的变量列表），保存后重新运行 `auto_generate.py`。
+填入真实的生产环境配置（参考第 11 节的变量列表），保存后重新运行 `auto_generate.py`。
 
 ### Q: 网站返回 HTTP 522（Cloudflare 报错）
 
@@ -681,6 +800,34 @@ cd /root/bigprc-deploy && git pull && bash deploy.sh
 cd /root/bigprc-deploy && git pull && bash deploy.sh
 ls -la /var/www/site/web/index.html  # 应显示 -rw-r--r--（普通文件）
 ```
+
+### Q: 部署后网站异常，如何紧急回滚？
+
+**原因**：新部署的配置或代码引入了问题。  
+**解决**：使用 deploy.sh 内置回滚命令：
+
+```bash
+# SSH 登录 VPS
+ssh -p 2222 root@37.27.246.3
+cd /root/bigprc-deploy
+
+# 回滚到上一个版本
+bash deploy.sh rollback
+
+# 回滚到更早的版本（如回滚 3 个提交）
+bash deploy.sh rollback 3
+```
+
+**回滚原理**：
+1. `git reset --hard HEAD~N` 将仓库文件恢复到历史版本
+2. 由于 Nginx 配置和 Python 脚本都是软链接指向仓库，会自动跟随更新
+3. 重新执行部署步骤（symlink + cp custom-pages + nginx reload）
+4. Nginx 语法检查失败会阻止回滚，确保不会雪上加霜
+
+**局限性**：
+- 仅能回滚 Git 跟踪的配置和脚本，不能回滚自动生成的 HTML 文件
+- 不能回滚 SQLite 数据库
+- 如有未提交的 VPS 本地修改，回滚会丢失这些修改
 
 ---
 

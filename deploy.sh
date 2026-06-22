@@ -22,6 +22,37 @@ OPENCLAW_LOG="/root/openclaw.log"
 OPENCLAW_CMD="openclaw gateway"
 SITE_WEB="/var/www/site/web"
 
+# ============================================================
+# Rollback command
+#   bash deploy.sh rollback      → go back 1 commit and re-deploy
+#   bash deploy.sh rollback 3    → go back 3 commits and re-deploy
+# ============================================================
+if [ "${1:-}" = "rollback" ]; then
+    echo "=============================================="
+    echo " BigPRC 站点回滚"
+    echo " 时间: $(date '+%Y-%m-%d %H:%M:%S')"
+    echo "=============================================="
+    echo ""
+
+    cd "$DEPLOY_ROOT"
+
+    echo "最近的提交记录:"
+    git log --oneline -5
+    echo ""
+
+    STEPS="${2:-1}"
+    echo "回滚 $STEPS 个提交..."
+    git reset --hard "HEAD~${STEPS}"
+    echo ""
+    echo "已回滚到: $(git log --oneline -1)"
+    echo ""
+    echo "重新部署回滚后的文件..."
+    echo ""
+
+    # Re-run the full deploy with the rolled-back files
+    exec bash "$0"
+fi
+
 echo "=============================================="
 echo " BigPRC 站点部署开始 (Git + 软链接)"
 echo " 时间: $(date '+%Y-%m-%d %H:%M:%S')"
@@ -86,6 +117,14 @@ if [ -d "$DEPLOY_ROOT/root/scripts" ]; then
     for f in "$DEPLOY_ROOT/root/scripts/"*.py; do
         [ -f "$f" ] || continue
         ln -sf "$f" "$SCRIPTS_DIR/$(basename "$f")"
+        echo "  → $(basename "$f")"
+    done
+
+    # Also deploy shell scripts
+    for f in "$DEPLOY_ROOT/root/scripts/"*.sh; do
+        [ -f "$f" ] || continue
+        ln -sf "$f" "$SCRIPTS_DIR/$(basename "$f")"
+        chmod +x "$SCRIPTS_DIR/$(basename "$f")"
         echo "  → $(basename "$f")"
     done
 

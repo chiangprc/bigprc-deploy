@@ -12,6 +12,15 @@ server {
     include /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
+    # Custom error pages
+    error_page 404 /404.html;
+
+    # Security headers (applied to all locations that don't override add_header)
+    include /etc/nginx/snippets/security_headers.conf;
+
+    # Default cache: 1 hour for HTML pages
+    add_header Cache-Control "public, max-age=3600" always;
+
     # ==== 百度验证专属 VIP 直出通道 ====
     location = /baidu_verify_codeva-aoxFXTkapa.html {
         access_log off;
@@ -20,8 +29,9 @@ server {
         return 200 'codeva-aoxFXTkapa';
     }
 
-    # ������【最关键】精确匹配 /ws（必须放最前）
+    # ������【最关键】精确匹配 /ws（必须放最前）
     location = /ws {
+        limit_req zone=ws_zone burst=10 nodelay;
         proxy_pass http://127.0.0.1:18789;
 
         proxy_http_version 1.1;
@@ -30,8 +40,9 @@ server {
         proxy_set_header Host $host;
     }
 
-    # ������ 兼容 /ws/
+    # ������ 兼容 /ws/
     location ^~ /ws/ {
+        limit_req zone=ws_zone burst=10 nodelay;
         proxy_pass http://127.0.0.1:18789/;
 
         proxy_http_version 1.1;
@@ -40,8 +51,9 @@ server {
         proxy_set_header Host $host;
     }
 
-    # ������ 自动化跳转规则
+    # ������ 自动化跳转规则
     location /jump/ {
+        limit_req zone=jump_zone burst=20 nodelay;
         include /etc/nginx/snippets/jump_rules.conf;
         return 302 https://www.bigprc.com;
     }
@@ -51,13 +63,16 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
-    # 静态目录
+    # 静态目录 (longer cache: generated pages change infrequently)
     location /static/ {
         autoindex off;
+        include /etc/nginx/snippets/security_headers.conf;
+        add_header Cache-Control "public, max-age=604800" always;
     }
 
     # go 中转
     location /go/ {
+        limit_req zone=go_zone burst=20 nodelay;
         try_files $uri $uri/ @rewrite_go;
     }
 

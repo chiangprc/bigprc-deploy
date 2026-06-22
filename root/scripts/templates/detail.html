@@ -30,6 +30,8 @@
     .dark-mode .desc-box { background: #222; border-left-color: #5c9ce6; }
     .dark-mode .download-box { background: #2a2a2a; border-color: #444; }
     .dark-mode a.back { background: #222; }
+    .dark-mode .feedback-row { color: #666 !important; }
+    .dark-mode .feedback-row a { color: #666 !important; }
     
     /* ✅ 新增：内部蜘蛛网（相关推荐）暗黑模式适配 */
     .dark-mode .related-box { border-top-color: #333; }
@@ -56,7 +58,15 @@
             <a href="/go/{{ res_id }}_transit" class="btn-sub" target="_blank" rel="nofollow">电脑端普通通道</a>
             {% elif normal_url %}
             <a href="/go/{{ res_id }}_transit" class="btn-main" target="_blank" rel="nofollow">{{ drive_name }}提取通道</a>
+            {% else %}
+            <p style="color: #999; font-size: 14px; margin: 0 0 10px;">📭 该资源暂无可用下载链接</p>
+            <p style="font-size: 12px; color: #aaa;">
+                链接待更新，<a href="mailto:{{ admin_email }}?subject=%5B%E9%93%BE%E6%8E%A5%E7%BC%BA%E5%A4%B1%5D%20{{ title }}%20({{ res_id }})" style="color: #999;">点此反馈</a>
+            </p>
             {% endif %}
+        </div>
+        <div class="feedback-row" style="text-align: center; margin-top: 15px; font-size: 11px; color: #bbb;">
+            ⚠ 链接失效？<a href="mailto:{{ admin_email }}?subject=%5B%E5%A4%B1%E6%95%88%E5%8F%8D%E9%A6%88%5D%20{{ title }}%20({{ res_id }})" style="color: #bbb;">点此反馈</a>
         </div>
 
         <div style="font-size: 12px; color: #999; margin-top: 15px; text-align: center;">免责声明：本站仅为技术索引，不存储任何实质资源文件</div>
