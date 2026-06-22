@@ -85,6 +85,12 @@ if [ -d "$DEPLOY_ROOT/etc/nginx/sites-available" ]; then
     done
 fi
 
+    # Also symlink nginx.conf (contains gzip + rate limit zones)
+    if [ -f "$DEPLOY_ROOT/etc/nginx/nginx.conf" ]; then
+        ln -sf "$DEPLOY_ROOT/etc/nginx/nginx.conf" /etc/nginx/nginx.conf
+        echo "  → nginx.conf"
+    fi
+
 # ============================================================
 # 3. Nginx snippets（跳过自动生成的 jump_rules.conf）
 # ============================================================
