@@ -18,6 +18,11 @@
     {% endif %}
     <link rel="search" type="application/opensearchdescription+xml" href="/opensearch.xml" title="BigPRC 资源索引">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%E2%9A%93</text></svg>">
+    <script>
+    function trackEvent(name, data) {
+        if (window.clarity) { try { clarity('event', name, data); } catch(e){} }
+    }
+    </script>
     <!-- Open Graph -->
     <meta property="og:title" content="{% block og_title %}{{ self.title() }}{% endblock %}">
     <meta property="og:description" content="{% block og_description %}BigPRC 极客资源技术索引引擎{% endblock %}">
@@ -149,9 +154,6 @@
     });
 })();
 
-function trackEvent(name, data) {
-    if (window.clarity) { try { clarity('event', name, data); } catch(e){} }
-}
 (function(){
     var m = location.search.match(/[?&]from=([^&]+)/);
     if (m && window.clarity) { try { clarity('set', 'source_page', m[1]); } catch(e){} }
