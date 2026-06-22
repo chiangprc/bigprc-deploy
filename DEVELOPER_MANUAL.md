@@ -2,7 +2,7 @@
 
 > **站点**: https://www.bigprc.com  
 > **仓库**: https://github.com/chiangprc/bigprc-deploy  
-> **最后更新**: 2026-06-21
+> **最后更新**: 2026-06-22
 
 ---
 
@@ -14,18 +14,19 @@
 ## 目录
 
 1. [项目概述](#1-项目概述)
-2. [系统架构](#2-系统架构)
-3. [目录结构](#3-目录结构)
-4. [环境搭建（一次性）](#4-环境搭建一次性)
-5. [日常开发流程](#5-日常开发流程)
-6. [脚本参考](#6-脚本参考)
-7. [Nginx 配置说明](#7-nginx-配置说明)
-8. [运维自动化](#8-运维自动化)
-9. [部署流程](#9-部署流程)
-10. [模板系统](#10-模板系统)
-11. [环境变量参考](#11-环境变量参考)
-12. [Git 管理策略](#12-git-管理策略)
-13. [常见问题排查](#13-常见问题排查)
+2. [设计系统](#2-设计系统)
+3. [系统架构](#3-系统架构)
+4. [目录结构](#4-目录结构)
+5. [环境搭建（一次性）](#5-环境搭建一次性)
+6. [日常开发流程](#6-日常开发流程)
+7. [脚本参考](#7-脚本参考)
+8. [Nginx 配置说明](#8-nginx-配置说明)
+9. [运维自动化](#9-运维自动化)
+10. [部署流程](#10-部署流程)
+11. [模板系统](#11-模板系统)
+12. [环境变量参考](#12-环境变量参考)
+13. [Git 管理策略](#13-git-管理策略)
+14. [常见问题排查](#14-常见问题排查)
 
 ---
 
@@ -67,7 +68,33 @@ claw.bigprc.com   ─── OpenClaw 管理控制台
 
 ---
 
-## 2. 系统架构
+## 2. 设计系统
+
+全站遵循 **Swiss 国际主义扁平风格**。完整规范见 [docs/DESIGN_SPEC_FLAT_REDESIGN.md](docs/DESIGN_SPEC_FLAT_REDESIGN.md)。
+
+**设计令牌**：
+| 属性 | 亮色 | 暗色 |
+|------|------|------|
+| 背景 | `#ffffff` | `#121212` |
+| 前景文字 | `#1a1a1a` | `#e0e0e0` |
+| 次级文字 | `#666666` | `#999999` |
+| 边框 | `#e5e5e5` | `#2a2a2a` |
+| 主色（链接）| `#1a365d` | `#5c9ce6` |
+| 强调 CTA | `#c0392b` | `#e74c3c` |
+| 卡片底色 | `#fafafa` | `#1a1a1a` |
+
+**核心原则**：无图标、无渐变、无阴影（卡片悬浮除外）、1px 边框、4px 圆角、system-ui 字体。暗色模式通过 `<head>` 内联脚本在 DOM 渲染前设置 `[data-theme="dark"]` 属性，杜绝白屏闪烁。
+
+**页面特色**：
+- 首页：搜索框优先，移动端 `.is-searching` 全屏接管 + History API 返回键支持
+- 详情页：4 列信息网格，实心 CTA 按钮，JSON-LD 结构化数据
+- 中转页：1px 进度条替代 spinner，倒计时结束按钮升起淡入
+- 列表页：fetch `/index.json` 异步加载，客户端分页搜索
+- 全局：`:focus-visible` 键盘焦点环、6px 扁平滚动条、`@media print` 打印样式
+
+---
+
+## 3. 系统架构
 
 ### 整体数据流
 
@@ -103,7 +130,7 @@ claw.bigprc.com   ─── OpenClaw 管理控制台
 
 ---
 
-## 3. 目录结构
+## 4. 目录结构
 
 ```
 bigprc configs/                       ← 项目根目录
@@ -171,7 +198,7 @@ bigprc configs/                       ← 项目根目录
 
 ---
 
-## 4. 环境搭建（一次性）
+## 5. 环境搭建（一次性）
 
 ### Windows（PowerShell）
 
@@ -213,7 +240,7 @@ venv/bin/python3 -m pip install jinja2 python-dotenv requests
 
 ---
 
-## 5. 日常开发流程
+## 6. 日常开发流程
 
 ### 标准工作流（5 步走）
 
@@ -289,7 +316,7 @@ git push origin main
 
 ---
 
-## 6. 脚本参考
+## 7. 脚本参考
 
 ### `pantools_sync.py` — Excel → SQLite 同步
 
@@ -350,13 +377,13 @@ git push origin main
 
 ---
 
-## 7. Nginx 配置说明
+## 8. Nginx 配置说明
 
 ### 站点配置总览
 
 | 文件 | 域名 | 功能 |
 |------|------|------|
-| `sites-available/default` | `www.bigprc.com` | 主站：静态文件 + WebSocket + 跳转规则 |
+| `sites-available/default` | `www.bigprc.com` | 主站：CSP 安全头、Cache-Control 分层、Rate Limit、CORS、/ws 代理、/jump/ 302 + Referer 防盗链、/go/ rewrite、immutable 静态缓存 |
 | `sites-available/claw` | `claw.bigprc.com` | OpenClaw 管理控制台代理 |
 | `sites-available/openclaw` | `bigprc.com` | 裸域 HTTPS 转发 + 网关反向代理 |
 
@@ -425,7 +452,7 @@ rewrite ^/jump/p001_short$ https://t.cn/xxxxx redirect;
 
 ---
 
-## 8. 运维自动化
+## 9. 运维自动化
 
 ### 数据备份
 
@@ -540,7 +567,7 @@ curl -X POST "https://api.cloudflare.com/client/v4/zones/{zone_id}/purge_cache" 
 
 ---
 
-## 9. 部署流程
+## 10. 部署流程
 
 ### 首次部署（VPS 初始化）
 
@@ -599,7 +626,7 @@ root/scripts/templates/detail.html             ──▶  /root/scripts/template
 
 ---
 
-## 10. 模板系统
+## 11. 模板系统
 
 ### 模板文件
 
@@ -652,7 +679,7 @@ root/scripts/templates/detail.html             ──▶  /root/scripts/template
 
 ---
 
-## 11. 环境变量参考
+## 12. 环境变量参考
 
 ### 本地 `.env` 文件（`root/scripts/.env`）
 
@@ -699,7 +726,7 @@ VPS 上需要一个**独立的** `.env` 文件（不推送 Git），包含真实
 
 ---
 
-## 12. Git 管理策略
+## 13. Git 管理策略
 
 ### 提交规则
 
@@ -726,7 +753,7 @@ VPS 上需要一个**独立的** `.env` 文件（不推送 Git），包含真实
 
 ---
 
-## 13. 常见问题排查
+## 14. 常见问题排查
 
 ### Q: `.\preview.ps1` 报错 "Generated site not found"
 

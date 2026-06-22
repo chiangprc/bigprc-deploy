@@ -1,156 +1,156 @@
-# 🗓️ BigPRC 开发者日常工作流
+# BigPRC 日常工作流与维护手册
 
-> **如果你只记得一件事：** 手工页面改 `root/custom-pages/`，生成页面改 Excel 跑脚本。改完 `git push`，然后 VPS 跑 `bash deploy.sh`。
+> **如果你只记得一件事：** 手工页面改 `root/custom-pages/`，生成页面改 Excel 跑脚本。改完 `git push`，然后 VPS 跑 `cd /root/bigprc-deploy && bash deploy.sh && cd /root/scripts && python3 auto_generate.py`。
 
 ---
 
-## ⚡ 一分钟速查
+## 一分钟速查
 
-### 我改了手工页面（首页、工具页等）
+### 我改了模板或手工页面（首页、详情页、中转页、404 等）
 
 ```powershell
-# 1. 本地预览确认
+# 1. 本地重新生成 + 预览
 cd "Z:\Claudeek\Projects\bigprc configs"
-.\preview.ps1
+python root\scripts\auto_generate.py
+python local_server.py 8765
 
 # 2. 推送
-git add -A
-git commit -m "feat: 更新 xxx 页面"
-git push origin main
+git add -A && git commit -m "feat: xxx" && git push origin main
 ```
 
 ```bash
-# 3. VPS 部署
-ssh root@37.27.246.3
-cd /root/bigprc-deploy && bash deploy.sh
+# 3. VPS 部署 + 重新生成（一行搞定）
+ssh -p 2222 root@37.27.246.3
+cd /root/bigprc-deploy && bash deploy.sh && cd /root/scripts && python3 auto_generate.py
 ```
 
 ### 我改了资源数据（新增/修改资源）
 
 ```powershell
-# 1. 编辑 root\scripts\pantools_export.xlsx
+# 1. 编辑 Excel
+# 打开 root\scripts\pantools_export.xlsx，编辑资源数据
 
 # 2. 同步到数据库
-.\venv\Scripts\python.exe root\scripts\pantools_sync.py
+python root\scripts\pantools_sync.py
 
-# 3. 生成网站
-.\venv\Scripts\python.exe root\scripts\auto_generate.py
+# 3. （可选）AI 生成 SEO
+python root\scripts\ai_seo_writer.py 10    # 处理 10 条
+python root\scripts\ai_seo_writer.py all   # 处理全部
 
-# 4. 预览
-.\preview.ps1
+# 4. 生成全站
+python root\scripts\auto_generate.py
 
-# 5. 推送
-git add -A
-git commit -m "feat: 更新资源数据"
-git push origin main
+# 5. 本地预览
+python local_server.py 8765
+
+# 6. 推送
+git add -A && git commit -m "feat: 更新资源" && git push origin main
 ```
 
+### 我只改了 Nginx 配置
+
+```powershell
+git add -A && git commit -m "fix: nginx xxx" && git push origin main
+```
 ```bash
-# 6. VPS 部署（同步配置和脚本）
-ssh root@37.27.246.3
+ssh -p 2222 root@37.27.246.3
 cd /root/bigprc-deploy && bash deploy.sh
-
-# 7. VPS 上重新生成 HTML（如果 auto_generate.py 没配 cron）
-python3 /root/scripts/auto_generate.py
 ```
 
 ---
 
-## 🔴 三个必须记住的关键点
+## 关键提醒
 
-### ❗ 1. 两种页面，两种改法
+### 页面类型速记
 
-| 页面类型 | 在哪里改 | Git 追踪？ | VPS 怎么更新 |
-|---------|---------|-----------|------------|
-| **手工页面**（首页 `index.html`、工具页 `claudeek.html` 等） | `root/custom-pages/` | ✅ 推送 | `deploy.sh` [5/6] 自动 `cp` 到 `/var/www/site/web/` |
-| **生成页面**（资源详情页、列表页、中转页） | 改 Excel → 跑 `auto_generate.py` | ❌ 不推送 | VPS 上独立跑 `auto_generate.py` |
+| 类型 | 位置 | 修改后需要 | 部署方式 |
+|------|------|-----------|---------|
+| 手工静态页面 | `root/custom-pages/` | 直接 git push | `deploy.sh` cp 到 web/ |
+| Jinja2 模板 | `root/scripts/templates/` | 跑 `auto_generate.py` 重新生成 | `deploy.sh` ln -sf 到 /root/scripts/ |
+| Python 脚本 | `root/scripts/*.py` | 直接 git push | `deploy.sh` ln -sf 到 /root/scripts/ |
+| Nginx 配置 | `etc/nginx/` | 直接 git push | `deploy.sh` ln -sf 到 /etc/nginx/ |
+| 资源数据 | `root/scripts/pantools_export.xlsx` | 跑 `pantools_sync.py` + `auto_generate.py` | 数据在 VPS 本地，不经过 Git |
 
-> ⚠️ **绝对不要直接改 `var/www/site/web/` 下的文件！** 它们要么是自动生成的（下次生成会覆盖），要么是软链接（不受 Git 管理）。
+### 本地 vs 线上差异
 
-### ❗ 2. 本地预览 ≠ 线上网站
+| 差异点 | 本地 | VPS |
+|--------|------|-----|
+| `/jump/*` 跳转 | local_server.py 显示提示 | Nginx 执行 302 |
+| 百度 SEO 推送 | 自动跳过（try/except）| 实际推送 |
+| Nginx 规则更新 | 自动跳过（try/except）| 实际更新 |
+| index.json | 生成到 var/www/site/web/ | 生成到 /var/www/site/web/ |
+| .env 路径 | 相对路径（root/scripts/）| 绝对路径（/root/scripts/）|
 
-| 环境 | 命令 | 说明 |
+---
+
+## 完整文件地图
+
+| 改这里 | 不要碰这里 |
+|--------|-----------|
+| root/custom-pages/*.html | var/www/site/web/（自动生成）|
+| root/scripts/templates/*.html | etc/nginx/snippets/jump_rules.conf（自动生成）|
+| root/scripts/*.py | root/scripts/.env（含密钥）|
+| etc/nginx/sites-available/ | etc/letsencrypt/（证书）|
+| etc/nginx/nginx.conf | root/scripts/database.db（数据）|
+| etc/nginx/snippets/security_headers.conf | root/scripts/pantools_export.xlsx（数据）|
+| root/custom-pages/opensearch.xml | root/bashrc（含密钥）|
+| deploy.sh | |
+| local_server.py | |
+| docs/*.md | |
+
+---
+
+## 常见问题 5 秒修复
+
+| 现象 | 原因 | 修复 |
 |------|------|------|
-| 本地预览 | `.\preview.ps1` | 127.0.0.1:8765，跳转功能禁用 |
-| 线上网站 | `https://www.bigprc.com` | 通过 Cloudflare → VPS |
-
-### ❗ 3. 两套防火墙，两套规则
-
-```
-你的 Mac ──▶ Hetzner 云防火墙 ──▶ VPS 内 ufw ──▶ Nginx
-              ↑ 独立于 VPS         ↑ VPS 内的
-              在 Hetzner 网页       ufw/iptables
-              控制台配置            命令行配置
-```
-
-> 🔴 **改了端口或发现外部连不上，两套防火墙都要检查。**  
-> Hetzner 控制台 → Firewalls → ssh-firewall → 入站规则  
-> VPS 内：`ufw status`
+| 网站不更新 | VPS 没重新生成 | `cd /root/bigprc-deploy && bash deploy.sh && cd /root/scripts && python3 auto_generate.py` |
+| 模板改了不生效 | 忘记跑 auto_generate.py | 先本地 `python root\scripts\auto_generate.py` 再推送 |
+| 详情页标题不居中 | 生成文件是旧的 | 重新生成 |
+| 搜索不出结果 | index.json 没更新 | 重新生成（auto_generate.py 会输出 index.json 大小）|
+| 中转页倒计时不动 | trackEvent 未定义 | 确认 layout.html 已更新并重新部署 |
+| 部署后网站异常 | 配置/代码有问题 | VPS 跑 `bash deploy.sh rollback` |
+| 回滚多版本 | 需回到更早的版本 | VPS 跑 `bash deploy.sh rollback 3` |
+| Nginx 语法错误 | 配置有 bug | deploy.sh 会自动阻止重载，检查 `nginx -t` 输出 |
+| push 报认证错误 | GitHub token 过期 | 去 GitHub → Settings → Developer settings 换 token |
+| 404 页面不触发 | try_files 回退到 index.html | 已修复为 `=404`，重新部署 |
 
 ---
 
-## 📋 完整文件地图
+## 定时任务
+
+VPS crontab 配置：
 
 ```
-项目根目录 Z:\Claudeek\Projects\bigprc configs
+# 每天凌晨 2:00 — 备份 Excel + SQLite + Nginx配置 + 模板（保留最近 7 天）
+0 2 * * * /root/scripts/backup.sh
 
-┌── 我该改哪些文件？ ──────────────────────────────┐
-│                                                   │
-│  改首页、工具页                                   │
-│  → root/custom-pages/     【Git 追踪 ✅】         │
-│                                                   │
-│  改网站外观                                       │
-│  → root/scripts/templates/ 【Git 追踪 ✅】         │
-│                                                   │
-│  改 Nginx 服务器配置                              │
-│  → etc/nginx/              【Git 追踪 ✅】         │
-│                                                   │
-│  改资源内容                                       │
-│  → root/scripts/pantools_export.xlsx 【本地】     │
-│                                                   │
-│  ❌ 别改这里（自动生成 / 不追踪）                  │
-│  → var/www/site/web/                             │
-│  → root/scripts/database.db                       │
-│  → root/scripts/.env                              │
-│                                                   │
-└───────────────────────────────────────────────────┘
+# 每天上午 9:00 — 检查 SSL 证书有效期，不足 14 天发邮件告警
+0 9 * * * /root/scripts/check_ssl.sh
+
+# 每周一凌晨 3:00 — 检测所有资源链接是否失效
+0 3 * * 1 /usr/bin/python3 /root/scripts/check_dead_links.py
 ```
 
 ---
 
-## 🔧 常见问题 5 秒定位
-
-| 症状 | 最可能原因 | 速修 |
-|------|-----------|------|
-| 网站打不开，Cloudflare 522 | Hetzner 云防火墙 | [Hetzner 控制台](https://console.hetzner.cloud) → Firewalls → 加 TCP 80/443 |
-| 网站 403 | Nginx 权限问题 | VPS 跑 `cd /root/bigprc-deploy && bash deploy.sh` |
-| 改完页面没变化 | 没跑 deploy.sh | VPS 跑 deploy.sh |
-| 新增资源没显示 | 没跑 auto_generate.py | VPS 跑 `python3 /root/scripts/auto_generate.py` |
-| 本地 preview 报错 | 没装环境 / 没生成网站 | 先跑 `setup.ps1`，再跑 `auto_generate.py` |
-| push 报认证错误 | GitHub token 过期 | 去 GitHub → Settings → Developer settings → Personal access tokens 换新的 |
-| 部署后网站异常 | 配置/代码有问题 | VPS 跑 `bash deploy.sh rollback` 回滚到上一个版本 |
-| 回滚多版本 | 需回到更早的版本 | VPS 跑 `bash deploy.sh rollback 3`（数字代表回退几个提交） |
-
----
-
-## 🖥️ 服务器信息
+## 服务器信息
 
 | 项目 | 值 |
 |------|-----|
 | 提供商 | Hetzner |
-| 主机名 | ubuntu-4gb-hel1-17 |
 | 公网 IP | `37.27.246.3` |
-| SSH 端口 | `2222`（不是默认的 22） |
+| SSH 端口 | `2222`（不是默认的 22）|
 | 仓库路径 | `/root/bigprc-deploy` |
 | 网站目录 | `/var/www/site/web` |
+| 脚本目录 | `/root/scripts` |
+| 备份目录 | `/root/backups` |
 
 ### SSH 登录
 
 ```bash
 ssh -p 2222 root@37.27.246.3
 ```
-
-> ⚠️ SSH 端口是 **2222**，不是默认的 22。Hetzner 云防火墙也只放行了 2222。
 
 ### 紧急回滚
 
@@ -159,18 +159,28 @@ ssh -p 2222 root@37.27.246.3
 cd /root/bigprc-deploy
 bash deploy.sh rollback     # 回滚到上一个版本
 bash deploy.sh rollback 3   # 回滚 3 个版本
-# 会自动显示最近提交记录，回滚后重新部署并重载 Nginx
+```
+
+### 日常部署（一行）
+
+```bash
+ssh -p 2222 root@37.27.246.3 "cd /root/bigprc-deploy && bash deploy.sh && cd /root/scripts && python3 auto_generate.py"
 ```
 
 ---
 
-## 📚 详细文档
+## 监控与告警
 
-需要更深入的信息（脚本参数、模板变量、部署原理等），请查阅：
-
-👉 **[DEVELOPER_MANUAL.md](DEVELOPER_MANUAL.md)**
+| 工具 | 用途 | 配置位置 |
+|------|------|---------|
+| UptimeRobot | 网站可用性监控（5 分钟间隔）| uptimerobot.com |
+| check_ssl.sh | SSL 证书过期告警（< 14 天）| VPS crontab |
+| backup.sh | 数据每日备份（7 天保留）| VPS crontab |
+| check_dead_links.py | 死链每周检测 | VPS crontab |
+| Microsoft Clarity | 用户行为分析 + 热图 | layout.html 内嵌 |
+| Cloudflare | CDN + DDoS 防护 | cloudflare.com |
 
 ---
 
-> 📝 文档最后更新：2026-06-21  
-> 🤖 由 Claude Code 根据实战排查经验整理
+> 详细文档: **[DEVELOPER_MANUAL.md](DEVELOPER_MANUAL.md)** · 设计规范: **[docs/DESIGN_SPEC_FLAT_REDESIGN.md](docs/DESIGN_SPEC_FLAT_REDESIGN.md)**  
+> 项目结构: **[docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)** · 评估方案: **[docs/EVALUATION_AND_IMPROVEMENT_PLAN.md](docs/EVALUATION_AND_IMPROVEMENT_PLAN.md)**
