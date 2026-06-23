@@ -128,12 +128,12 @@
             var r = items[i];
             var tr = document.createElement('tr');
             tr.innerHTML = '<td style="text-align:left;padding-left:12px;"><a href="/go/'+r.id+'?from=list">'+esc(r.title)+'</a></td>'+
-                '<td><span style="color:var(--secondary);">'+(r.size||'-')+'</span></td>'+
-                '<td><a href="/go/'+r.id+'?from=list" target="_blank">详情</a></td>';
+                '<td style="text-align:center"><span style="color:var(--secondary);">'+(r.size||'N/A')+'</span></td>'+
+                '<td style="text-align:center"><a href="/go/'+r.id+'?from=list" target="_blank">详情</a></td>';
             tbody.appendChild(tr);
         }
         pages = Math.ceil(items.length/PER_PAGE)||1;
-        document.getElementById('pageInfo').textContent = items.length+' 条 &middot; '+page+'/'+pages;
+        document.getElementById('pageInfo').innerHTML = items.length+' 条 &middot; '+page+'/'+pages;
         document.getElementById('firstBtn').disabled = document.getElementById('prevBtn').disabled = (page<=1);
         document.getElementById('nextBtn').disabled = document.getElementById('lastBtn').disabled = (page>=pages);
         document.getElementById('jumpInput').max = pages;
