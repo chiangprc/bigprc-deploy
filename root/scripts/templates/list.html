@@ -33,6 +33,11 @@
     td { padding: 10px 8px; border-bottom: 1px solid var(--border); text-align: center; font-size: 13px; }
     tr:hover td { background: var(--card-bg); }
     td a { color: var(--text); }
+
+    /* 列对齐硬性约束 — 表头和数据锁死在同一轴线 */
+    th:nth-child(1), td:nth-child(1) { text-align: left; }    /* 资源名称: 文本左对齐 */
+    th:nth-child(2), td:nth-child(2) { text-align: right; }   /* 大小: 数值右对齐 */
+    th:nth-child(3), td:nth-child(3) { text-align: center; }  /* 操作: 链接居中对齐 */
     td a:hover { color: var(--primary); text-decoration: none; }
 
     .page-btn {
