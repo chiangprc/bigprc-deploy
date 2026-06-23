@@ -35,9 +35,9 @@
     td a { color: var(--text); }
 
     /* 列对齐硬性约束 — 表头和数据锁死在同一轴线 */
-    th:nth-child(1), td:nth-child(1) { text-align: left; }    /* 资源名称: 文本左对齐 */
-    th:nth-child(2), td:nth-child(2) { text-align: right; }   /* 大小: 数值右对齐 */
-    th:nth-child(3), td:nth-child(3) { text-align: center; }  /* 操作: 链接居中对齐 */
+    table th:nth-child(1), table td:nth-child(1) { text-align: left !important; }
+    table th:nth-child(2), table td:nth-child(2) { text-align: right !important; padding-right: 24px !important; }
+    table th:nth-child(3), table td:nth-child(3) { text-align: center !important; }
     td a:hover { color: var(--primary); text-decoration: none; }
 
     .page-btn {
@@ -133,8 +133,8 @@
             var r = items[i];
             var tr = document.createElement('tr');
             tr.innerHTML = '<td style="text-align:left;padding-left:12px;"><a href="/go/'+r.id+'?from=list">'+esc(r.title)+'</a></td>'+
-                '<td style="text-align:center"><span style="color:var(--secondary);">'+(r.size||'N/A')+'</span></td>'+
-                '<td style="text-align:center"><a href="/go/'+r.id+'?from=list" target="_blank">详情</a></td>';
+                '<td><span style="color:var(--secondary);">'+(r.size||'N/A')+'</span></td>'+
+                '<td><a href="/go/'+r.id+'?from=list" target="_blank">详情</a></td>';
             tbody.appendChild(tr);
         }
         pages = Math.ceil(items.length/PER_PAGE)||1;
