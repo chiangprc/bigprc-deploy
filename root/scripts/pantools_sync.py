@@ -101,7 +101,7 @@ def sync_excel_to_db(conn):
                 size=excluded.size,
                 normal_url=excluded.normal_url,
                 short_url=excluded.short_url,
-                seo_desc=excluded.seo_desc,
+                seo_desc=CASE WHEN excluded.seo_desc = '极客精选优质资源，全网稀缺，无广告纯净版，推荐直接转存。' THEN resources.seo_desc ELSE excluded.seo_desc END,
                 category=excluded.category,
                 platform=excluded.platform,
                 version=excluded.version,
