@@ -36,6 +36,7 @@ if len(sys.argv) > 1:
 # ================= 3. 基础配置 =================
 EXCEL_FILE = "/root/scripts/pantools_export.xlsx"
 OUTPUT_FILE = "/root/scripts/pantools_export_seo.xlsx"
+DB_FILE = os.getenv("DB_FILE", "/root/scripts/database.db")
 
 # ✅ 你的高阶玩法：模型轮询列表（按优先级从高到低）
 FALLBACK_MODELS = [
@@ -159,10 +160,15 @@ else:
     seo_col = header["seo简介"]
 
 file_col = header.get("文件名")
+# ================= 连接数据库 =================
+import sqlite3
+db = sqlite3.connect(DB_FILE)
+db.execute("PRAGMA journal_mode=WAL")
+
 cache_hits, api_calls, processed_in_this_run = 0, 0, 0
 
 for row in range(2, sheet.max_row + 1):
-    if processed_in_this_run >= PROCESS_LIMIT: 
+    if processed_in_this_run >= PROCESS_LIMIT:
         print(f"\n🛑 达到任务限额 ({PROCESS_LIMIT} 条)，程序平稳退出。")
         break
 
@@ -170,30 +176,32 @@ for row in range(2, sheet.max_row + 1):
     if not filename: continue
 
     filename_str = str(filename).strip()
-    key = normalize_filename(filename_str)
-    existing = sheet.cell(row=row, column=seo_col).value
 
-    if existing and len(str(existing).strip()) > 300 and "<p>" in str(existing):
-        eng_ratio = sum(1 for c in str(existing) if c.isalpha() and c.isascii()) / len(str(existing))
-        if eng_ratio < 0.4:
-            continue
-
-    if key in cache_dict:
-        sheet.cell(row=row, column=seo_col, value=cache_dict[key])
+    # Check if database already has good content
+    db_row = db.execute("SELECT seo_desc FROM resources WHERE title=?", (filename_str,)).fetchone()
+    if db_row and db_row[0] and len(str(db_row[0])) > 200 and "<p>" in str(db_row[0]):
         cache_hits += 1
         continue
 
     print(f"\n🤖 正在处理: {filename_str}")
     desc = generate_seo_desc(filename_str)
 
-    sheet.cell(row=row, column=seo_col, value=desc)
-    cache_dict[key] = desc
-    
-    api_calls += 1
-    processed_in_this_run += 1 
+    # Write to database immediately
+    db.execute("UPDATE resources SET seo_desc=? WHERE title=?", (desc, filename_str))
+    db.commit()
 
-    if api_calls % 5 == 0: wb.save(OUTPUT_FILE)
-    time.sleep(1) 
+    # Also save to Excel cache for backup
+    sheet.cell(row=row, column=seo_col, value=desc)
+
+    api_calls += 1
+    processed_in_this_run += 1
+
+    if api_calls % 5 == 0:
+        wb.save(OUTPUT_FILE)
+        db.commit()
+    time.sleep(1)
 
 wb.save(OUTPUT_FILE)
-print(f"========================================\n✅ 任务结束 | 🟢 缓存跳过: {cache_hits} | 🚀 AI生成: {api_calls}\n========================================")
+db.commit()
+db.close()
+print(f"========================================\n✅ 任务结束 | 🟢 DB缓存跳过: {cache_hits} | 🚀 AI生成: {api_calls}\n========================================")
