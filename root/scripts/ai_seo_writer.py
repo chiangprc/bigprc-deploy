@@ -65,8 +65,9 @@ def clean_header_name(val):
 # ================= 5. 核心调度与验证逻辑 =================
 def validate_output(text):
     if not text: raise ValueError("返回内容为空")
-    if len(text) < 300: raise ValueError(f"字数不足 ({len(text)} 字)")
-    if "<p>" not in text and "<ul>" not in text: raise ValueError("未检测到 HTML 排版标签")
+    if len(text) < 100: raise ValueError(f"字数不足 ({len(text)} 字)")
+    if len(text) > 500: raise ValueError(f"字数超限 ({len(text)} 字)")
+    if "<p>" not in text: raise ValueError("未检测到 <p> 标签")
     
     english_chars = sum(1 for c in text if c.isalpha() and c.isascii())
     if english_chars > len(text) * 0.4:
@@ -89,24 +90,17 @@ def generate_seo_desc(filename):
     for brand in forbidden_brands:
         safe_filename = safe_filename.replace(brand, "")
         
-    prompt = f"""
-你是一个资源分享站的编辑。请为资源《{safe_filename}》写一篇 500 字左右的介绍。
+    prompt = f”””
+为资源《{safe_filename}》写一篇300字以内的简介。
 
-【写作要求】
-1. 全程用简体中文。禁止说”作为一个人工智能”、”抱歉”这类话。
-2. 不要提任何网盘品牌名，用”云盘””网盘”代替。
-3. 语气像真人分享——直接、有料、不废话。不要营销口吻和emoji堆砌。
-4. 写三件事：这份资料是什么、里面具体有什么、适合谁看能解决什么问题。
-5. 避免雷同：同系列资源每篇的开场角度、亮点选取必须有明显差异，禁止套模板。
-6. 写完读一遍，像机器人写的就重写。
-
-【输出格式】直接输出 HTML：
-<p>开场（80字，一句话说清这是什么，为什么值得下载）</p>
-<p>核心内容（200字，具体说明里面有什么，不要空话）</p>
-<ul><li>亮点1</li><li>亮点2</li><li>亮点3</li></ul>
-<p>适合人群（100字，谁需要，看完能得到什么）</p>
-<p>结尾（自然收尾，60字）</p>
-"""
+要求：
+1. 简体中文。禁止说”作为一个人工智能””抱歉”。
+2. 禁止提网盘品牌名，禁止说”链接在下面””下载””转存””提取码””存盘”。
+3. 语气像朋友聊天推荐好东西。不要营销话术。
+4. 只写两段：第一段说清这是什么（100字），第二段说有什么亮点+适合谁（200字）。
+5. 不同资源的角度必须不同，禁止套模板。
+6. 直接输出两段<p>，不要<ul>、不要标题、不要结尾。总字数≤300。
+“””
     # 在这个循环里依次尝试你的模型
     for model_name in FALLBACK_MODELS:
         try:
