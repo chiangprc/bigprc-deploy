@@ -66,7 +66,7 @@ def clean_header_name(val):
 def validate_output(text):
     if not text: raise ValueError("返回内容为空")
     if len(text) < 100: raise ValueError(f"字数不足 ({len(text)} 字)")
-    if len(text) > 500: raise ValueError(f"字数超限 ({len(text)} 字)")
+    if len(text) > 450: raise ValueError(f"字数超限 ({len(text)} 字)")
     if "<p>" not in text: raise ValueError("未检测到 <p> 标签")
     
     english_chars = sum(1 for c in text if c.isalpha() and c.isascii())
@@ -99,7 +99,7 @@ def generate_seo_desc(filename):
 3. 语气像朋友聊天推荐好东西。不要营销话术。
 4. 只写两段：第一段说清这是什么（100字），第二段说有什么亮点+适合谁（200字）。
 5. 不同资源的角度必须不同，禁止套模板。
-6. 直接输出两段<p>，不要<ul>、不要标题、不要结尾。总字数≤300。
+6. 直接输出两段<p>，不要<ul>、不要标题、不要结尾。总字数严格≤350字，超了就打回重写。
 “””
     # 在这个循环里依次尝试你的模型
     for model_name in FALLBACK_MODELS:
