@@ -187,27 +187,39 @@ CREATE TABLE resource_collections (
 );
 ```
 
-### 2.3 字段映射: v1 → v2
+### 2.3 状态机职责分离
+
+| 字段 | 表 | 含义 | 可选值 |
+|------|-----|------|--------|
+| `status` | `resources` | 资源存续状态 | `active` / `archived` / `deleted` |
+| `editor_status` | `resource_content` | 内容编辑流程 | `draft` / `pending` / `approved` / `rejected` |
+
+> **首页展示条件**: `resources.status = 'active' AND resource_content.editor_status = 'approved'`
+>
+> 旧数据迁移时: `resources.status` 默认 'active', `resource_content.editor_status` 默认 'approved' (已有内容视为已审核)
+
+### 2.4 字段映射: v1 → v2
 
 | v1 字段 | v2 表.字段 | 说明 |
 |---------|-----------|------|
 | `res_id` | `resources.res_id` | 不变 |
 | `title` | `resources.title` | 不变 |
 | `size` | `resources.file_size` | 重命名 |
-| `normal_url` | `resources.source_url` | 重命名，语义从"下载"改为"来源" |
-| `short_url` | `resources.short_url` | 不变 |
+| `normal_url` | `resources.source_url` | 重命名，同时写入 `resource_access` |
+| `short_url` | `resources.short_url` | 不变，同时写入 `resource_access` |
 | `seo_desc` | `resource_content.seo_desc` | 迁移到内容层 |
 | `category` | `resources.category` | 不变 |
 | `platform` | `resources.platform` | 保留兼容 |
 | `version` | `resources.version` | 不变 |
-| `password` | `resources.password` | 不变 |
-| `rating` | `resources.rating` | 不变 |
+| `password` | `resource_access.password` | **移出主表**，作为入口属性 |
+| `rating` | `resource_metrics.rating_score` | **移出主表**，作为用户行为数据 |
 | `sync_time` | `resources.updated_at` | 重命名 |
 | `ai_generated` | `resource_content.ai_generated` | 迁移到内容层 |
 | — | `resources.official_url` | 新增 |
-| — | `resources.status` | 新增 (draft/pending/approved/archived) |
+| — | `resources.status` | 新增 (生命周期: active/archived/deleted) |
 | — | `resource_content.*` | 新增 (tagline, ai_*, editor_*) |
 | — | `resource_metrics.*` | 新增 |
+| — | `resource_access.*` | 新增 (多入口支持) |
 
 ---
 
@@ -232,8 +244,17 @@ CREATE TABLE resource_collections (
 ### 3.2 切换步骤
 
 ```
+Phase 0: Shadow Read (影子读取, 新增)
+  └── 创建 test_new_generator.py 读 v2 表
+  └── 输出与旧 auto_generate.py 对比
+  └── 确认资源数量一致、内容完整、无孤儿数据
+  └── 通过 → 进入 Phase A
+
 Phase A: 数据库扩展 (零影响)
-  └── 新建表 + 新字段 + 数据迁移
+  └── python3 migration.py plan → 审查
+  └── python3 migration.py backup → 强制备份
+  └── python3 migration.py up → 执行 001-008
+  └── python3 migration.py validate → 全部 PASS
   └── 旧 pipeline 完全不受影响
 
 Phase B: 脚本升级 (逐步)
@@ -272,12 +293,14 @@ Phase D: 清理 (稳定后)
 root/scripts/
 ├── migration.py                    ← 迁移管理器
 └── migrations/
-    ├── 001_extend_resources.sql    ← resources 新列
-    ├── 002_create_content.sql      ← resource_content 表 + 数据迁移
+    ├── 001_extend_resources.sql    ← resources 新列 + 数据迁移
+    ├── 002_create_content.sql      ← resource_content 表 + seo_desc 迁移
     ├── 003_create_metrics.sql      ← resource_metrics 表
     ├── 004_create_collections.sql  ← collections + collection_content
-    ├── 005_seed_collections.sql    ← 种子合集数据
-    └── 006_create_indexes.sql      ← 性能索引
+    ├── 005_create_access.sql       ← resource_access 表 + password 迁移
+    ├── 006_seed_collections.sql    ← 种子合集数据
+    ├── 007_create_indexes.sql      ← 性能索引
+    └── 008_validate.sql            ← 数据完整性检查
 ```
 
 ### 4.2 `migration.py` 设计
@@ -288,12 +311,18 @@ root/scripts/
 BigPRC 数据库迁移管理器
 
 用法:
-  python3 migration.py status        # 查看当前版本
+  python3 migration.py status        # 查看当前版本和待执行迁移
+  python3 migration.py plan          # DRY-RUN: 显示迁移计划，不执行
   python3 migration.py up            # 执行所有未执行的迁移
-  python3 migration.py up 003        # 执行到指定版本
-  python3 migration.py down 001      # 回滚到指定版本
+  python3 migration.py up 005        # 执行到指定版本
+  python3 migration.py validate      # 运行 008_validate 数据完整性检查
   python3 migration.py backup        # 仅备份，不迁移
-"""
+
+回滚策略:
+  本系统不提供逐条反向 SQL (SQLite DROP COLUMN 兼容性不可靠)。
+  回滚方式: 恢复迁移前的 .backup 文件。
+  迁移前会自动备份到 /root/backups/pre_migration_YYYYMMDD_HHMMSS.db
+```
 
 import os
 import sys
@@ -355,12 +384,57 @@ UPDATE resources SET status = 'approved';
 
 | # | 版本 | 内容 | 影响 |
 |---|------|------|------|
-| 1 | `001` | resources 表新增列 + 数据迁移 (normal_url→source_url, size→file_size, sync_time→updated_at) | 新增列，旧列保留 |
-| 2 | `002` | 创建 resource_content 表 + 从 resources 迁移 seo_desc, ai_generated | 新表，旧数据复制 |
+| 1 | `001` | resources 表新增列 + 数据迁移 (normal_url→source_url, size→file_size, sync_time→updated_at, status 默认 'active') | 新增列，旧列保留 |
+| 2 | `002` | 创建 resource_content 表 + 从 resources 迁移 seo_desc, ai_generated | 新表，旧值复制 |
 | 3 | `003` | 创建 resource_metrics 表 + 为已有资源初始化 score=0 | 新表 |
 | 4 | `004` | 创建 collections + collection_content 表 | 新表 |
-| 5 | `005` | 插入 9 个种子合集 | 种子数据 |
-| 6 | `006` | 创建索引 (resource_collections, metrics score, content editor_pick) | 性能 |
+| 5 | `005` | 创建 resource_access 表 + 从 resources.password/normal_url/short_url 迁移数据 | password 从主表移出 |
+| 6 | `006` | 插入 9 个种子合集 | 种子数据 |
+| 7 | `007` | 创建索引 (详见 §5.3) | 性能 |
+| 8 | `008` | 数据完整性验证 (详见 §5.4) | 只读检查 |
+
+### 5.1 关键索引 (007)
+
+```sql
+-- SEO 查询: 按编辑状态筛选
+CREATE INDEX idx_content_editor_status ON resource_content(editor_status);
+
+-- 首页热门: 按热度分排序
+CREATE INDEX idx_metrics_score ON resource_metrics(score DESC);
+
+-- 最新资源: 按更新时间排序
+CREATE INDEX idx_resources_updated ON resources(updated_at DESC);
+
+-- 合集关联查询
+CREATE INDEX idx_rc_resource ON resource_collections(resource_id);
+CREATE INDEX idx_rc_collection ON resource_collections(collection_id);
+```
+
+### 5.2 数据完整性验证 (008)
+
+```sql
+-- 检查 1: 资源与内容 1:1 对应
+SELECT 'orphan_content' AS check_name, COUNT(*) AS issue_count
+FROM resource_content WHERE resource_id NOT IN (SELECT res_id FROM resources);
+
+-- 检查 2: 资源与 metrics 1:1 对应
+SELECT 'orphan_metrics' AS check_name, COUNT(*) AS issue_count
+FROM resource_metrics WHERE resource_id NOT IN (SELECT res_id FROM resources);
+
+-- 检查 3: 合集关联无孤儿
+SELECT 'orphan_collection_ref' AS check_name, COUNT(*) AS issue_count
+FROM resource_collections WHERE resource_id NOT IN (SELECT res_id FROM resources);
+
+-- 检查 4: 数量一致性
+SELECT 'count_mismatch' AS check_name,
+       ABS((SELECT COUNT(*) FROM resources) - (SELECT COUNT(*) FROM resource_content)) AS issue_count;
+
+-- 检查 5: 访问入口无孤儿
+SELECT 'orphan_access' AS check_name, COUNT(*) AS issue_count
+FROM resource_access WHERE resource_id NOT IN (SELECT res_id FROM resources);
+
+-- 所有检查应返回 issue_count = 0
+```
 
 ---
 

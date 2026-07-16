@@ -34,52 +34,116 @@
 
 ## 2. 数据表设计
 
-### 2.1 `resources` — 资源主表 (扩展)
+### 2.1 `resources` — 核心实体 (精简为"资源身份证")
+
+> **设计原则**: resources 只保存"这个资源是什么"的不变属性。
+> 内容层 (SEO/编辑/AI) → `resource_content`
+> 行为数据 (浏览/点击/评分) → `resource_metrics`
+> 访问入口 (官网/GitHub/网盘) → `resource_access`
 
 ```sql
--- 现有字段 (保持不变)
-res_id          TEXT PRIMARY KEY,       -- e.g. "p001"
-title           TEXT NOT NULL,          -- 资源标题
-size            TEXT,                   -- 文件大小
-normal_url      TEXT,                   -- 普通网盘链接
-short_url       TEXT,                   -- 短链
-seo_desc        TEXT,                   -- SEO 描述 (HTML)
-category        TEXT,                   -- 分类 (e.g. "AI编程")
-platform        TEXT,                   -- 平台 (e.g. "Mac,Windows")
-version         TEXT,                   -- 版本号
-password        TEXT,                   -- 提取码
-rating          TEXT,                   -- 评分
-sync_time       TIMESTAMP,              -- Excel 同步时间
-ai_generated    INTEGER DEFAULT 0,      -- SEO 描述是否 AI 生成
+CREATE TABLE resources (
+    -- === 核心标识 (不变) ===
+    res_id       TEXT PRIMARY KEY,       -- e.g. "p001"
+    title        TEXT NOT NULL,          -- 资源标题
+    category     TEXT,                   -- 分类 (e.g. "AI编程")
+    version      TEXT,                   -- 版本号
+    platform     TEXT,                   -- 平台 (保留兼容, 逐步被 resource_access 替代)
 
--- v2.0 新增: 一句话定位
-tagline         TEXT,                   -- 一句话定位 (e.g. "AI 驱动的终端开发助手")
-                                        -- AI 可生成候选，编辑确认
+    -- === v2: URL 语义化 ===
+    source_url   TEXT,                   -- 资源来源 URL (原 normal_url, 重命名去"下载"语义)
+    short_url    TEXT,                   -- 短链 (保留)
+    official_url TEXT,                   -- 官方网站 (新增)
 
--- v2.0 新增: 编辑体系
-editor_status   TEXT DEFAULT 'pending', -- 'pending' | 'approved' | 'rejected'
-editor_pick     INTEGER DEFAULT 0,      -- 1 = 编辑精选 (首页展示)
-editor_reason   TEXT,                   -- 编辑推荐理由 (一句话)
-editor_not_for  TEXT,                   -- 什么时候不用它 (边界说明)
-editor_reviewed_at TIMESTAMP,           -- 编辑最后审核时间
+    -- === v2: 生命周期状态 (只管理资源存续，不管理内容质量) ===
+    status       TEXT DEFAULT 'active',  -- 'active' | 'archived' | 'deleted'
 
--- v2.0 新增: AI 元数据
-ai_summary      TEXT,                   -- AI 生成的短摘要 (50字以内)
-ai_keywords     TEXT,                   -- AI 关键词 (JSON array string)
-ai_reason_candidates TEXT,              -- AI 生成的推荐理由候选 (JSON array, 3-5条)
-                                          -- 编辑可从中选择一条设为 editor_reason
+    -- === v2: 元数据 ===
+    language     TEXT,                   -- 语言 (e.g. "简体中文/English")
+    license      TEXT,                   -- 许可证 (e.g. "MIT", "免费", "付费")
+    file_size    TEXT,                   -- 文件大小 (原 size, 重命名更明确)
 
--- v2.0 新增: 展示元数据
-meta_platform   TEXT,                   -- 支持的平台 (结构化 JSON: ["Mac","Windows"])
-meta_official_url TEXT,                 -- 官方网站
-meta_language   TEXT,                   -- 语言 (e.g. "简体中文/English")
-meta_license    TEXT,                   -- 许可证 (e.g. "开源/MIT", "免费", "付费")
-meta_updated_at TEXT,                   -- 资源最后更新时间
+    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- 原 sync_time
+);
+```
 
--- v2.0 新增: 统计 (由脚本更新)
-view_count      INTEGER DEFAULT 0,      -- 浏览量
-click_count     INTEGER DEFAULT 0,      -- 点击量
-score_popular   REAL DEFAULT 0.0,       -- 热度分 (计算字段, 定时更新)
+> **v1→v2 迁移说明**:
+> - `size` → `file_size` (重命名)
+> - `normal_url` → `source_url` (重命名，去"下载"语义)
+> - `password` → 移入 `resource_access` 表
+> - `rating` → 移入 `resource_metrics` 表
+> - `sync_time` → `updated_at` (重命名)
+> - `seo_desc`, `ai_generated` → 移入 `resource_content` 表
+> - 旧字段不删除，保留至 Phase D 清理阶段
+
+### 2.2 `resource_content` — 内容层 (SEO/编辑/AI)
+
+> 资源不变，内容持续迭代。拆出独立表避免频繁更新主表。
+
+```sql
+CREATE TABLE resource_content (
+    resource_id          TEXT PRIMARY KEY,
+    tagline              TEXT,       -- 一句话定位 (15字以内)
+    seo_desc             TEXT,       -- SEO 描述 HTML (从旧表迁移)
+    ai_generated         INTEGER DEFAULT 0,
+
+    -- AI 生成
+    ai_summary           TEXT,       -- AI 短摘要 (50字以内)
+    ai_keywords          TEXT,       -- AI 关键词 (JSON array)
+    ai_reason_candidates TEXT,       -- AI 推荐理由候选 (JSON array, 3-5条)
+
+    -- 编辑流程 (管理内容质量，与 resources.status 职责分离)
+    editor_status   TEXT DEFAULT 'draft',  -- 'draft' | 'pending' | 'approved' | 'rejected'
+    editor_pick     INTEGER DEFAULT 0,     -- 1 = 编辑精选 (首页展示)
+    editor_reason   TEXT,                  -- 编辑推荐理由 (一句话)
+    editor_not_for  TEXT,                  -- 什么时候不用它
+    editor_reviewed_at TIMESTAMP,
+
+    FOREIGN KEY (resource_id) REFERENCES resources(res_id)
+);
+```
+
+> **状态机职责分离**:
+> - `resources.status` → 管理资源存续: `active` (存在) | `archived` (归档) | `deleted` (删除)
+> - `resource_content.editor_status` → 管理内容质量: `draft` (草稿) | `pending` (待审) | `approved` (通过) | `rejected` (驳回)
+>
+> **首页展示条件**: `resources.status = 'active' AND resource_content.editor_status = 'approved'`
+
+### 2.3 `resource_metrics` — 行为数据
+
+> 热度分数是动态计算，不是资源属性。独立表方便未来调整公式。
+
+```sql
+CREATE TABLE resource_metrics (
+    resource_id   TEXT PRIMARY KEY,
+    view_count    INTEGER DEFAULT 0,
+    click_count   INTEGER DEFAULT 0,
+    fav_count     INTEGER DEFAULT 0,
+    score         REAL DEFAULT 0.0,    -- 热度分 = views*0.3 + clicks*0.4 + favs*0.3
+    rating_score  REAL DEFAULT 0.0,    -- 用户评分 (原 rating 迁移至此)
+    rating_count  INTEGER DEFAULT 0,
+    updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (resource_id) REFERENCES resources(res_id)
+);
+```
+
+### 2.4 `resource_access` — 访问入口 (新建)
+
+> 一个资源可以有多个访问入口: 官网、GitHub、网盘、镜像。
+> 原 `password` 字段移入此表，作为入口属性而非资源属性。
+
+```sql
+CREATE TABLE resource_access (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    resource_id  TEXT NOT NULL,
+    type         TEXT NOT NULL,        -- 'official' | 'github' | 'source' | 'mirror' | 'short'
+    url          TEXT NOT NULL,
+    password     TEXT,                 -- 提取码 (仅网盘类入口使用)
+    priority     INTEGER DEFAULT 0,    -- 优先级，数字越小越优先展示
+    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (resource_id) REFERENCES resources(res_id)
+);
 ```
 
 ### 2.2 `collections` — 合集表 (新建)
