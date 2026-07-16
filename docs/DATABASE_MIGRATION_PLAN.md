@@ -293,14 +293,14 @@ Phase D: 清理 (稳定后)
 root/scripts/
 ├── migration.py                    ← 迁移管理器
 └── migrations/
-    ├── 001_extend_resources.sql    ← resources 新列 + 数据迁移
-    ├── 002_create_content.sql      ← resource_content 表 + seo_desc 迁移
-    ├── 003_create_metrics.sql      ← resource_metrics 表
-    ├── 004_create_collections.sql  ← collections + collection_content
-    ├── 005_create_access.sql       ← resource_access 表 + password 迁移
-    ├── 006_seed_collections.sql    ← 种子合集数据
-    ├── 007_create_indexes.sql      ← 性能索引
-    └── 008_validate.sql            ← 数据完整性检查
+    ├── 001_create_schema_version.sql  ← _migrations 版本追踪表
+    ├── 002_resources_v2.sql           ← resources 新列 + CHECK 约束 + 数据迁移
+    ├── 003_resource_content.sql       ← resource_content 表 + seo_desc 迁移
+    ├── 004_resource_metrics.sql       ← resource_metrics 表 + rating 迁移
+    ├── 005_resource_access.sql        ← resource_access 表 + password 迁移
+    ├── 006_collections.sql            ← collections + collection_content + resource_collections
+    ├── 007_indexes.sql                ← 性能索引
+    └── 008_validate_v2.sql            ← 数据完整性检查
 ```
 
 ### 4.2 `migration.py` 设计
@@ -310,18 +310,74 @@ root/scripts/
 """
 BigPRC 数据库迁移管理器
 
+数据库路径: 从 /root/scripts/.env 读取 DB_FILE
+  VPS 生产: DB_FILE=/root/scripts/database.db
+  本地开发: DB_FILE=./database.db
+
 用法:
   python3 migration.py status        # 查看当前版本和待执行迁移
   python3 migration.py plan          # DRY-RUN: 显示迁移计划，不执行
-  python3 migration.py up            # 执行所有未执行的迁移
-  python3 migration.py up 005        # 执行到指定版本
-  python3 migration.py validate      # 运行 008_validate 数据完整性检查
+  python3 migration.py up            # 执行所有未执行的迁移 (自动备份 → 执行 → validate)
+  python3 migration.py validate      # 运行 008_validate_v2 数据完整性检查
   python3 migration.py backup        # 仅备份，不迁移
 
+流程:
+  status/plan → 审查
+  backup      → 强制备份 (也包含在 up 中自动执行)
+  up          → 自动备份 → 逐条执行 → 写 _migrations 表 → validate
+  validate    → 5 项检查全部 PASS 才算成功
+
 回滚策略:
-  本系统不提供逐条反向 SQL (SQLite DROP COLUMN 兼容性不可靠)。
-  回滚方式: 恢复迁移前的 .backup 文件。
-  迁移前会自动备份到 /root/backups/pre_migration_YYYYMMDD_HHMMSS.db
+  不提供逐条反向 SQL (SQLite DROP COLUMN 兼容性不可靠)。
+  回滚方式: 恢复迁移前自动备份的 .db 文件。
+  备份路径: /root/backups/pre_migration_YYYYMMDD_HHMMSS.db
+```
+
+### 4.3 `migration.py` 输出示例
+
+```
+$ python3 migration.py status
+Current version: 0 (no migrations applied)
+Pending: 001, 002, 003, 004, 005, 006, 007, 008
+
+$ python3 migration.py plan
+=== Migration Plan (DRY-RUN) ===
+
+Backup will be created at:
+  /root/backups/pre_migration_20260717_120000.db
+
+Migrations to execute:
+  001_create_schema_version.sql
+  002_resources_v2.sql           (ALTER TABLE + UPDATE ~1267 rows)
+  003_resource_content.sql       (CREATE TABLE + INSERT ~1267 rows)
+  004_resource_metrics.sql       (CREATE TABLE + INSERT ~1267 rows)
+  005_resource_access.sql        (CREATE TABLE + INSERT from password/urls)
+  006_collections.sql            (CREATE 3 tables + 9 seed rows)
+  007_indexes.sql                (CREATE 5 indexes)
+  008_validate_v2.sql            (5 integrity checks)
+
+WARNING: No changes will be made. Use 'up' to execute.
+
+$ python3 migration.py up
+[1/8] 001_create_schema_version.sql ... OK
+[2/8] 002_resources_v2.sql ............ OK (1267 rows)
+[3/8] 003_resource_content.sql ........ OK (1267 rows)
+[4/8] 004_resource_metrics.sql ........ OK (1267 rows)
+[5/8] 005_resource_access.sql ......... OK
+[6/8] 006_collections.sql ............ OK (9 collections)
+[7/8] 007_indexes.sql ................ OK (5 indexes)
+[8/8] 008_validate_v2.sql ............ ALL PASS
+Migration complete. Version: 008
+
+$ python3 migration.py validate
+✅ resources: 1267 rows
+✅ resource_content: 1267 rows (linked)
+✅ resource_metrics: 1267 rows (linked)
+✅ resource_access: N rows (linked)
+✅ collections: 9 rows
+✅ orphan resources: 0
+✅ orphan collection refs: 0
+ALL CHECKS PASSED
 ```
 
 import os
@@ -382,16 +438,18 @@ UPDATE resources SET status = 'approved';
 
 ## 5. 迁移顺序
 
-| # | 版本 | 内容 | 影响 |
-|---|------|------|------|
-| 1 | `001` | resources 表新增列 + 数据迁移 (normal_url→source_url, size→file_size, sync_time→updated_at, status 默认 'active') | 新增列，旧列保留 |
-| 2 | `002` | 创建 resource_content 表 + 从 resources 迁移 seo_desc, ai_generated | 新表，旧值复制 |
-| 3 | `003` | 创建 resource_metrics 表 + 为已有资源初始化 score=0 | 新表 |
-| 4 | `004` | 创建 collections + collection_content 表 | 新表 |
-| 5 | `005` | 创建 resource_access 表 + 从 resources.password/normal_url/short_url 迁移数据 | password 从主表移出 |
-| 6 | `006` | 插入 9 个种子合集 | 种子数据 |
-| 7 | `007` | 创建索引 (详见 §5.3) | 性能 |
-| 8 | `008` | 数据完整性验证 (详见 §5.4) | 只读检查 |
+| # | 文件 | 内容 | CHECK 约束 |
+|---|------|------|-----------|
+| 1 | `001_create_schema_version.sql` | 创建 `_migrations` 版本追踪表 | — |
+| 2 | `002_resources_v2.sql` | ALTER TABLE 新增列 + 数据迁移 + CHECK(status) | `CHECK(status IN ('active','archived','deleted'))` |
+| 3 | `003_resource_content.sql` | 创建 resource_content + 迁移 seo_desc/ai_generated + CHECK(editor_status) | `CHECK(editor_status IN ('draft','pending','approved','rejected'))` |
+| 4 | `004_resource_metrics.sql` | 创建 resource_metrics + 迁移 rating | — |
+| 5 | `005_resource_access.sql` | 创建 resource_access + 迁移 password/normal_url/short_url | — |
+| 6 | `006_collections.sql` | 创建 collections + collection_content + resource_collections + 9 条种子数据 | — |
+| 7 | `007_indexes.sql` | 创建 5 个性能索引 | — |
+| 8 | `008_validate_v2.sql` | 5 项数据完整性检查 | — |
+
+> **旧字段不删除**: 所有 v1 字段 (normal_url, size, password, rating, sync_time, seo_desc) 在 Phase D 之前保留。新脚本同时读写新旧字段。旧 auto_generate.py 不受影响。
 
 ### 5.1 关键索引 (007)
 

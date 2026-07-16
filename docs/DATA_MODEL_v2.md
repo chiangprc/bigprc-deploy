@@ -56,7 +56,7 @@ CREATE TABLE resources (
     official_url TEXT,                   -- 官方网站 (新增)
 
     -- === v2: 生命周期状态 (只管理资源存续，不管理内容质量) ===
-    status       TEXT DEFAULT 'active',  -- 'active' | 'archived' | 'deleted'
+    status       TEXT DEFAULT 'active' CHECK(status IN ('active','archived','deleted')),
 
     -- === v2: 元数据 ===
     language     TEXT,                   -- 语言 (e.g. "简体中文/English")
@@ -94,7 +94,7 @@ CREATE TABLE resource_content (
     ai_reason_candidates TEXT,       -- AI 推荐理由候选 (JSON array, 3-5条)
 
     -- 编辑流程 (管理内容质量，与 resources.status 职责分离)
-    editor_status   TEXT DEFAULT 'draft',  -- 'draft' | 'pending' | 'approved' | 'rejected'
+    editor_status   TEXT DEFAULT 'draft' CHECK(editor_status IN ('draft','pending','approved','rejected')),
     editor_pick     INTEGER DEFAULT 0,     -- 1 = 编辑精选 (首页展示)
     editor_reason   TEXT,                  -- 编辑推荐理由 (一句话)
     editor_not_for  TEXT,                  -- 什么时候不用它
