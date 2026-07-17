@@ -23,8 +23,8 @@ ALTER TABLE resources ADD COLUMN official_url TEXT;
 ALTER TABLE resources ADD COLUMN file_size TEXT;
 ALTER TABLE resources ADD COLUMN language TEXT;
 ALTER TABLE resources ADD COLUMN license TEXT;
-ALTER TABLE resources ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE resources ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE resources ADD COLUMN created_at TIMESTAMP;
+ALTER TABLE resources ADD COLUMN updated_at TIMESTAMP;
 
 -- Step 2: 数据迁移 — 旧值复制到新列
 
