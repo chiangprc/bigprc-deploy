@@ -176,14 +176,20 @@ EXT_PLATFORM = {
 }
 
 
-def detect_file_format(title):
-    """根据文件名扩展名确定 file_format (纯程序判断)."""
-    if not title:
-        return None
-    t = title.lower().rstrip(")")
-    for ext, fmt in sorted(FILE_FORMATS.items(), key=lambda x: -len(x[0])):
-        if t.endswith(ext) or f"{ext})" in t:
-            return fmt
+def detect_file_format(title, url=None):
+    """根据文件名或 URL 扩展名确定 file_format (纯程序判断)."""
+    # 优先从标题检测
+    if title:
+        t = title.lower().rstrip(")")
+        for ext, fmt in sorted(FILE_FORMATS.items(), key=lambda x: -len(x[0])):
+            if t.endswith(ext) or f"{ext})" in t:
+                return fmt
+    # fallback: 从 source_url 检测
+    if url:
+        u = url.lower().rstrip(")")
+        for ext, fmt in sorted(FILE_FORMATS.items(), key=lambda x: -len(x[0])):
+            if f".{ext.lower()}" in u or f"{ext})" in u:
+                return fmt
     return None
 
 
@@ -235,7 +241,8 @@ def get_unclassified(cursor, force=False, limit=None, random_order=False):
     query = f"""
         SELECT r.res_id, r.title, COALESCE(r.seo_desc, '') AS seo_desc,
                COALESCE(r.category, '') AS category,
-               COALESCE(r.platform, '') AS platform
+               COALESCE(r.platform, '') AS platform,
+               COALESCE(r.source_url, r.normal_url, '') AS source_url
         FROM resources r
         WHERE {where}
         ORDER BY {order}
@@ -328,8 +335,8 @@ JSON only:
 {{"category":"NaturalScience","platform":"Video","resource_type":"NatureDocumentary"}}"""
 
 
-def classify(title, seo_desc=""):
-    """调用 AI 分类，返回 {category, platform, resource_type} 或 None."""
+def classify(title, seo_desc="", source_url=""):
+    """调用 AI 分类，返回 {category, platform, resource_type, file_format} 或 None."""
     prompt = build_prompt(title, seo_desc)
 
     try:
@@ -347,8 +354,8 @@ def classify(title, seo_desc=""):
         platform_ai = str(data.get("platform", "Other")).strip()
         resource_type = str(data.get("resource_type", "Other")).strip()
 
-        # 文件格式: 纯程序检测
-        file_format = detect_file_format(title)
+        # 文件格式: 纯程序检测 (标题 → 降级 URL)
+        file_format = detect_file_format(title, source_url)
 
         # 真实平台: 程序优先 (apk→Android, exe→Windows), AI 兜底
         platform_ext = detect_platform_from_title(title)
@@ -439,10 +446,10 @@ def main():
 
     ok, fail = 0, 0
     for idx, row in enumerate(resources, 1):
-        res_id, title, seo_desc, old_cat, old_plat = row
+        res_id, title, seo_desc, old_cat, old_plat, source_url = row
         print(f"[{idx}/{len(resources)}] {res_id}  {title[:50]}")
 
-        result = classify(title, seo_desc)
+        result = classify(title, seo_desc, source_url)
         if result:
             save_classification(cursor, res_id, result["category"],
                                 result["platform"], result["resource_type"],
