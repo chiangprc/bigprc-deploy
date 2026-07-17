@@ -154,7 +154,7 @@ def validate_round1_output(data):
     ai_keywords = data.get("ai_keywords", [])
     confidence  = data.get("confidence", 0.5)
 
-    validate_text(tagline, "tagline", max_len=20)
+    validate_text(tagline, "tagline", max_len=50)
     validate_text(ai_summary, "ai_summary", max_len=80)
 
     if not isinstance(ai_keywords, list):
@@ -281,7 +281,7 @@ def build_round1_prompt(title, category, platform, version, seo_desc="", resourc
 
 Output JSON with four fields:
 
-1. tagline (max 15 chars): editorial positioning. Combine "what it is" + "why it matters".
+1. tagline (max 50 chars): editorial positioning. Combine "what it is" + "why it matters".
    NEVER end with "documentary" "software" "tool" "course" "game" "book".
 2. ai_summary (max 50 chars): what problem, who is it for. No templates.
 3. ai_keywords (5-8 precise terms): searchable, specific. Never "software" "tool" "resource".
