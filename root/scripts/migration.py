@@ -387,7 +387,7 @@ def cmd_validate():
 
         # 检查 4: 索引存在
         required_indexes = [
-            'idx_content_editor_status',
+            'idx_content_editor_pick',
             'idx_metrics_score',
             'idx_resources_updated',
             'idx_rc_resource',
