@@ -105,57 +105,95 @@ PLATFORM_CN = {
     "Other":         "其他",
 }
 
-# 文件扩展名 → platform 映射 (优先于 AI 判断)
-EXT_PLATFORM = {
+# 文件扩展名 → file_format (程序自动检测, AI 不负责)
+FILE_FORMATS = {
     ".pdf":  "PDF",
-    ".epub": "Ebook",
-    ".mobi": "Ebook",
-    ".azw3": "Ebook",
-    ".djvu": "Ebook",
-    ".doc":  "PDF",
-    ".docx": "PDF",
-    ".txt":  "PDF",
-    ".xls":  "PDF",
-    ".xlsx": "PDF",
-    ".ppt":  "PDF",
-    ".pptx": "PDF",
-    ".cbr":  "Ebook",
-    ".cbz":  "Ebook",
-    ".chm":  "Ebook",
-    ".zip":  "Other",
-    ".rar":  "Other",
-    ".7z":   "Other",
-    ".tar":  "Other",
-    ".gz":   "Other",
-    ".apk":  "Android",
-    ".exe":  "Windows",
-    ".msi":  "Windows",
-    ".dmg":  "Mac",
-    ".pkg":  "Mac",
-    ".deb":  "Linux",
-    ".iso":  "Other",
-    ".mp4":  "Video",
-    ".mkv":  "Video",
-    ".avi":  "Video",
-    ".mov":  "Video",
-    ".mp3":  "Audio",
-    ".flac": "Audio",
-    ".wav":  "Audio",
-    ".jpg":  "Image",
-    ".png":  "Image",
-    ".gif":  "Image",
-    ".webp": "Image",
-    ".psd":  "Image",
+    ".epub": "EPUB",
+    ".mobi": "MOBI",
+    ".azw3": "AZW3",
+    ".djvu": "DJVU",
+    ".doc":  "DOC",
+    ".docx": "DOCX",
+    ".txt":  "TXT",
+    ".xls":  "XLS",
+    ".xlsx": "XLSX",
+    ".ppt":  "PPT",
+    ".pptx": "PPTX",
+    ".cbr":  "CBR",
+    ".cbz":  "CBZ",
+    ".chm":  "CHM",
+    ".rtf":  "RTF",
+    ".csv":  "CSV",
+    ".md":   "MD",
+    ".zip":  "ZIP",
+    ".rar":  "RAR",
+    ".7z":   "7Z",
+    ".tar":  "TAR",
+    ".gz":   "GZ",
+    ".bz2":  "BZ2",
+    ".apk":  "APK",
+    ".exe":  "EXE",
+    ".msi":  "MSI",
+    ".dmg":  "DMG",
+    ".pkg":  "PKG",
+    ".deb":  "DEB",
+    ".app":  "APP",
+    ".iso":  "ISO",
+    ".mp4":  "MP4",
+    ".mkv":  "MKV",
+    ".avi":  "AVI",
+    ".mov":  "MOV",
+    ".wmv":  "WMV",
+    ".flv":  "FLV",
+    ".webm": "WEBM",
+    ".ts":   "TS",
+    ".mp3":  "MP3",
+    ".flac": "FLAC",
+    ".wav":  "WAV",
+    ".aac":  "AAC",
+    ".ogg":  "OGG",
+    ".wma":  "WMA",
+    ".jpg":  "JPG",
+    ".jpeg": "JPEG",
+    ".png":  "PNG",
+    ".gif":  "GIF",
+    ".webp": "WEBP",
+    ".bmp":  "BMP",
+    ".svg":  "SVG",
+    ".psd":  "PSD",
+    ".ai":   "AI",
+}
+
+# 文件扩展名 → platform (仅真实平台, 不含文件格式)
+EXT_PLATFORM = {
+    ".apk": "Android",
+    ".exe": "Windows",
+    ".msi": "Windows",
+    ".dmg": "Mac",
+    ".pkg": "Mac",
+    ".deb": "Linux",
+    ".app": "Mac",
 }
 
 
-def detect_platform_from_title(title):
-    """根据文件名扩展名检测 platform，覆盖 AI 误判 (docx→PDF 等)."""
+def detect_file_format(title):
+    """根据文件名扩展名确定 file_format (纯程序判断)."""
     if not title:
         return None
     t = title.lower().rstrip(")")
-    for ext, plat in EXT_PLATFORM.items():
-        if t.endswith(ext) or (ext + ")") in t:
+    for ext, fmt in sorted(FILE_FORMATS.items(), key=lambda x: -len(x[0])):
+        if t.endswith(ext) or f"{ext})" in t:
+            return fmt
+    return None
+
+
+def detect_platform_from_title(title):
+    """根据文件名扩展名检测真实平台 (apk→Android, exe→Windows)."""
+    if not title:
+        return None
+    t = title.lower().rstrip(")")
+    for ext, plat in sorted(EXT_PLATFORM.items(), key=lambda x: -len(x[0])):
+        if t.endswith(ext) or f"{ext})" in t:
             return plat
     return None
 
@@ -169,7 +207,7 @@ def ensure_columns(cursor):
         "PRAGMA table_info(resources)"
     ).fetchall())
 
-    for col in ["category", "platform"]:
+    for col in ["category", "platform", "file_format"]:
         if col not in existing:
             print(f"   → 新增列: resources.{col}")
             cursor.execute(f"ALTER TABLE resources ADD COLUMN {col} TEXT")
@@ -207,11 +245,11 @@ def get_unclassified(cursor, force=False, limit=None, random_order=False):
     return cursor.execute(query).fetchall()
 
 
-def save_classification(cursor, res_id, category, platform, resource_type):
+def save_classification(cursor, res_id, category, platform, resource_type, file_format=None):
     """写入分类结果到 resources + resource_content."""
     cursor.execute("""
-        UPDATE resources SET category=?, platform=? WHERE res_id=?
-    """, (category, platform, res_id))
+        UPDATE resources SET category=?, platform=?, file_format=? WHERE res_id=?
+    """, (category, platform, file_format, res_id))
 
     cursor.execute("""
         INSERT INTO resource_content (resource_id, resource_type)
@@ -309,7 +347,10 @@ def classify(title, seo_desc=""):
         platform_ai = str(data.get("platform", "Other")).strip()
         resource_type = str(data.get("resource_type", "Other")).strip()
 
-        # 扩展名检测覆盖 AI 的 platform (docx → PDF, apk → Android)
+        # 文件格式: 纯程序检测
+        file_format = detect_file_format(title)
+
+        # 真实平台: 程序优先 (apk→Android, exe→Windows), AI 兜底
         platform_ext = detect_platform_from_title(title)
         platform = platform_ext if platform_ext else platform_ai
 
@@ -320,6 +361,7 @@ def classify(title, seo_desc=""):
             "category": category,
             "platform": platform,
             "resource_type": resource_type,
+            "file_format": file_format,
         }
     except Exception as e:
         print(f"   ❌ {e}")
@@ -403,10 +445,12 @@ def main():
         result = classify(title, seo_desc)
         if result:
             save_classification(cursor, res_id, result["category"],
-                                result["platform"], result["resource_type"])
+                                result["platform"], result["resource_type"],
+                                result["file_format"])
             conn.commit()
             ok += 1
-            print(f"   ✅ {result['category']} | {result['platform']} | {result['resource_type']}")
+            fmt = result['file_format'] or ""
+            print(f"   ✅ {result['category']} | {result['platform']} | {fmt} | {result['resource_type']}")
         else:
             fail += 1
 
