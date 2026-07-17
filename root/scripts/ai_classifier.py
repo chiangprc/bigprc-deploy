@@ -69,6 +69,96 @@ VALID_TYPES = {
     "Other",
 }
 
+# 英文→中文映射 (前端展示用)
+CATEGORY_CN = {
+    "NaturalScience":   "自然科学",
+    "HistoryCulture":   "历史文化",
+    "TravelGeography":  "旅行地理",
+    "ArtDesign":        "艺术设计",
+    "FoodLifestyle":    "美食生活",
+    "SoftwareTool":     "软件工具",
+    "DevProgramming":   "编程开发",
+    "AITech":           "AI技术",
+    "DesignCreative":   "设计创意",
+    "BusinessCareer":   "商业职场",
+    "StudyCourse":      "课程学习",
+    "EbookRead":        "电子书籍",
+    "GamePlay":         "游戏娱乐",
+    "KidsEducation":    "儿童教育",
+    "ChineseCulture":   "传统文化",
+    "Other":            "其他",
+}
+
+PLATFORM_CN = {
+    "Windows":       "Windows",
+    "Mac":           "Mac",
+    "Linux":         "Linux",
+    "Web":           "网页",
+    "iOS":           "iOS",
+    "Android":       "Android",
+    "CrossPlatform": "跨平台",
+    "Video":         "视频",
+    "PDF":           "PDF",
+    "Ebook":         "电子书",
+    "Audio":         "音频",
+    "Image":         "图片",
+    "Other":         "其他",
+}
+
+# 文件扩展名 → platform 映射 (优先于 AI 判断)
+EXT_PLATFORM = {
+    ".pdf":  "PDF",
+    ".epub": "Ebook",
+    ".mobi": "Ebook",
+    ".azw3": "Ebook",
+    ".djvu": "Ebook",
+    ".doc":  "PDF",
+    ".docx": "PDF",
+    ".txt":  "PDF",
+    ".xls":  "PDF",
+    ".xlsx": "PDF",
+    ".ppt":  "PDF",
+    ".pptx": "PDF",
+    ".cbr":  "Ebook",
+    ".cbz":  "Ebook",
+    ".chm":  "Ebook",
+    ".zip":  "Other",
+    ".rar":  "Other",
+    ".7z":   "Other",
+    ".tar":  "Other",
+    ".gz":   "Other",
+    ".apk":  "Android",
+    ".exe":  "Windows",
+    ".msi":  "Windows",
+    ".dmg":  "Mac",
+    ".pkg":  "Mac",
+    ".deb":  "Linux",
+    ".iso":  "Other",
+    ".mp4":  "Video",
+    ".mkv":  "Video",
+    ".avi":  "Video",
+    ".mov":  "Video",
+    ".mp3":  "Audio",
+    ".flac": "Audio",
+    ".wav":  "Audio",
+    ".jpg":  "Image",
+    ".png":  "Image",
+    ".gif":  "Image",
+    ".webp": "Image",
+    ".psd":  "Image",
+}
+
+
+def detect_platform_from_title(title):
+    """根据文件名扩展名检测 platform，覆盖 AI 误判 (docx→PDF 等)."""
+    if not title:
+        return None
+    t = title.lower().rstrip(")")
+    for ext, plat in EXT_PLATFORM.items():
+        if t.endswith(ext) or (ext + ")") in t:
+            return plat
+    return None
+
 # ============================================================
 # 3. 数据库
 # ============================================================
@@ -215,12 +305,16 @@ def classify(title, seo_desc=""):
         raw = response.choices[0].message.content.strip()
         data = json.loads(raw)
 
-        category = str(data.get("category", "其他")).strip()
-        platform = str(data.get("platform", "其他")).strip()
-        resource_type = str(data.get("resource_type", "other")).strip()
+        category = str(data.get("category", "Other")).strip()
+        platform_ai = str(data.get("platform", "Other")).strip()
+        resource_type = str(data.get("resource_type", "Other")).strip()
+
+        # 扩展名检测覆盖 AI 的 platform (docx → PDF, apk → Android)
+        platform_ext = detect_platform_from_title(title)
+        platform = platform_ext if platform_ext else platform_ai
 
         if resource_type not in VALID_TYPES:
-            resource_type = "other"
+            resource_type = "Other"
 
         return {
             "category": category,
