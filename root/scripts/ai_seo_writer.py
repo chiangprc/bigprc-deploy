@@ -144,8 +144,7 @@ def validate_text(text, field_name, max_len=None):
 def validate_round1_output(data):
     """校验 Round 1 JSON 输出 → 清洗后 dict.
 
-    Returns: {"tagline": str, "ai_summary": str, "ai_keywords": str(JSON array)}
-    Raises:  ValueError on failure
+    Returns: {"tagline", "ai_summary", "ai_keywords", "confidence"} or raises ValueError.
     """
     if not isinstance(data, dict):
         raise ValueError("Round 1 输出必须是 JSON 对象")
@@ -153,6 +152,7 @@ def validate_round1_output(data):
     tagline     = data.get("tagline", "")
     ai_summary  = data.get("ai_summary", "")
     ai_keywords = data.get("ai_keywords", [])
+    confidence  = data.get("confidence", 0.5)
 
     validate_text(tagline, "tagline", max_len=20)
     validate_text(ai_summary, "ai_summary", max_len=80)
@@ -170,10 +170,18 @@ def validate_round1_output(data):
             raise ValueError("ai_keywords 包含空值")
         cleaned_kw.append(str(kw).strip())
 
+    # Normalize confidence
+    try:
+        confidence = float(confidence)
+        confidence = max(0.0, min(1.0, confidence))
+    except (TypeError, ValueError):
+        confidence = 0.5
+
     return {
         "tagline":     tagline.strip(),
         "ai_summary":  ai_summary.strip(),
         "ai_keywords": json.dumps(cleaned_kw, ensure_ascii=False),
+        "confidence":  confidence,
     }
 
 
@@ -213,42 +221,55 @@ def validate_round2_output(data):
 # 4. AI 生成 — Prompt 构建 + 模型调用
 # ============================================================
 
-def build_round1_prompt(title, category, platform, version):
-    """Round 1: 一次性生成 tagline + ai_summary + ai_keywords."""
+def build_round1_prompt(title, category, platform, version, seo_desc=""):
+    """Round 1: 一次性生成 tagline + ai_summary + ai_keywords + confidence."""
     context_parts = [f"资源名称：{title}"]
-    if category: context_parts.append(f"分类：{category}")
-    if platform: context_parts.append(f"平台：{platform}")
-    if version:  context_parts.append(f"版本：{version}")
+    if category:  context_parts.append(f"分类：{category}")
+    if platform:  context_parts.append(f"平台：{platform}")
+    if version:   context_parts.append(f"版本：{version}")
+    if seo_desc:  context_parts.append(f"已有简介：{seo_desc[:200]}")
     context = "\n".join(context_parts)
 
-    return f"""为以下资源生成内容信息。
+    return f"""你是 BigPRC 数字资源策展编辑。
 
 {context}
 
-要求：
-1. 输出严格 JSON 格式，包含三个字段
-2. tagline：15字以内，说明"它是什么 + 最大价值"
-   - 正确示例："AI辅助编程编辑器"、"跨平台笔记应用"、"开源向量数据库"
-   - 错误示例："强大的AI代码编辑器"、"非常好用的笔记软件"
-3. ai_summary：50字以内，回答"这个工具解决什么问题？适合什么人？"
-   - 正确示例："面向开发者的AI代码编辑工具，支持代码补全和智能问答，适合提升日常开发效率"
-4. ai_keywords：5-8个中文关键词数组，从功能、场景、用户群体角度提取
+请生成四字段 JSON：
 
-禁止：
-- 使用"强大的""顶级的""最好的""世界领先""无与伦比"等营销词
-- 说"作为一个人工智能""抱歉""无法提供"
-- 套用模板，每条资源内容必须不同
+1. tagline（≤15字）：策展推荐语，不是分类标签。
+   规则：
+   - 告诉用户"为什么值得关注"，不是"它是什么类别"
+   - 不出现"纪录片""软件""工具"等分类词作为主体
+   - 不重复标题
+   - 像编辑推荐，不像百科条目
+   - 如果标题信息不足无法确定内容，保守描述，不要猜测具体类型
+   正确："探索地球生命运行规律""帮助开发者提升编码效率""观察顶级猎食者的生存智慧"
+   错误："自然纪录片""AI工具""编程软件""新闻资讯平台"
 
-只输出 JSON，不要任何其他文字：
-{{"tagline":"...","ai_summary":"...","ai_keywords":["...","..."]}}"""
+2. ai_summary（≤50字）：回答"解决什么问题？适合什么人？"
+   正确："面向开发者的AI代码编辑工具，支持代码补全和智能问答，适合提升日常开发效率"
+
+3. ai_keywords（5-8个中文词）：从功能、场景、用户群体角度提取，有搜索价值
+   正确：["AI编程","代码助手","开发工具","自动补全"]
+   错误：["软件","工具","资源"]
+
+4. confidence（0-1 数字）：你对 tagline 准确性的信心。已有简介明确则 >0.9，标题模糊则 <0.7
+
+禁止：使用"强大的""顶级的""最好的""世界领先""神器""必备""必装"等营销词。
+禁止：说"作为一个人工智能""抱歉""无法提供"。
+禁止：套用模板，每条资源内容必须不同。
+
+只输出 JSON：
+{{"tagline":"...","ai_summary":"...","ai_keywords":["...","..."],"confidence":0.9}}"""
 
 
-def build_round2_prompt(title, category, platform, summary):
+def build_round2_prompt(title, category, platform, summary, seo_desc=""):
     """Round 2: 生成 ai_reason_candidates (推荐理由候选)."""
     context_parts = [f"资源名称：{title}"]
     if category: context_parts.append(f"分类：{category}")
     if platform: context_parts.append(f"平台：{platform}")
     if summary:  context_parts.append(f"简介：{summary}")
+    if seo_desc: context_parts.append(f"详细描述：{seo_desc[:200]}")
     context = "\n".join(context_parts)
 
     return f"""为以下资源生成推荐理由候选。
@@ -351,12 +372,12 @@ def call_ai_with_fallback(prompt, is_json=True):
     return None
 
 
-def generate_round1(title, category="", platform="", version=""):
-    """Round 1: 一次 API 调用生成 tagline + ai_summary + ai_keywords.
+def generate_round1(title, category="", platform="", version="", seo_desc=""):
+    """Round 1: 一次 API 调用生成 tagline + ai_summary + ai_keywords + confidence.
 
-    Returns: {"tagline", "ai_summary", "ai_keywords"} or None
+    Returns: {"tagline", "ai_summary", "ai_keywords", "confidence"} or None
     """
-    prompt = build_round1_prompt(title, category, platform, version)
+    prompt = build_round1_prompt(title, category, platform, version, seo_desc)
     data = call_ai_with_fallback(prompt, is_json=True)
 
     if data is None:
@@ -369,12 +390,12 @@ def generate_round1(title, category="", platform="", version=""):
         return None
 
 
-def generate_round2(title, category="", platform="", summary=""):
+def generate_round2(title, category="", platform="", summary="", seo_desc=""):
     """Round 2: 生成 ai_reason_candidates.
 
     Returns: JSON string of reason candidates array, or None
     """
-    prompt = build_round2_prompt(title, category, platform, summary)
+    prompt = build_round2_prompt(title, category, platform, summary, seo_desc)
     data = call_ai_with_fallback(prompt, is_json=True)
 
     if data is None:
@@ -426,10 +447,11 @@ def get_pending_resources(cursor, round_num, force=False, limit=None):
 
     query = f"""
         SELECT r.res_id, r.title,
-               COALESCE(r.category, '')  AS category,
-               COALESCE(r.platform, '')  AS platform,
-               COALESCE(r.version, '')   AS version,
-               COALESCE(rc.ai_summary, '') AS ai_summary
+               COALESCE(r.category, '')   AS category,
+               COALESCE(r.platform, '')   AS platform,
+               COALESCE(r.version, '')    AS version,
+               COALESCE(rc.ai_summary, '') AS ai_summary,
+               COALESCE(r.seo_desc, '')   AS seo_desc
         FROM resources r
         LEFT JOIN resource_content rc ON r.res_id = rc.resource_id
         WHERE {where}
@@ -884,6 +906,7 @@ def main():
             platform = row[3] or ""
             version  = row[4] or ""
             summary  = row[5] or ""
+            seo_desc = row[6] or ""
 
             print(f"[{idx}/{len(resources)}] {res_id}  {title[:55]}")
 
@@ -899,13 +922,13 @@ def main():
                     print(f"   ⏭️  all fields filled")
                     stats["r1_skip"] += 1
                 else:
-                    data = generate_round1(title, category, platform, version)
+                    data = generate_round1(title, category, platform, version, seo_desc)
                     if data:
                         save_round1(cursor, res_id, data, force=force)
                         conn.commit()
                         stats["r1_gen"] += 1
                         summary = data["ai_summary"]  # 传给 Round 2 使用
-                        print(f"   ✅ tagline={data['tagline']}")
+                        print(f"   ✅ tagline={data['tagline']}  (conf={data['confidence']:.0%})")
                     else:
                         stats["r1_fail"] += 1
 
@@ -915,7 +938,7 @@ def main():
                     print(f"   ⏭️  reason_candidates filled")
                     stats["r2_skip"] += 1
                 else:
-                    reasons = generate_round2(title, category, platform, summary)
+                    reasons = generate_round2(title, category, platform, summary, seo_desc)
                     if reasons:
                         save_round2(cursor, res_id, reasons, force=force)
                         conn.commit()
