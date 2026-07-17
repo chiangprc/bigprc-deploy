@@ -53,9 +53,20 @@ MODEL = "deepseek-chat"
 
 # resource_type 枚举 (英文标签, 前端映射为中文)
 VALID_TYPES = {
-    "SoftwareTool", "Course", "Documentary", "Ebook",
-    "CulturalArchive", "Game", "DevResource", "TemplateAssets",
-    "Dataset", "Other",
+    "NatureDocumentary", "WildlifeDoc", "EarthScience", "OceanDoc", "SpaceDoc",
+    "HistoryDocumentary", "WarDoc", "CivilizationDoc", "ReligionDoc", "PhilosophyText",
+    "TravelDocumentary", "GeographyDoc", "CityDoc", "RailwayDoc",
+    "ArchitectureDoc", "ArtDocumentary", "MusicDoc", "DesignCourse", "PhotographyBook",
+    "UtilitySoftware", "ProductivityApp", "Plugin", "IDE",
+    "DevTool", "OpenSourceProject", "CodeLibrary", "Framework", "GitHubRepo",
+    "AITool", "AIModel", "AICourse", "PromptSet",
+    "MarketingCourse", "BusinessBook", "OperationsTool",
+    "VideoCourse", "Tutorial", "Textbook", "SkillTraining",
+    "Dictionary", "LiteratureCollection", "ReferenceBook", "ClassicText",
+    "PCGame", "GameMod", "SimulationGame",
+    "KidsAnimation", "EducationalVideo", "ChildrensBook",
+    "TaoistText", "BuddhistScripture", "ClassicalLiterature", "TraditionalMedicine",
+    "Other",
 }
 
 # ============================================================
@@ -124,43 +135,69 @@ def save_classification(cursor, res_id, category, platform, resource_type):
 # ============================================================
 
 def build_prompt(title, seo_desc):
-    """构造分类 prompt (v3: 统一分类体系, 15类以内)."""
+    """构造分类 prompt (v4: category = user browsing intent, not file type)."""
     parts = [f"Title: {title}"]
     if seo_desc:
         parts.append(f"Description: {seo_desc[:300]}")
     context = "\n".join(parts)
 
-    return f"""Classify this digital resource. Based on the title and description, determine its category, platform, and type.
+    return f"""Classify this digital resource for a curated content library. The goal is to help users DISCOVER resources, not just label them.
 
 {context}
 
-Output JSON with three fields:
+Output JSON with three DISTINCT fields (category and resource_type must NOT be the same):
 
-1. category (pick one):
-   AITool / DevTool / DesignTool / ProductivityTool / OfficeTool /
-   Course / Marketing / Ebook / Documentary / Game /
-   TemplateAssets / Dataset / TraditionalCulture / OpenSource / Other
+1. category — the BROWSING shelf a user would look under. Pick ONE:
+   NaturalScience (自然/地球/动物/生态/海洋/宇宙/环境)
+   HistoryCulture (历史/文明/战争/考古/人文/哲学/宗教)
+   TravelGeography (旅行/地理/探险/城市/铁路)
+   ArtDesign (艺术/建筑/绘画/音乐/摄影/设计)
+   FoodLifestyle (美食/生活/园艺/手工/健康)
+   SoftwareTool (软件/应用/工具/插件)
+   DevProgramming (编程/开发/GitHub/开源/框架)
+   AITech (AI/机器学习/深度学习/大模型)
+   DesignCreative (设计工具/创意/3D/视频编辑)
+   BusinessCareer (商业/运营/营销/创业/管理)
+   StudyCourse (课程/教程/学习/培训)
+   EbookRead (电子书/书籍/词典/文献/小说)
+   GamePlay (游戏/模组/MOD/模拟)
+   KidsEducation (儿童/启蒙/动画/早教)
+   ChineseCulture (国学/中医/道家/道教/佛教/古籍/传统文化)
+   Other
 
-2. platform (pick one):
+2. platform — storage medium or access method:
    Windows / Mac / Linux / Web / iOS / Android / CrossPlatform /
-   Video / PDF / Ebook / Other
+   Video / PDF / Ebook / Audio / Image / Other
 
-3. resource_type (pick one):
-   SoftwareTool / Course / Documentary / Ebook /
-   CulturalArchive / Game / DevResource / TemplateAssets / Dataset / Other
+3. resource_type — specific subtype, must be DIFFERENT from category. Examples:
+   For NaturalScience: NatureDocumentary / WildlifeDoc / EarthScience / OceanDoc / SpaceDoc
+   For HistoryCulture: HistoryDocumentary / WarDoc / CivilizationDoc / ReligionDoc / PhilosophyText
+   For TravelGeography: TravelDocumentary / GeographyDoc / CityDoc / RailwayDoc
+   For ArtDesign: ArchitectureDoc / ArtDocumentary / MusicDoc / DesignCourse / PhotographyBook
+   For SoftwareTool: UtilitySoftware / ProductivityApp / Plugin / IDE
+   For DevProgramming: DevTool / OpenSourceProject / CodeLibrary / Framework / GitHubRepo
+   For AITech: AITool / AIModel / AICourse / PromptSet
+   For BusinessCareer: MarketingCourse / BusinessBook / OperationsTool
+   For StudyCourse: VideoCourse / Tutorial / Textbook / SkillTraining
+   For EbookRead: Dictionary / LiteratureCollection / ReferenceBook / ClassicText
+   For GamePlay: PCGame / GameMod / SimulationGame
+   For KidsEducation: KidsAnimation / EducationalVideo / ChildrensBook
+   For ChineseCulture: TaoistText / BuddhistScripture / ClassicalLiterature / TraditionalMedicine
+   For Other: Other
 
-Rules:
-- BBC/NationalGeographic/Discovery/IMAX/History productions -> category=Documentary, resource_type=Documentary
-- Video tutorials, editing courses, livestream commerce courses -> category=Course, resource_type=Course
-- Taoism/Buddhism/scriptures/rituals/religious texts -> category=TraditionalCulture, resource_type=CulturalArchive
-- Dictionary collections, complete literary works, book sets -> category=Ebook, resource_type=Ebook
-- Douyin/operations/personal branding courses -> category=Marketing, resource_type=Course
-- Films/TV series/animations -> category=Documentary, resource_type=Documentary
-- Do NOT use generic labels like "media" or "other" unless truly unclassifiable
-- If unsure, use Other
+Rules (IMPORTANT):
+- category and resource_type MUST be different! Never output Documentary for both.
+- BBC Planet Earth is about nature -> category=NaturalScience, resource_type=NatureDocumentary
+- BBC Empire is about history -> category=HistoryCulture, resource_type=HistoryDocumentary
+- BBC Bombay Railway is about railways/travel -> category=TravelGeography, resource_type=RailwayDoc
+- Taoist PDF manuscripts -> category=ChineseCulture, resource_type=TaoistText
+- A video editing course -> category=StudyCourse, resource_type=VideoCourse
+- A Windows ZIP tool -> category=SoftwareTool, resource_type=UtilitySoftware
+- A children's English learning animation -> category=KidsEducation, resource_type=KidsAnimation
+- Use the Description field (seo_desc) to understand what the resource is ABOUT, not just its format
 
 JSON only:
-{{"category":"Documentary","platform":"Video","resource_type":"Documentary"}}"""
+{{"category":"NaturalScience","platform":"Video","resource_type":"NatureDocumentary"}}"""
 
 
 def classify(title, seo_desc=""):
