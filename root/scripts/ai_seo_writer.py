@@ -222,42 +222,61 @@ def validate_round2_output(data):
 # ============================================================
 
 def build_round1_prompt(title, category, platform, version, seo_desc=""):
-    """Round 1: 一次性生成 tagline + ai_summary + ai_keywords + confidence."""
+    """Round 1: category-aware 生成 tagline + ai_summary + ai_keywords + confidence."""
     context_parts = [f"资源名称：{title}"]
-    if category:  context_parts.append(f"分类：{category}")
+    if category:  context_parts.append(f"资源分类：{category}")
     if platform:  context_parts.append(f"平台：{platform}")
     if version:   context_parts.append(f"版本：{version}")
-    if seo_desc:  context_parts.append(f"已有简介：{seo_desc[:200]}")
+    if seo_desc:  context_parts.append(f"已有描述：{seo_desc[:250]}")
     context = "\n".join(context_parts)
 
-    return f"""你是 BigPRC 数字资源策展编辑。
+    # 根据分类给出不同的 tagline 规则
+    cat_lower = (category or "").lower()
+    if any(w in cat_lower for w in ["纪录", "电影", "视频", "影视", "动画", "剧集"]):
+        type_rule = """你是 BigPRC 数字资源策展编辑。这是一个影音/纪录片类资源。
+tagline 规则：主题 + 为什么值得看。例如：
+  正确："探索地球生命运行规律""揭开猫科动物生存密码""非洲大陆的壮丽生态画卷"
+  错误："自然纪录片""BBC纪录片""视频资源"
+  禁止用"纪录片""电影""视频"作为 tagline 主体词。"""
+    elif any(w in cat_lower for w in ["软件", "工具", "应用", "app", "程序", "插件", "ide", "开发"]):
+        type_rule = """你是 BigPRC 数字资源策展编辑。这是一个软件/工具类资源。
+tagline 规则：解决什么 + 最大价值。例如：
+  正确："AI辅助编程，提升开发效率""跨平台笔记与知识管理""自动化测试与部署工具"
+  错误："AI工具""编程软件""开发工具"
+  禁止用"软件""工具""应用"作为 tagline 主体词。"""
+    elif any(w in cat_lower for w in ["课程", "教程", "学习", "教育", "培训", "书籍", "电子书", "文档"]):
+        type_rule = """你是 BigPRC 数字资源策展编辑。这是一个课程/学习类资源。
+tagline 规则：学习目标 + 适合人群。例如：
+  正确："零基础掌握Python数据分析""系统学习机器学习核心算法"
+  错误："编程课程""学习资源""教程"
+  禁止用"课程""教程""书籍"作为 tagline 主体词。"""
+    elif any(w in cat_lower for w in ["游戏", "mod", "模拟", "rpg", "fps", "策略"]):
+        type_rule = """你是 BigPRC 数字资源策展编辑。这是一个游戏类资源。
+tagline 规则：核心体验 + 独特之处。例如：
+  正确："沉浸式开放世界角色扮演""策略卡牌构筑与对战"
+  错误："动作游戏""策略游戏""RPG游戏"
+  禁止用"游戏"作为 tagline 主体词。"""
+    else:
+        type_rule = """你是 BigPRC 数字资源策展编辑。
+tagline 规则：最值得关注的独特价值，不是分类标签。例如：
+  正确："探索地球生命运行规律""帮助开发者提升编码效率"
+  错误："资源合集""工具集合""网站服务"
+  禁止用分类词作为 tagline 主体。"""
+
+    return f"""{type_rule}
 
 {context}
 
-请生成四字段 JSON：
+生成四个字段的 JSON：
 
-1. tagline（≤15字）：策展推荐语，不是分类标签。
-   规则：
-   - 告诉用户"为什么值得关注"，不是"它是什么类别"
-   - 不出现"纪录片""软件""工具"等分类词作为主体
-   - 不重复标题
-   - 像编辑推荐，不像百科条目
-   - 如果标题信息不足无法确定内容，保守描述，不要猜测具体类型
-   正确："探索地球生命运行规律""帮助开发者提升编码效率""观察顶级猎食者的生存智慧"
-   错误："自然纪录片""AI工具""编程软件""新闻资讯平台"
+1. tagline（≤15字）：按上述规则写策展推荐语。必须体现独特价值，不与标题重复。
+2. ai_summary（≤50字）：回答"解决什么问题？适合什么人？"。不套模板。
+3. ai_keywords（5-8个中文词）：有搜索价值的精确词。不用"软件""工具""资源"等泛词。
+4. confidence（0-1）：tagline 准确性信心。有详细描述 >0.9，仅有标题 <0.7。
 
-2. ai_summary（≤50字）：回答"解决什么问题？适合什么人？"
-   正确："面向开发者的AI代码编辑工具，支持代码补全和智能问答，适合提升日常开发效率"
-
-3. ai_keywords（5-8个中文词）：从功能、场景、用户群体角度提取，有搜索价值
-   正确：["AI编程","代码助手","开发工具","自动补全"]
-   错误：["软件","工具","资源"]
-
-4. confidence（0-1 数字）：你对 tagline 准确性的信心。已有简介明确则 >0.9，标题模糊则 <0.7
-
-禁止：使用"强大的""顶级的""最好的""世界领先""神器""必备""必装"等营销词。
-禁止：说"作为一个人工智能""抱歉""无法提供"。
-禁止：套用模板，每条资源内容必须不同。
+禁止："强大的""顶级的""最好的""神器""必备""必装""强烈推荐"等营销词。
+禁止："作为一个人工智能""抱歉""无法提供"。
+禁止：套用模板，每条必须不同。
 
 只输出 JSON：
 {{"tagline":"...","ai_summary":"...","ai_keywords":["...","..."],"confidence":0.9}}"""
