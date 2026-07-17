@@ -221,84 +221,86 @@ def validate_round2_output(data):
 # 4. AI 生成 — Prompt 构建 + 模型调用
 # ============================================================
 
-def build_round1_prompt(title, category, platform, version, seo_desc=""):
-    """Round 1: category-aware 生成 tagline + ai_summary + ai_keywords + confidence."""
-    context_parts = [f"资源名称：{title}"]
-    if category:  context_parts.append(f"资源分类：{category}")
-    if platform:  context_parts.append(f"平台：{platform}")
-    if version:   context_parts.append(f"版本：{version}")
-    if seo_desc:  context_parts.append(f"已有描述：{seo_desc[:250]}")
+def build_round1_prompt(title, category, platform, version, seo_desc="", resource_type=""):
+    """Round 1: category-aware + resource_type tagline/summary/keywords/confidence."""
+    context_parts = [f"Title: {title}"]
+    if category:       context_parts.append(f"Category: {category}")
+    if resource_type:  context_parts.append(f"Type: {resource_type}")
+    if platform:       context_parts.append(f"Platform: {platform}")
+    if version:        context_parts.append(f"Version: {version}")
+    if seo_desc:       context_parts.append(f"Description: {seo_desc[:250]}")
     context = "\n".join(context_parts)
 
-    # 根据分类给出不同的 tagline 规则
-    cat_lower = (category or "").lower()
-    if any(w in cat_lower for w in ["纪录", "电影", "视频", "影视", "动画", "剧集"]):
-        type_rule = """你是 BigPRC 数字资源策展编辑。这是一个影音/纪录片类资源。
-tagline 规则（必须同时满足）：
-  ✅ 必须：主题内容 + 为什么值得关注
-  ✅ 正确："探索地球生命运行规律""揭开猫科动物生存密码""非洲大陆的壮丽生态画卷""深入观察海洋巨兽生命奥秘"
-  ❌ 禁止以"纪录片""电影""视频"结尾（那是分类，不是定位）
-  ❌ 错误："自然纪录片""BBC纪录片系列""野生动物纪录片""海洋生物纪录片系列"
-  ❌ 禁止："自然纪录片，展现XX"（逗号前后都是分类词）"""
-    elif any(w in cat_lower for w in ["软件", "工具", "应用", "app", "程序", "插件", "ide", "开发"]):
-        type_rule = """你是 BigPRC 数字资源策展编辑。这是一个软件/工具类资源。
-tagline 规则（必须同时满足）：
-  ✅ 必须：解决什么问题 + 用户获得什么价值
-  ✅ 正确："AI辅助编程，提升开发效率""跨平台笔记与知识管理""零基础快速搭建网站"
-  ❌ 禁止以"软件""工具""应用""平台"结尾
-  ❌ 错误："AI编程工具""开发软件""效率工具" """
-    elif any(w in cat_lower for w in ["课程", "教程", "学习", "教育", "培训", "书籍", "电子书", "文档"]):
-        type_rule = """你是 BigPRC 数字资源策展编辑。这是一个课程/学习类资源。
-tagline 规则（必须同时满足）：
-  ✅ 必须：学习目标 + 适合谁
-  ✅ 正确："零基础掌握Python数据分析""系统学习机器学习核心算法"
-  ❌ 禁止以"课程""教程""书籍"结尾
-  ❌ 错误："编程课程""学习资源""Python教程" """
-    elif any(w in cat_lower for w in ["游戏", "mod", "模拟", "rpg", "fps", "策略"]):
-        type_rule = """你是 BigPRC 数字资源策展编辑。这是一个游戏类资源。
-tagline 规则（必须同时满足）：
-  ✅ 必须：核心体验 + 独特之处
-  ✅ 正确："沉浸式开放世界角色扮演""策略卡牌构筑与对战"
-  ❌ 禁止以"游戏"为结尾
-  ❌ 错误："动作游戏""策略游戏""RPG游戏" """
-    else:
-        type_rule = """你是 BigPRC 数字资源策展编辑。
-tagline 规则（必须同时满足）：
-  ✅ 必须：它是什么 + 为什么值得关注
-  ✅ 正确："探索地球生命运行规律""帮助开发者提升编码效率"
-  ❌ 禁止以分类词结尾
-  ❌ 错误："资源合集""工具集合""网站服务" """
+    DOC_CATS = {"NaturalScience","HistoryCulture","TravelGeography","ArtDesign","FoodLifestyle","ChineseCulture"}
+    SW_CATS  = {"SoftwareTool","DevProgramming","AITech","DesignCreative"}
+    COURSE_CATS = {"StudyCourse","BusinessCareer"}
+    BOOK_CATS   = {"EbookRead"}
+    GAME_CATS   = {"GamePlay"}
+    KIDS_CATS   = {"KidsEducation"}
 
-    return f"""{type_rule}
+    cat_set = {category} if category else set()
+    if cat_set & DOC_CATS:
+        rule = """Documentary/video resource. Tagline: theme + why it matters.
+  Good: "Uncover the survival code of big cats" "Africa's magnificent ecological tapestry"
+  Bad: "Nature documentary" "BBC documentary series"
+  NEVER end with "documentary" "video" "film" -- those are labels, not positioning."""
+    elif cat_set & SW_CATS:
+        rule = """Software/tool resource. Tagline: problem solved + value gained.
+  Good: "AI-powered coding, faster development" "Cross-platform knowledge management"
+  Bad: "AI tool" "Programming software"
+  NEVER end with "software" "tool" "app" "platform"."""
+    elif cat_set & COURSE_CATS:
+        rule = """Course/learning resource. Tagline: learning goal + who it's for.
+  Good: "Master Python data analysis from scratch" "Systematic ML fundamentals"
+  Bad: "Programming course" "Python tutorial"
+  NEVER end with "course" "tutorial" "textbook"."""
+    elif cat_set & BOOK_CATS:
+        rule = """Ebook/document resource. Tagline: core content + reader benefit.
+  Good: "Comprehensive dictionary collection for scholars"
+  Bad: "Book collection" "PDF bundle"
+  NEVER end with "book" "ebook" "PDF"."""
+    elif cat_set & GAME_CATS:
+        rule = """Game/mod resource. Tagline: core experience + unique feature.
+  Good: "Immersive open-world role-playing" "Strategic card drafting"
+  Bad: "Action game" "Strategy game"
+  NEVER end with "game" "mod"."""
+    elif cat_set & KIDS_CATS:
+        rule = """Kids education resource. Tagline: what kids learn + how.
+  Good: "Fun English phonics for ages 3-6" "Animated science for preschoolers"
+  Bad: "Kids video" "Children education"
+  NEVER end with "video" "animation" "course"."""
+    else:
+        rule = """General resource. Tagline: unique value, not a category label.
+  Good: "Explore how Earth's life system works" "Boost coding efficiency with AI"
+  Bad: "Resource collection" "Tool set"
+  NEVER end with a generic category word."""
+
+    return f"""{rule}
 
 {context}
 
-生成四个字段的 JSON：
+Output JSON with four fields:
 
-1. tagline（≤15字）：必须同时包含"内容/功能是什么" + "为什么值得关注"。
-   ❌ 禁止以"纪录片""软件""工具""课程""游戏"结尾——那是分类，不是定位。
-   ✅ 正确："探索地球生命运行规律""提升代码效率的AI开发助手""零基础掌握数据分析"
-   ❌ 错误："自然纪录片""AI编程工具""海洋生物纪录片系列"
+1. tagline (max 15 chars): editorial positioning. Combine "what it is" + "why it matters".
+   NEVER end with "documentary" "software" "tool" "course" "game" "book".
+2. ai_summary (max 50 chars): what problem, who is it for. No templates.
+3. ai_keywords (5-8 precise terms): searchable, specific. Never "software" "tool" "resource".
+4. confidence (0-1): tagline accuracy. Rich description -> >0.9. Title only -> <0.7.
 
-2. ai_summary（≤50字）：回答"解决什么问题？适合什么人？"。不套模板。
-3. ai_keywords（5-8个中文词）：有搜索价值的精确词。不用"软件""工具""资源"等泛词。
-4. confidence（0-1）：tagline 准确性信心。有详细描述 >0.9，仅有标题 <0.7。
+No marketing buzzwords. No "As an AI" apologies. Every resource unique.
 
-禁止："强大的""顶级的""最好的""神器""必备""必装""强烈推荐"等营销词。
-禁止："作为一个人工智能""抱歉""无法提供"。
-禁止：套用模板，每条必须不同。
-
-只输出 JSON：
+JSON only:
 {{"tagline":"...","ai_summary":"...","ai_keywords":["...","..."],"confidence":0.9}}"""
 
 
-def build_round2_prompt(title, category, platform, summary, seo_desc=""):
+def build_round2_prompt(title, category, platform, summary, seo_desc="", resource_type=""):
     """Round 2: 生成 ai_reason_candidates (推荐理由候选)."""
     context_parts = [f"资源名称：{title}"]
     if category: context_parts.append(f"分类：{category}")
     if platform: context_parts.append(f"平台：{platform}")
     if summary:  context_parts.append(f"简介：{summary}")
-    if seo_desc: context_parts.append(f"详细描述：{seo_desc[:200]}")
+    if seo_desc:       context_parts.append(f"详细描述：{seo_desc[:200]}")
+    if resource_type:  context_parts.append(f"Type: {resource_type}")
     context = "\n".join(context_parts)
 
     return f"""为以下资源生成推荐理由候选。
@@ -401,12 +403,12 @@ def call_ai_with_fallback(prompt, is_json=True):
     return None
 
 
-def generate_round1(title, category="", platform="", version="", seo_desc=""):
+def generate_round1(title, category="", platform="", version="", seo_desc="", resource_type=""):
     """Round 1: 一次 API 调用生成 tagline + ai_summary + ai_keywords + confidence.
 
     Returns: {"tagline", "ai_summary", "ai_keywords", "confidence"} or None
     """
-    prompt = build_round1_prompt(title, category, platform, version, seo_desc)
+    prompt = build_round1_prompt(title, category, platform, version, seo_desc, resource_type)
     data = call_ai_with_fallback(prompt, is_json=True)
 
     if data is None:
@@ -419,12 +421,12 @@ def generate_round1(title, category="", platform="", version="", seo_desc=""):
         return None
 
 
-def generate_round2(title, category="", platform="", summary="", seo_desc=""):
+def generate_round2(title, category="", platform="", summary="", seo_desc="", resource_type=""):
     """Round 2: 生成 ai_reason_candidates.
 
     Returns: JSON string of reason candidates array, or None
     """
-    prompt = build_round2_prompt(title, category, platform, summary, seo_desc)
+    prompt = build_round2_prompt(title, category, platform, summary, seo_desc, resource_type)
     data = call_ai_with_fallback(prompt, is_json=True)
 
     if data is None:
@@ -480,7 +482,8 @@ def get_pending_resources(cursor, round_num, force=False, limit=None):
                COALESCE(r.platform, '')   AS platform,
                COALESCE(r.version, '')    AS version,
                COALESCE(rc.ai_summary, '') AS ai_summary,
-               COALESCE(r.seo_desc, '')   AS seo_desc
+               COALESCE(r.seo_desc, '')   AS seo_desc,
+               COALESCE(rc.resource_type, '') AS resource_type
         FROM resources r
         LEFT JOIN resource_content rc ON r.res_id = rc.resource_id
         WHERE {where}
@@ -936,6 +939,7 @@ def main():
             version  = row[4] or ""
             summary  = row[5] or ""
             seo_desc = row[6] or ""
+            res_type = row[7] or ""
 
             print(f"[{idx}/{len(resources)}] {res_id}  {title[:55]}")
 
@@ -951,7 +955,7 @@ def main():
                     print(f"   ⏭️  all fields filled")
                     stats["r1_skip"] += 1
                 else:
-                    data = generate_round1(title, category, platform, version, seo_desc)
+                    data = generate_round1(title, category, platform, version, seo_desc, res_type)
                     if data:
                         save_round1(cursor, res_id, data, force=force)
                         conn.commit()
@@ -967,7 +971,7 @@ def main():
                     print(f"   ⏭️  reason_candidates filled")
                     stats["r2_skip"] += 1
                 else:
-                    reasons = generate_round2(title, category, platform, summary, seo_desc)
+                    reasons = generate_round2(title, category, platform, summary, seo_desc, res_type)
                     if reasons:
                         save_round2(cursor, res_id, reasons, force=force)
                         conn.commit()
