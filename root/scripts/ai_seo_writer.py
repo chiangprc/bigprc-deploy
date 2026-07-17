@@ -121,14 +121,15 @@ FORBIDDEN_BRANDS = [
 
 
 def validate_text(text, field_name, max_len=None):
-    """校验单段文本: 非空 / 长度 / 禁用词 / 违禁品牌."""
+    """校验单段文本: 非空 / 自动截断超长 / 禁用词 / 违禁品牌."""
     if not text or not str(text).strip():
         raise ValueError(f"[{field_name}] 返回内容为空")
 
     text = str(text).strip()
 
     if max_len and len(text) > max_len:
-        raise ValueError(f"[{field_name}] 字数超限 ({len(text)} > {max_len})")
+        print(f"   ⚡ {field_name} 自动截断 ({len(text)} → {max_len})")
+        text = text[:max_len]
 
     for word in FORBIDDEN_WORDS:
         if word in text:
@@ -154,8 +155,8 @@ def validate_round1_output(data):
     ai_keywords = data.get("ai_keywords", [])
     confidence  = data.get("confidence", 0.5)
 
-    validate_text(tagline, "tagline", max_len=50)
-    validate_text(ai_summary, "ai_summary", max_len=80)
+    validate_text(tagline, "tagline", max_len=25)
+    validate_text(ai_summary, "ai_summary", max_len=120)
 
     if not isinstance(ai_keywords, list):
         raise ValueError("ai_keywords 必须是数组")
@@ -281,8 +282,8 @@ def build_round1_prompt(title, category, platform, version, seo_desc="", resourc
 
 Output JSON with four fields:
 
-1. tagline (max 50 chars): editorial positioning. Combine "what it is" + "why it matters".
-   NEVER end with "documentary" "software" "tool" "course" "game" "book".
+1. tagline (in Chinese, max 20 chars): editorial positioning. Combine "what" + "why".
+   MUST be Chinese (中文). NEVER end with category words like "纪录片" "软件" "工具".
 2. ai_summary (max 50 chars): what problem, who is it for. No templates.
 3. ai_keywords (5-8 precise terms): searchable, specific. Never "software" "tool" "resource".
 4. confidence (0-1): tagline accuracy. Rich description -> >0.9. Title only -> <0.7.
