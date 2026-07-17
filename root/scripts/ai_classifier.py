@@ -51,8 +51,8 @@ MODEL = "deepseek-chat"
 # 2. 分类体系
 # ============================================================
 
-# resource_type 枚举
-VALID_TYPES = {"media", "software", "course", "book", "game", "website", "tool", "other"}
+# resource_type 中文标签
+VALID_TYPES = {"影视纪录", "软件工具", "课程学习", "电子书籍", "游戏娱乐", "网站服务", "开发资源", "模板素材", "数据资源", "文化资料", "其他"}
 
 # ============================================================
 # 3. 数据库
@@ -80,12 +80,14 @@ def ensure_columns(cursor):
     cursor.connection.commit()
 
 
-def get_unclassified(cursor, force=False, limit=None):
+def get_unclassified(cursor, force=False, limit=None, random_order=False):
     """查询待分类的资源."""
     if force:
         where = "1=1"
     else:
         where = "(r.category IS NULL OR r.category = '' OR r.platform IS NULL OR r.platform = '')"
+
+    order = "RANDOM()" if random_order else "r.res_id"
 
     query = f"""
         SELECT r.res_id, r.title, COALESCE(r.seo_desc, '') AS seo_desc,
@@ -93,7 +95,7 @@ def get_unclassified(cursor, force=False, limit=None):
                COALESCE(r.platform, '') AS platform
         FROM resources r
         WHERE {where}
-        ORDER BY r.res_id
+        ORDER BY {order}
     """
     if limit:
         query += f" LIMIT {int(limit)}"
@@ -130,31 +132,39 @@ def build_prompt(title, seo_desc):
 
 输出 JSON（三个字段）：
 
-1. category：中文分类标签，从以下选一个最匹配的：
+1. category：中文分类标签，从以下选最匹配的一个：
    纪录片 / 电影 / 剧集 / 动画 / AI工具 / 开发工具 / 设计工具 /
-   效率工具 / 学习资源 / 电子书 / 游戏 / 模组 / 模板 /
-   开源项目 / NAS资源 / Docker镜像 / 网站服务 / 其他
+   效率工具 / 课程学习 / 运营营销 / 电子书 / 游戏 / 模组 /
+   传统文化 / 宗教哲学 / 开源项目 / NAS资源 / Docker镜像 /
+   网站服务 / 模板素材 / 数据资源 / 其他
 
-2. platform：适用平台或介质，从以下选一个最匹配的：
-   Windows / Mac / Linux / Web / iOS / Android / 跨平台 / 视频 / 音频 / 电子书格式 / 其他
+2. platform：适用平台或介质，从以下选最匹配的一个：
+   Windows / Mac / Linux / Web / iOS / Android / 跨平台 /
+   视频 / 音频 / PDF / 电子书格式 / 其他
 
-3. resource_type：资源类型枚举
-   media（影音/纪录片/电影/剧集/动画）
-   software（软件/应用/工具/插件）
-   course（课程/教程/学习资料）
-   book（电子书/文档/书籍）
-   game（游戏/模组/MOD）
-   website（网站/在线服务）
-   tool（命令行工具/开发库/框架）
-   other（以上都不匹配）
+3. resource_type：资源类型（中文标签，不是英文）：
+   影视纪录 — 纪录片/电影/剧集/动画/电视节目
+   软件工具 — 软件/应用/插件/IDE
+   课程学习 — 课程/教程/培训/学习资料
+   电子书籍 — 电子书/PDF文档/书籍
+   游戏娱乐 — 游戏/模组/MOD
+   网站服务 — 网站/在线服务/SaaS
+   开发资源 — 命令行工具/开发库/框架/开源代码
+   模板素材 — 设计模板/PPT/视频素材/图片素材
+   数据资源 — 数据集/数据库/词典/知识库
+   文化资料 — 宗教/古籍/传统文化/哲学文档
+   其他 — 以上都不匹配
 
 注意：
-- 如果描述明确提到是 BBC/国家地理/Discovery 等出品的影片 → category=纪录片, resource_type=media
-- 如果描述提到编程/开发/AI → 判断是工具还是课程
+- BBC/国家地理/Discovery/IMAX 出品 → category=纪录片, resource_type=影视纪录
+- 短视频教程/剪辑课程 → category=课程学习, resource_type=课程学习
+- PDF电子书/古籍/宗教文献 → category=传统文化(或宗教哲学), resource_type=电子书籍
+- 文件名含"道家""道教""经""咒""科仪" → category=传统文化, resource_type=文化资料
+- 抖音/运营/IP打造 → category=运营营销, resource_type=课程学习
 - 不要猜，描述不足时用"其他"
 
 只输出 JSON：
-{{"category":"纪录片","platform":"视频","resource_type":"media"}}"""
+{{"category":"纪录片","platform":"视频","resource_type":"影视纪录"}}"""
 
 
 def classify(title, seo_desc=""):
@@ -234,6 +244,7 @@ def main():
     parser = argparse.ArgumentParser(description="BigPRC ai_classifier — AI resource classifier")
     parser.add_argument("--plan", action="store_true", help="Show pending counts")
     parser.add_argument("--limit", type=int, default=None, help="Max resources to classify")
+    parser.add_argument("--random", action="store_true", help="Random order (for diverse sampling)")
     parser.add_argument("--force", action="store_true", help="Re-classify all, overwrite existing")
     args = parser.parse_args()
 
@@ -247,7 +258,7 @@ def main():
 
     ensure_columns(cursor)
 
-    resources = get_unclassified(cursor, force=args.force, limit=args.limit)
+    resources = get_unclassified(cursor, force=args.force, limit=args.limit, random_order=args.random)
 
     if not resources:
         print("✅ All resources already classified.")
