@@ -50,7 +50,7 @@ COLLECTION_DEFS = [
 
     # 道家文化
     {"id":"taoist-classics","title":"道家经典文献","tags":["道教","古籍"],"cats":["传统文化"],"featured":1},
-    {"id":"taoist-rituals","title":"道教符箓科仪","tags":["符箓","符咒","科仪"],"cats":["传统文化"],"featured":0},
+    {"id":"taoist-rituals","title":"道教符箓科仪","tags_or":["符箓","符咒","科仪"],"tags":["道教"],"cats":["传统文化"],"featured":0},
     {"id":"taoist-manuscripts","title":"道家手抄孤本","tags":["手抄本","道教"],"cats":["传统文化"],"featured":0},
     {"id":"buddhist-texts","title":"佛教经典文献","tags":["佛教","古籍"],"cats":["传统文化"],"featured":0},
 
@@ -64,7 +64,7 @@ COLLECTION_DEFS = [
     {"id":"android-tools","title":"Android 实用工具","tags":["Android"],"cats":["软件工具"],"min_resources":10,"featured":1},
     {"id":"windows-software","title":"Windows 效率软件","tags":["Windows"],"cats":["软件工具","编程开发"],"min_resources":10,"featured":1},
     {"id":"video-editing","title":"视频剪辑工具包","tags":["视频剪辑"],"cats":["设计创意","课程学习"],"featured":1},
-    {"id":"ai-tools","title":"AI 效率工具","tags":["AI","工具"],"cats":["AI技术","软件工具"],"featured":1},
+    {"id":"ai-tools","title":"AI 效率工具","tags_or":["AI","人工智能","ChatGPT","Claude","大模型"],"min_resources":5,"featured":1},
 
     # 电子书
     {"id":"ebook-collections","title":"经典电子书合集","tags":["电子书"],"cats":["电子书籍"],"min_resources":20,"featured":0},
@@ -83,18 +83,28 @@ def ensure_schema(cursor):
 
 
 def populate_collection(cursor, coll_def):
-    """根据 tag 规则匹配资源, 填充 resource_collections."""
-    cid = coll_def["id"]
+    """根据 tag 规则匹配资源, 填充 resource_collections.
 
-    # 构建 WHERE 条件
-    tag_conditions = []
+    tags:     AND 逻辑 (全部匹配)
+    tags_or:  OR 逻辑  (任一匹配)
+    cats:     category 筛选 (可选)
+    """
+    cid = coll_def["id"]
+    conditions = []
     params = []
 
+    # AND 条件: 必须全部拥有
     for tag in coll_def.get("tags", []):
-        tag_conditions.append("EXISTS (SELECT 1 FROM resource_tags rt2 JOIN tags t2 ON rt2.tag_id=t2.id WHERE rt2.resource_id=r.res_id AND t2.name=?)")
+        conditions.append("EXISTS (SELECT 1 FROM resource_tags rt2 JOIN tags t2 ON rt2.tag_id=t2.id WHERE rt2.resource_id=r.res_id AND t2.name=?)")
         params.append(tag)
 
-    where = " AND ".join(tag_conditions)
+    # OR 条件: 拥有任一即可
+    if coll_def.get("tags_or"):
+        or_parts = ["EXISTS (SELECT 1 FROM resource_tags rt3 JOIN tags t3 ON rt3.tag_id=t3.id WHERE rt3.resource_id=r.res_id AND t3.name=?)" for _ in coll_def["tags_or"]]
+        conditions.append("(" + " OR ".join(or_parts) + ")")
+        params.extend(coll_def["tags_or"])
+
+    where = " AND ".join(conditions) if conditions else "1=1"
 
     # 可选: 限定 category
     cat_filter = ""
@@ -196,16 +206,16 @@ def main():
         cid = coll["id"]
         title = coll["title"]
 
-        # 计算匹配资源数 (用于 plan)
-        tag_list = coll.get("tags", [])
-        where_parts = []
-        for tag in tag_list:
-            where_parts.append("EXISTS (SELECT 1 FROM resource_tags rt2 JOIN tags t2 ON rt2.tag_id=t2.id WHERE rt2.resource_id=r.res_id AND t2.name=?)")
-        where_sql = " AND ".join(where_parts)
-        params = list(tag_list) + [coll.get("min_resources", 3)]
+        # 计算匹配资源数 (用于 plan, 支持 tags + tags_or)
+        conditions = []
+        for tag in coll.get("tags", []):
+            conditions.append("EXISTS (SELECT 1 FROM resource_tags rt2 JOIN tags t2 ON rt2.tag_id=t2.id WHERE rt2.resource_id=r.res_id AND t2.name=?)")
+        if coll.get("tags_or"):
+            or_parts = [f"EXISTS (SELECT 1 FROM resource_tags rt3 JOIN tags t3 ON rt3.tag_id=t3.id WHERE rt3.resource_id=r.res_id AND t3.name='{t}')" for t in coll["tags_or"]]
+            conditions.append("(" + " OR ".join(or_parts) + ")")
+        where_sql = " AND ".join(conditions) if conditions else "1=1"
         match_count = cursor.execute(
-            f"SELECT COUNT(DISTINCT r.res_id) FROM resources r WHERE {where_sql}",
-            params[:-1]
+            f"SELECT COUNT(DISTINCT r.res_id) FROM resources r WHERE {where_sql}"
         ).fetchone()[0]
 
         if match_count < coll.get("min_resources", 3):
