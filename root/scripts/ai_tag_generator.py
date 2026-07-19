@@ -161,26 +161,33 @@ CRITICAL — Tag Atomicity Rules:
 ④ NEVER include version numbers, years, file extensions:
    WRONG: "v2.0" "2024" "PDF" "mp4" ".apk"
 
-⑤ Brand/Source tags (atomic, original name):
+⑤ NEVER use these standalone generic words (they have zero discovery value):
+   "文化" "学习" "资源" "工具" "软件" — too broad to be useful.
+   Use specific subjects instead: "英国文化"→"英国"+"历史", "学习资源"→"英语"+"课程"
+
+⑥ NEVER use recommendation attributes as content tags:
+   "亲子" "办公" "热门" "精选" "必备" "推荐" — these describe who or why, not what.
+
+⑦ Brand/Source tags (atomic, original name):
    BBC / Discovery / IMAX / NationalGeographic / History / PBS / CCTV
    Apple / Google / Microsoft / Adobe / OpenAI
 
-⑥ Type tags (pick 0-1):
+⑧ Type tags (pick 0-1):
    纪录片 / 电影 / 剧集 / 动画 / 软件 / 课程 / 电子书 / 游戏
 
-⑦ Topic tags (pick 2-4 specific, reusable concepts):
+⑨ Topic tags (pick 2-4 specific, reusable concepts):
    海洋 / 动物 / 宇宙 / 历史 / 战争 / 自然 / 科技 / AI /
    编程 / 设计 / 摄影 / 音乐 / 建筑 / 美食 / 旅行 /
    英语 / 数学 / 物理 / 心理学 / 经济学 / 哲学 /
    道教 / 佛教 / 中医 / 古籍 / 书法 / 绘画
 
-⑧ Score: 0.9+ = explicit in title, 0.7-0.9 = from keywords/description, <0.7 = inferred.
+⑩ Score: 0.9+ = explicit in title, 0.7-0.9 = from keywords/description, <0.7 = inferred.
    Use Chinese names for topics, original names for brands.
 
-⑨ ONLY use tags from the lists above or very close variants. Do NOT invent new topic names.
+⑪ ONLY use tags from the lists above or very close variants. Do NOT invent new topic names.
    If a concept fits none, skip it rather than invent a one-off tag.
 
-⑩ 4-6 tags total. More is NOT better — precision over quantity.
+⑫ 4-6 tags total. More is NOT better — precision over quantity.
 
 JSON only:
 [{{"name":"BBC","score":0.99}},{{"name":"纪录片","score":0.97}},{{"name":"海洋","score":0.90}},{{"name":"动物","score":0.82}}]"""
