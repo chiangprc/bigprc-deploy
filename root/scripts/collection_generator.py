@@ -235,7 +235,7 @@ def main():
             INSERT OR REPLACE INTO collections (id, title, description, rule_json, is_featured, sort_order)
             VALUES (?,?,?,?,?,?)
         """, (cid, title, coll.get("title",""),
-              json.dumps({"tags":tag_list,"cats":coll.get("cats",[])}),
+              json.dumps({"tags":coll.get("tags",[]),"tags_or":coll.get("tags_or",[]),"cats":coll.get("cats",[])}),
               coll.get("featured",0), 0))
 
         # 填充资源关联
