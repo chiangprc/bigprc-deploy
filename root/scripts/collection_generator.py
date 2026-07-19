@@ -209,7 +209,7 @@ def main():
         # 计算匹配资源数 (用于 plan, 支持 tags + tags_or)
         conditions = []
         for tag in coll.get("tags", []):
-            conditions.append("EXISTS (SELECT 1 FROM resource_tags rt2 JOIN tags t2 ON rt2.tag_id=t2.id WHERE rt2.resource_id=r.res_id AND t2.name=?)")
+            conditions.append(f"EXISTS (SELECT 1 FROM resource_tags rt2 JOIN tags t2 ON rt2.tag_id=t2.id WHERE rt2.resource_id=r.res_id AND t2.name='{tag}')")
         if coll.get("tags_or"):
             or_parts = [f"EXISTS (SELECT 1 FROM resource_tags rt3 JOIN tags t3 ON rt3.tag_id=t3.id WHERE rt3.resource_id=r.res_id AND t3.name='{t}')" for t in coll["tags_or"]]
             conditions.append("(" + " OR ".join(or_parts) + ")")
