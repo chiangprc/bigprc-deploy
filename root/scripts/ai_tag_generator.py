@@ -137,26 +137,53 @@ def build_prompt(title, category, ai_keywords, ai_summary, seo_desc):
     if seo_desc:      parts.append(f"Description: {seo_desc[:200]}")
     context = "\n".join(parts)
 
-    return f"""Extract 5-10 meaningful tags for this digital resource. Tags should help users discover content.
+    return f"""Extract 4-6 atomic tags for this resource. Tags form a discovery graph — users click one tag to find all related resources.
 
 {context}
 
-Output a JSON array of objects with "name" and "score" (0-1 confidence):
-[{{"name":"BBC","score":0.99}}, {{"name":"ocean","score":0.90}}]
+Output a JSON array: [{{"name":"BBC","score":0.99}}, {{"name":"海洋","score":0.90}}]
 
-Rules:
-- Tag names should be concise labels: people/organizations (BBC, Discovery), topics (ocean, AI, history), formats (PDF, APK), levels (beginner, advanced)
-- Merge similar concepts: "自然" + "nature" → use Chinese if the title is Chinese
-- Score reflects how confidently this tag applies (0.7-1.0 = strong, 0.4-0.7 = inferred)
-- Extract from ALL available context (title + keywords + summary + description)
-- Avoid overly broad tags ("video" "file" "download")
-- For documentaries: extract subject (ocean, space, history, animals), series name (BBC, Discovery), and theme
-- For software: extract function (download, video player, editor), platform (Android, Windows)
-- For books/docs: extract topic, era, author if mentioned
-- 5-10 tags total, sorted by score descending
+CRITICAL — Tag Atomicity Rules:
+① ONE concept per tag. NEVER combine concepts into compound tags.
+   WRONG: "BBC纪录片" "野生动物迁徙" "自然科普" "海洋纪录片" "AI编程工具"
+   RIGHT: "BBC" + "纪录片" — decompose into independent atoms
+   RIGHT: "野生动物" + "迁徙" — two separate concepts
+   RIGHT: "自然" + "科普" — atomic, reusable
+
+② Tag length: max 6 Chinese characters (person/organization names excepted).
+   WRONG: "野生动物迁徙" (too long, compound)
+   RIGHT: "野生动物" or "迁徙"
+
+③ NEVER include resolution/quality metadata:
+   WRONG: "4K" "1080P" "HDR" "蓝光" "超清" "高清版"
+   These are display attributes, not discovery tags.
+
+④ NEVER include version numbers, years, file extensions:
+   WRONG: "v2.0" "2024" "PDF" "mp4" ".apk"
+
+⑤ Brand/Source tags (atomic, original name):
+   BBC / Discovery / IMAX / NationalGeographic / History / PBS / CCTV
+   Apple / Google / Microsoft / Adobe / OpenAI
+
+⑥ Type tags (pick 0-1):
+   纪录片 / 电影 / 剧集 / 动画 / 软件 / 课程 / 电子书 / 游戏
+
+⑦ Topic tags (pick 2-4 specific, reusable concepts):
+   海洋 / 动物 / 宇宙 / 历史 / 战争 / 自然 / 科技 / AI /
+   编程 / 设计 / 摄影 / 音乐 / 建筑 / 美食 / 旅行 /
+   英语 / 数学 / 物理 / 心理学 / 经济学 / 哲学 /
+   道教 / 佛教 / 中医 / 古籍 / 书法 / 绘画
+
+⑧ Score: 0.9+ = explicit in title, 0.7-0.9 = from keywords/description, <0.7 = inferred.
+   Use Chinese names for topics, original names for brands.
+
+⑨ ONLY use tags from the lists above or very close variants. Do NOT invent new topic names.
+   If a concept fits none, skip it rather than invent a one-off tag.
+
+⑩ 4-6 tags total. More is NOT better — precision over quantity.
 
 JSON only:
-[{{"name":"BBC","score":0.99}},{{"name":"wildlife","score":0.95}},{{"name":"documentary","score":0.90}}]"""
+[{{"name":"BBC","score":0.99}},{{"name":"纪录片","score":0.97}},{{"name":"海洋","score":0.90}},{{"name":"动物","score":0.82}}]"""
 
 
 def extract_tags(title, category="", ai_keywords="", ai_summary="", seo_desc=""):
@@ -182,7 +209,7 @@ def extract_tags(title, category="", ai_keywords="", ai_summary="", seo_desc="")
         else:
             return None
 
-        if not tags or len(tags) < 3:
+        if not tags or len(tags) < 2:
             return None
 
         # Validate & deduplicate
@@ -197,7 +224,7 @@ def extract_tags(title, category="", ai_keywords="", ai_summary="", seo_desc="")
                 seen.add(name.lower())
                 result.append({"name": name, "score": min(score, 1.0)})
 
-        return result[:10] if result else None
+        return result[:6] if result else None
 
     except Exception as e:
         print(f"   ❌ {e}")
