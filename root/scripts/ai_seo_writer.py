@@ -651,9 +651,8 @@ GENERIC_KEYWORDS = [
     "免费", "好用", "实用", "推荐",
 ]
 
-# 推荐理由里的广告腔
+# 推荐理由里的广告腔 (排除常见中性副词)
 AD_REASON_PATTERNS = [
-    "非常", "十分", "极其", "特别", "极为",
     "值得推荐", "强烈推荐", "不容错过",
 ]
 
@@ -685,7 +684,7 @@ def cmd_audit():
     tagline_empty = 0
 
     summary_lens = []
-    summary_over50 = []       # (res_id, title, len)
+    summary_over80 = []       # (res_id, title, len)
     summary_marketing = []    # (res_id, title, word)
     summary_empty = 0
 
@@ -716,8 +715,8 @@ def cmd_audit():
         if has_value(summary):
             s = str(summary).strip()
             summary_lens.append(len(s))
-            if len(s) > 50:
-                summary_over50.append((res_id, title, len(s)))
+            if len(s) > 80:
+                summary_over80.append((res_id, title, len(s)))
             for w in AUDIT_MARKETING_WORDS:
                 if w in s:
                     summary_marketing.append((res_id, title, w))
@@ -795,14 +794,14 @@ def cmd_audit():
     print(f"    已填: {total - summary_empty}/{total}  "
           f"空: {summary_empty}  "
           f"平均长度: {avg_sum:.1f} 字")
-    if summary_over50:
-        print(f"    ⚠️  超 50 字: {len(summary_over50)} 条")
-        for rid, t, l in summary_over50[:5]:
+    if summary_over80:
+        print(f"    ⚠️  超 80 字: {len(summary_over80)} 条")
+        for rid, t, l in summary_over80[:5]:
             print(f"       {rid} {t[:30]}  → {l} 字")
-        if len(summary_over50) > 5:
-            print(f"       ... +{len(summary_over50) - 5} more")
+        if len(summary_over80) > 5:
+            print(f"       ... +{len(summary_over80) - 5} more")
     else:
-        print(f"    ✅ 全部 ≤50 字")
+        print(f"    ✅ 全部 ≤80 字")
     if summary_marketing:
         print(f"    ⚠️  营销词: {len(summary_marketing)} 条")
         for rid, t, w in summary_marketing[:5]:
@@ -854,7 +853,7 @@ def cmd_audit():
 
     # -- 总评 --
     issue_count = (
-        len(tagline_marketing) + len(summary_over50) + len(summary_marketing) +
+        len(tagline_marketing) + len(summary_over80) + len(summary_marketing) +
         len(keywords_few) + len(keywords_generic) +
         len(reason_few) + len(reason_ad)
     )
@@ -866,6 +865,83 @@ def cmd_audit():
         print(f"  📊 共发现 {issue_count} 个问题 (详情见上)")
     print("=" * 60)
     print()
+
+
+# ============================================================
+# 6c. --repair 自动修复
+# ============================================================
+
+REPAIR_WORDS = ["神器", "必备", "必装", "强烈推荐", "不容错过"]
+
+
+def cmd_repair():
+    """扫描并重新生成包含禁用词的内容（仅修复违规字段，不重跑全部）."""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+
+    # 查找包含禁用词的资源
+    conditions = " OR ".join([
+        f"(rc.{field} LIKE '%{word}%')"
+        for field in ["tagline", "ai_summary", "ai_keywords", "ai_reason_candidates"]
+        for word in REPAIR_WORDS
+    ])
+    query = f"""
+        SELECT r.res_id, r.title, r.category, r.platform, r.version,
+               COALESCE(r.seo_desc, ''), COALESCE(rc.resource_type, ''),
+               rc.tagline, rc.ai_summary, rc.ai_keywords, rc.ai_reason_candidates
+        FROM resource_content rc
+        JOIN resources r ON r.res_id = rc.resource_id
+        WHERE {conditions}
+        ORDER BY r.res_id
+    """
+    rows = cursor.execute(query).fetchall()
+
+    if not rows:
+        print("✅ No repair needed — all clean.")
+        conn.close()
+        return
+
+    print(f"🔧 Repairing {len(rows)} resources with forbidden words...")
+    print()
+
+    fixed, failed = 0, 0
+    for res_id, title, cat, plat, ver, seo_desc, res_type, tag, summary, kws, reasons in rows:
+
+        for word in REPAIR_WORDS:
+            dirty = False
+            if tag and word in tag:
+                dirty = True
+            if summary and word in summary:
+                dirty = True
+            if kws and word in kws:
+                dirty = True
+            if reasons and word in reasons:
+                dirty = True
+
+            if not dirty:
+                continue
+
+            print(f"[{res_id}] {title[:50]}  → contains '{word}'")
+
+            # 重新生成 Round 1
+            data = generate_round1(title, cat, plat, ver, seo_desc, res_type)
+            if data:
+                save_round1(cursor, res_id, data, force=True)
+                conn.commit()
+                fixed += 1
+                print(f"   ✅ repaired: {data['tagline']}")
+            else:
+                failed += 1
+            time.sleep(0.5)
+            break  # 每个资源只修一次
+
+    conn.commit()
+    conn.close()
+
+    print()
+    print("=" * 50)
+    print(f"  Repair: ✅ {fixed} fixed  ❌ {failed} failed")
+    print("=" * 50)
 
 
 # ============================================================
@@ -888,6 +964,8 @@ def main():
                         help="Overwrite existing AI content")
     parser.add_argument("--resume", action="store_true",
                         help="Skip already-filled fields (this is the default)")
+    parser.add_argument("--repair", action="store_true",
+                        help="Re-generate fields containing forbidden words (神器/必备/必装)")
 
     args = parser.parse_args()
 
@@ -898,6 +976,13 @@ def main():
 
     # ---- Audit mode ----
     if args.audit:
+        cmd_audit()
+        return
+
+    # ---- Repair mode ----
+    if args.repair:
+        cmd_repair()
+        return
         cmd_audit()
         return
 
