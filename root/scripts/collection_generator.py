@@ -113,14 +113,11 @@ def populate_collection(cursor, coll_def):
         cat_filter = f" AND r.category IN ({cat_placeholders})"
         params.extend(coll_def["cats"])
 
-    params.append(coll_def.get("min_resources", 3))
-
     query = f"""
         SELECT r.res_id FROM resources r
         WHERE {where}
         {cat_filter}
         GROUP BY r.res_id
-        HAVING COUNT(*) >= ?
     """
 
     resources = cursor.execute(query, params).fetchall()
