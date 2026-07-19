@@ -154,19 +154,15 @@ def execute_merges(cursor, merges):
             continue
         target_id = target_row[0]
 
-        # 3. 迁移 resource_tags: 指向 canonical tag (防重复主键)
-        cursor.execute(
-            "UPDATE resource_tags SET tag_id=? WHERE tag_id=?",
-            (target_id, tag_id))
-        # 删除重复: 同一 (resource_id, target_id) 只保留 score 最高的一条
+        # 3. 迁移 resource_tags: INSERT canonical → DELETE fragment (避免 UNIQUE 冲突)
         cursor.execute("""
-            DELETE FROM resource_tags WHERE rowid NOT IN (
-                SELECT MIN(rowid) FROM resource_tags
-                WHERE tag_id=? GROUP BY resource_id
-            ) AND tag_id=?
-        """, (target_id, target_id))
+            INSERT OR IGNORE INTO resource_tags (resource_id, tag_id, score, source)
+            SELECT resource_id, ?, MAX(score, 0.7), 'normalized'
+            FROM resource_tags WHERE tag_id=?
+        """, (target_id, tag_id))
+        cursor.execute("DELETE FROM resource_tags WHERE tag_id=?", (tag_id,))
 
-        # 4. 重算 target count
+        # 4. 重算 counts
         cursor.execute(
             "UPDATE tags SET count=(SELECT COUNT(*) FROM resource_tags WHERE tag_id=?) WHERE id=?",
             (target_id, target_id))
