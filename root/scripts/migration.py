@@ -335,6 +335,8 @@ def cmd_validate():
             'collections',
             'collection_content',
             'resource_collections',
+            'tags',
+            'resource_tags',
             '_migrations',
         ]
 
@@ -392,6 +394,11 @@ def cmd_validate():
             'idx_resources_updated',
             'idx_rc_resource',
             'idx_rc_collection',
+            'idx_tags_slug',
+            'idx_tags_type',
+            'idx_tags_count',
+            'idx_rt_tag',
+            'idx_rt_resource',
         ]
 
         existing_indexes = set(
