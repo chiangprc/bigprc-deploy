@@ -337,6 +337,7 @@ def cmd_validate():
             'resource_collections',
             'tags',
             'resource_tags',
+            'tag_aliases',
             '_migrations',
         ]
 
