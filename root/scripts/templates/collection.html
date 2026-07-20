@@ -7,87 +7,145 @@
 
 {% block extra_css %}
     <link rel="preload" href="/index.json" as="fetch" crossorigin="anonymous">
-    .cw { max-width: 800px; margin: 0 auto; padding: 0 20px; }
-    .ch { text-align: center; padding: 48px 0 36px; border-bottom: 1px solid var(--border); }
-    .ch h1 { font-size: 28px; font-weight: 800; margin: 0 0 10px; }
-    .ch .lead { font-size: 15px; color: var(--secondary); line-height: 1.65; max-width: 560px; margin: 0 auto; }
-    .ch .meta { font-size: 13px; color: var(--primary); margin-top: 10px; font-weight: 500; }
-    .ch .meta span { background: var(--card-bg); padding: 3px 12px; border-radius: 12px; }
-    .ed { padding: 36px 0 0; }
-    .ed-card { background: var(--card-bg); border-radius: 8px; padding: 24px 28px; margin-bottom: 14px; border: 1px solid var(--border); }
-    .ed-card h2 { font-size: 15px; font-weight: 700; margin: 0 0 8px; display: flex; align-items: center; gap: 8px; }
-    .ed-card p, .ed-card li { font-size: 14px; color: var(--secondary); line-height: 1.75; margin: 0; }
-    .ed-card ul { padding-left: 18px; }
-    .ed-card ul li { margin-bottom: 4px; }
-    .ed-card ul li::marker { color: var(--primary); }
-    .sbar { text-align: center; padding: 24px 0 16px; }
-    .sbar input { width: 100%; max-width: 400px; height: 42px; padding: 0 16px; font-size: 14px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); outline: none; font-family: inherit; text-align: center; }
-    .sbar input:focus { border-color: var(--primary); }
+    :root { --accent: #1a6b4f; --accent-soft: #e8f5e9; --warn: #f0a030; --warn-soft: #fef9f0; }
+    [data-theme="dark"] { --accent: #4db88d; --accent-soft: #1a2f24; --warn: #e0b050; --warn-soft: #2a2218; }
+    .wrap { max-width: 780px; margin: 0 auto; padding: 0 20px; }
+
+    /* Hero */
+    .hero { text-align: center; padding: 52px 0 40px; }
+    .hero .badge { display: inline-block; padding: 4px 14px; border-radius: 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; background: var(--accent-soft); color: var(--accent); margin-bottom: 16px; }
+    .hero h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.3px; margin: 0 0 12px; line-height: 1.2; }
+    .hero .desc { font-size: 16px; color: var(--secondary); line-height: 1.65; max-width: 540px; margin: 0 auto; }
+    .hero .stat-row { display: flex; justify-content: center; gap: 24px; margin-top: 20px; flex-wrap: wrap; }
+    .hero .stat { text-align: center; }
+    .hero .stat .n { font-size: 26px; font-weight: 700; color: var(--accent); }
+    .hero .stat .l { font-size: 12px; color: var(--secondary); }
+
+    /* Editorial cards */
+    .ed { display: grid; gap: 14px; padding: 0 0 32px; }
+    .ed-card { border-radius: 10px; border: 1px solid var(--border); overflow: hidden; }
+    .ed-card .hd { padding: 16px 22px; border-bottom: 1px solid var(--border); background: var(--card-bg); font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .ed-card .bd { padding: 18px 22px; font-size: 15px; color: var(--secondary); line-height: 1.8; }
+    .ed-card .bd ul { padding-left: 18px; margin: 0; }
+    .ed-card .bd ul li { margin-bottom: 6px; }
+    .ed-card .bd ul li::marker { color: var(--accent); }
+
+    /* Highlight grid */
+    .hl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; padding: 0 0 32px; }
+    .hl-card { border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; background: var(--card-bg); }
+    .hl-card .n { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .hl-card .t { font-size: 12px; color: var(--secondary); line-height: 1.5; }
+    .hl-card:hover { border-color: var(--accent); }
+
+    /* Search bar */
+    .sbar { padding: 0 0 20px; }
+    .sbar input { width: 100%; height: 42px; padding: 0 16px; font-size: 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); outline: none; font-family: inherit; }
+    .sbar input:focus { border-color: var(--accent); }
+
+    /* Table (compact) */
     .rt { padding-bottom: 24px; }
-    table { width: 100%; border-collapse: collapse; }
-    th { background: var(--card-bg); border-bottom: 2px solid var(--border); padding: 12px 10px; font-size: 12px; color: var(--secondary); cursor: pointer; user-select: none; font-weight: 600; }
-    th:hover { color: var(--primary); }
-    td { padding: 11px 10px; border-bottom: 1px solid var(--border); text-align: center; font-size: 13px; }
+    .rt h3 { font-size: 15px; font-weight: 700; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+    .rt h3 .n { font-size: 12px; color: var(--secondary); font-weight: 400; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: var(--card-bg); padding: 10px 8px; font-size: 11px; color: var(--secondary); cursor: pointer; user-select: none; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; border-bottom: 2px solid var(--border); }
+    th:hover { color: var(--accent); }
+    td { padding: 9px 8px; border-bottom: 1px solid var(--border); }
     tr:hover td { background: var(--card-bg); }
     td a { color: var(--text); font-weight: 500; }
-    td a:hover { color: var(--primary); text-decoration: none; }
-    th:first-child, td:first-child { text-align: left !important; }
-    th:nth-child(2), td:nth-child(2) { text-align: right !important; padding-right: 28px !important; width: 80px; }
+    td a:hover { color: var(--accent); text-decoration: none; }
+    th:first-child, td:first-child { text-align: left; }
+    th:last-child, td:last-child { text-align: center; width: 80px; }
+    th:nth-child(2), td:nth-child(2) { text-align: right; padding-right: 20px; width: 70px; }
+
     .pg { text-align: center; padding: 16px 0; }
-    .pg-btn { padding: 8px 16px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 4px; cursor: pointer; font-size: 13px; margin: 0 3px; min-width: 40px; font-family: inherit; }
-    .pg-btn:hover:not(:disabled) { border-color: var(--primary); background: var(--card-bg); }
-    .pg-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-    .pg-info { font-size: 13px; color: var(--secondary); margin: 0 6px; }
-    .faq { border-top: 1px solid var(--border); padding: 32px 0 0; margin-top: 12px; }
+    .pg button { padding: 7px 14px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); cursor: pointer; font-size: 12px; margin: 0 2px; font-family: inherit; }
+    .pg button:hover:not(:disabled) { border-color: var(--accent); }
+    .pg button:disabled { opacity: 0.3; cursor: not-allowed; }
+    .pg .info { font-size: 12px; color: var(--secondary); margin: 0 6px; }
+
+    /* FAQ */
+    .faq { border-top: 1px solid var(--border); padding: 32px 0 0; }
     .faq h2 { font-size: 18px; font-weight: 700; margin: 0 0 16px; }
-    .faq details { background: var(--card-bg); border-radius: 6px; padding: 14px 18px; margin-bottom: 10px; border: 1px solid var(--border); }
+    .faq details { background: var(--card-bg); border-radius: 8px; padding: 16px 20px; margin-bottom: 10px; border: 1px solid var(--border); transition: border-color 0.15s; }
+    .faq details[open] { border-color: var(--accent); }
     .faq summary { cursor: pointer; font-size: 14px; font-weight: 500; outline: none; }
-    .faq summary:hover { color: var(--primary); }
+    .faq summary:hover { color: var(--accent); }
     .faq .a { margin-top: 10px; font-size: 13px; color: var(--secondary); line-height: 1.7; }
-    .cf { text-align: center; padding: 32px 0 48px; }
-    .cf a { color: var(--primary); font-size: 14px; font-weight: 500; }
-    @media (max-width: 600px) { .ch { padding: 32px 0 24px; } .ch h1 { font-size: 22px; } .ed-card { padding: 18px 16px; } }
+
+    /* Footer */
+    .ft { text-align: center; padding: 36px 0 48px; border-top: 1px solid var(--border); margin-top: 24px; }
+    .ft a { color: var(--primary); font-size: 14px; font-weight: 500; }
+
+    @media (max-width: 600px) {
+        .hero { padding: 36px 0 28px; }
+        .hero h1 { font-size: 24px; }
+        .hero .desc { font-size: 14px; }
+        .hl-grid { grid-template-columns: 1fr; }
+        .ed-card .hd, .ed-card .bd { padding: 14px 16px; }
+    }
 {% endblock %}
 
 {% block content %}
-<div class="cw">
-    <section class="ch">
+<div class="wrap">
+    <!-- ── Hero ── -->
+    <section class="hero">
+        <div class="badge">精选专题</div>
         <h1>{{ coll_title }}</h1>
-        {% if coll_intro %}<p class="lead">{{ coll_intro }}</p>{% endif %}
-        <p class="meta"><span>{{ resources|length }} 个精选资源</span></p>
+        {% if coll_intro %}<p class="desc">{{ coll_intro }}</p>{% endif %}
+        <div class="stat-row">
+            <div class="stat"><div class="n">{{ resources|length }}</div><div class="l">精选资源</div></div>
+            <div class="stat"><div class="n">{{ (resources|map(attribute='category')|select|list|unique|list)|length }}</div><div class="l">覆盖分类</div></div>
+        </div>
     </section>
 
-    {% if editor_note or why_collect or audience or highlights %}
+    <!-- ── Editorial curation ── -->
+    {% if editor_note or why_collect or audience %}
     <section class="ed">
-        {% if editor_note %}<div class="ed-card"><h2>📝 编辑推荐</h2><p>{{ editor_note }}</p></div>{% endif %}
-        {% if why_collect %}<div class="ed-card"><h2>⭐ 为什么值得收藏</h2><p>{{ why_collect }}</p></div>{% endif %}
-        {% if audience %}<div class="ed-card"><h2>👥 适合人群</h2><p>{{ audience }}</p></div>{% endif %}
-        {% if highlights %}<div class="ed-card"><h2>🌟 精选亮点</h2><ul>{% for item in highlights %}<li>{{ item }}</li>{% endfor %}</ul></div>{% endif %}
+        {% if editor_note %}<div class="ed-card"><div class="hd">📝 编辑推荐</div><div class="bd"><p>{{ editor_note }}</p></div></div>{% endif %}
+        {% if why_collect %}<div class="ed-card"><div class="hd">⭐ 为什么值得收藏</div><div class="bd"><p>{{ why_collect }}</p></div></div>{% endif %}
+        {% if audience %}<div class="ed-card"><div class="hd">👥 适合人群</div><div class="bd"><p>{{ audience }}</p></div></div>{% endif %}
     </section>
     {% endif %}
 
-    <div class="sbar"><input type="text" id="searchInput" placeholder="在「{{ coll_title }}」中搜索..." oninput="filterTable()" autocomplete="off"></div>
+    <!-- ── Highlights ── -->
+    {% if highlights %}
+    <section class="hl-grid">
+        {% for item in highlights %}<div class="hl-card"><div class="t">{{ item }}</div></div>{% endfor %}
+    </section>
+    {% endif %}
+
+    <!-- ── Search + Table ── -->
+    <div class="sbar"><input type="text" id="s" placeholder="在「{{ coll_title }}」中筛选..." oninput="F()" autocomplete="off"></div>
 
     <div class="rt">
-        <table id="resourceTable"><thead><tr><th onclick="sortTable(0)">资源名称</th><th onclick="sortTable(1)">大小</th><th>类型</th></tr></thead>
-        <tbody>{% for r in resources %}<tr data-search="{{ r.title }} {{ r.category or '' }}"><td><a href="/go/{{ r.res_id }}">{{ r.title }}</a></td><td>{{ r.size or '-' }}</td><td>{{ r.category or '-' }}</td></tr>{% endfor %}</tbody></table>
-        <div class="pg" id="pagination"></div>
+        <h3>📋 资源列表 <span class="n">（共 {{ resources|length }} 条）</span></h3>
+        <table><thead><tr><th onclick="S(0)">名称</th><th onclick="S(1)">大小</th><th>分类</th></tr></thead>
+        <tbody>{% for r in resources %}<tr data-q="{{ r.title }}"><td><a href="/go/{{ r.res_id }}">{{ r.title }}</a></td><td>{{ r.size or '-' }}</td><td>{{ r.category or '-' }}</td></tr>{% endfor %}</tbody></table>
+        <div class="pg" id="pg"></div>
     </div>
 
+    <!-- ── FAQ ── -->
     {% if schema_json %}<script type="application/ld+json">{{ schema_json }}</script>{% endif %}
     {% if faq_html %}
-    <section class="faq"><h2>常见问题</h2>{% for item in faq_html %}<details><summary>{{ item.q }}</summary><p class="a">{{ item.a }}</p></details>{% endfor %}</section>
+    <section class="faq"><h2>💬 常见问题</h2>
+        {% for item in faq_html %}<details><summary>{{ item.q }}</summary><p class="a">{{ item.a }}</p></details>{% endfor %}
+    </section>
     {% endif %}
 
-    <div class="cf"><a href="/collection/index.html">← 浏览全部专题</a> &nbsp;·&nbsp; <a href="/list.html">完整资源列表</a></div>
+    <!-- ── Footer ── -->
+    <div class="ft">
+        <a href="/collection/index.html">← 浏览全部专题</a>
+        &nbsp;·&nbsp;
+        <a href="/">返回首页</a>
+    </div>
 </div>
 
 <script>
-var allRows,pageSize=50,currentPage=1;
-(function(){allRows=Array.from(document.querySelectorAll('#resourceTable tbody tr'));renderPage();})();
-function filterTable(){var q=(document.getElementById('searchInput').value||'').toLowerCase();allRows.forEach(function(tr){tr.style.display=q?(tr.dataset.search.toLowerCase().indexOf(q)>=0?'':'none'):''});currentPage=1;renderPage();}
-function sortTable(col){var tb=document.querySelector('#resourceTable tbody'),rows=Array.from(tb.querySelectorAll('tr'));rows.sort(function(a,b){var va=(a.cells[col].textContent||'').trim(),vb=(b.cells[col].textContent||'').trim();if(col===1)return(parseFloat(va)||0)-(parseFloat(vb)||0);return va.localeCompare(vb,'zh')});rows.forEach(function(r){tb.appendChild(r)});allRows=rows;currentPage=1;renderPage();}
-function renderPage(){var t=allRows.length,p=Math.ceil(t/pageSize),s=(currentPage-1)*pageSize;allRows.forEach(function(r,i){r.style.display=(i>=s&&i<s+pageSize)?'':'none'});var h='';for(var i=1;i<=p;i++)h+='<button class=pg-btn onclick=goPage('+i+')'+(i===currentPage?' disabled':'')+'>'+i+'</button>';document.getElementById('pagination').innerHTML=h+'<span class=pg-info>'+currentPage+'/'+p+' 页</span>';}
-function goPage(n){currentPage=n;renderPage();window.scrollTo(0,0);}
+var R,PS=50,CP=1;
+(function(){R=Array.from(document.querySelectorAll('#resourceTable tbody tr'));P()})();
+function F(){var q=(document.getElementById('s').value||'').toLowerCase();R.forEach(function(r){r.style.display=q?(r.dataset.q.toLowerCase().indexOf(q)>=0?'':'none'):''});CP=1;P()}
+function S(c){var tb=document.querySelector('#resourceTable tbody'),rs=Array.from(tb.querySelectorAll('tr'));rs.sort(function(a,b){var va=(a.cells[c].textContent||'').trim(),vb=(b.cells[c].textContent||'').trim();if(c===1)return(parseFloat(va)||0)-(parseFloat(vb)||0);return va.localeCompare(vb,'zh')});rs.forEach(function(r){tb.appendChild(r)});R=rs;CP=1;P()}
+function P(){var t=R.length,p=Math.ceil(t/PS),s=(CP-1)*PS;R.forEach(function(r,i){r.style.display=(i>=s&&i<s+PS)?'':'none'});var h='';for(var i=1;i<=p;i++)h+='<button onclick=G('+i+')'+(i===CP?' disabled':'')+'>'+i+'</button>';document.getElementById('pg').innerHTML=h+'<span class=info>'+CP+'/'+p+'</span>'}
+function G(n){CP=n;P();window.scrollTo(0,0)}
 </script>
 {% endblock %}
