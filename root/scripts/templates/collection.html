@@ -7,193 +7,87 @@
 
 {% block extra_css %}
     <link rel="preload" href="/index.json" as="fetch" crossorigin="anonymous">
-
-    .collection-hero {
-        max-width: 680px; margin: 0 auto 32px; text-align: center;
-        padding: 32px 20px; border-bottom: 1px solid var(--border);
-    }
-    .collection-hero h1 { font-size: 24px; font-weight: 700; margin-bottom: 12px; color: var(--text); }
-    .collection-hero .intro { font-size: 15px; color: var(--secondary); line-height: 1.6; max-width: 560px; margin: 0 auto 8px; }
-    .collection-hero .seo-desc { font-size: 12px; color: var(--secondary); opacity: 0.7; margin-top: 4px; }
-    .collection-hero .count { font-size: 13px; color: var(--primary); margin-top: 8px; font-weight: 500; }
-
-    .tags { text-align: center; margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-    .tags span {
-        padding: 6px 14px; border-radius: 14px; font-size: 12px; cursor: pointer;
-        border: 1px solid var(--border); color: var(--secondary); background: var(--bg);
-        transition: all 0.15s; -webkit-tap-highlight-color: transparent;
-    }
-    .tags span.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-    .tags span:hover:not(.active) { border-color: var(--primary); color: var(--primary); }
-
-    .search-box { text-align: center; margin-bottom: 20px; }
-    .search-box input {
-        width: 100%; max-width: 400px; height: 40px; padding: 0 16px;
-        font-size: 14px; border: 1px solid var(--border); border-radius: 4px;
-        background: var(--bg); color: var(--text); outline: none; font-family: inherit;
-        text-align: center;
-    }
-    .search-box input:focus { border-color: var(--primary); }
-
-    table { width: 100%; max-width: 800px; margin: 0 auto; border-collapse: collapse; }
-    th { background: var(--card-bg); border-bottom: 2px solid var(--border); padding: 10px 8px; font-size: 12px; color: var(--secondary); cursor: pointer; user-select: none; font-weight: 500; }
+    .cw { max-width: 800px; margin: 0 auto; padding: 0 20px; }
+    .ch { text-align: center; padding: 48px 0 36px; border-bottom: 1px solid var(--border); }
+    .ch h1 { font-size: 28px; font-weight: 800; margin: 0 0 10px; }
+    .ch .lead { font-size: 15px; color: var(--secondary); line-height: 1.65; max-width: 560px; margin: 0 auto; }
+    .ch .meta { font-size: 13px; color: var(--primary); margin-top: 10px; font-weight: 500; }
+    .ch .meta span { background: var(--card-bg); padding: 3px 12px; border-radius: 12px; }
+    .ed { padding: 36px 0 0; }
+    .ed-card { background: var(--card-bg); border-radius: 8px; padding: 24px 28px; margin-bottom: 14px; border: 1px solid var(--border); }
+    .ed-card h2 { font-size: 15px; font-weight: 700; margin: 0 0 8px; display: flex; align-items: center; gap: 8px; }
+    .ed-card p, .ed-card li { font-size: 14px; color: var(--secondary); line-height: 1.75; margin: 0; }
+    .ed-card ul { padding-left: 18px; }
+    .ed-card ul li { margin-bottom: 4px; }
+    .ed-card ul li::marker { color: var(--primary); }
+    .sbar { text-align: center; padding: 24px 0 16px; }
+    .sbar input { width: 100%; max-width: 400px; height: 42px; padding: 0 16px; font-size: 14px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--text); outline: none; font-family: inherit; text-align: center; }
+    .sbar input:focus { border-color: var(--primary); }
+    .rt { padding-bottom: 24px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: var(--card-bg); border-bottom: 2px solid var(--border); padding: 12px 10px; font-size: 12px; color: var(--secondary); cursor: pointer; user-select: none; font-weight: 600; }
     th:hover { color: var(--primary); }
-    td { padding: 10px 8px; border-bottom: 1px solid var(--border); text-align: center; font-size: 13px; }
+    td { padding: 11px 10px; border-bottom: 1px solid var(--border); text-align: center; font-size: 13px; }
     tr:hover td { background: var(--card-bg); }
-    td a { color: var(--text); }
-    table th:nth-child(1), table td:nth-child(1) { text-align: left !important; }
-    table th:nth-child(2), table td:nth-child(2) { text-align: right !important; padding-right: 24px !important; }
-    table th:nth-child(3), table td:nth-child(3) { text-align: center !important; }
+    td a { color: var(--text); font-weight: 500; }
     td a:hover { color: var(--primary); text-decoration: none; }
-
-    .page-btn {
-        padding: 8px 14px; background: var(--bg); border: 1px solid var(--border);
-        color: var(--text); border-radius: 4px; cursor: pointer; font-size: 13px; margin: 0 2px;
-        min-width: 44px; transition: all 0.15s; font-family: inherit;
-    }
-    .page-btn:hover:not(:disabled) { border-color: var(--primary); }
-    .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-    #pageInfo { font-size: 13px; color: var(--secondary); margin: 0 8px; }
-
-    .collection-footer { max-width: 680px; margin: 32px auto 0; text-align: center; padding-top: 24px; border-top: 1px solid var(--border); }
-    .collection-footer a { color: var(--primary); font-size: 14px; }
+    th:first-child, td:first-child { text-align: left !important; }
+    th:nth-child(2), td:nth-child(2) { text-align: right !important; padding-right: 28px !important; width: 80px; }
+    .pg { text-align: center; padding: 16px 0; }
+    .pg-btn { padding: 8px 16px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 4px; cursor: pointer; font-size: 13px; margin: 0 3px; min-width: 40px; font-family: inherit; }
+    .pg-btn:hover:not(:disabled) { border-color: var(--primary); background: var(--card-bg); }
+    .pg-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .pg-info { font-size: 13px; color: var(--secondary); margin: 0 6px; }
+    .faq { border-top: 1px solid var(--border); padding: 32px 0 0; margin-top: 12px; }
+    .faq h2 { font-size: 18px; font-weight: 700; margin: 0 0 16px; }
+    .faq details { background: var(--card-bg); border-radius: 6px; padding: 14px 18px; margin-bottom: 10px; border: 1px solid var(--border); }
+    .faq summary { cursor: pointer; font-size: 14px; font-weight: 500; outline: none; }
+    .faq summary:hover { color: var(--primary); }
+    .faq .a { margin-top: 10px; font-size: 13px; color: var(--secondary); line-height: 1.7; }
+    .cf { text-align: center; padding: 32px 0 48px; }
+    .cf a { color: var(--primary); font-size: 14px; font-weight: 500; }
+    @media (max-width: 600px) { .ch { padding: 32px 0 24px; } .ch h1 { font-size: 22px; } .ed-card { padding: 18px 16px; } }
 {% endblock %}
 
 {% block content %}
-<section class="collection-hero">
-    <h1>{{ coll_title }}</h1>
-    {% if coll_intro %}
-    <p class="intro">{{ coll_intro }}</p>
-    {% endif %}
-    {% if seo_desc %}
-    <p class="seo-desc">{{ seo_desc }}</p>
-    {% endif %}
-    <p class="count">{{ resources|length }} 个精选资源</p>
-</section>
+<div class="cw">
+    <section class="ch">
+        <h1>{{ coll_title }}</h1>
+        {% if coll_intro %}<p class="lead">{{ coll_intro }}</p>{% endif %}
+        <p class="meta"><span>{{ resources|length }} 个精选资源</span></p>
+    </section>
 
-{% if editor_note or why_collect or audience %}
-<section class="collection-editorial" style="max-width:680px;margin:0 auto 32px;padding:0 20px;">
-    {% if editor_note %}
-    <div style="margin-bottom:20px;">
-        <h2 style="font-size:16px;font-weight:600;margin-bottom:6px;color:var(--text);">📝 编辑推荐</h2>
-        <p style="font-size:14px;color:var(--secondary);line-height:1.7;">{{ editor_note }}</p>
+    {% if editor_note or why_collect or audience or highlights %}
+    <section class="ed">
+        {% if editor_note %}<div class="ed-card"><h2>📝 编辑推荐</h2><p>{{ editor_note }}</p></div>{% endif %}
+        {% if why_collect %}<div class="ed-card"><h2>⭐ 为什么值得收藏</h2><p>{{ why_collect }}</p></div>{% endif %}
+        {% if audience %}<div class="ed-card"><h2>👥 适合人群</h2><p>{{ audience }}</p></div>{% endif %}
+        {% if highlights %}<div class="ed-card"><h2>🌟 精选亮点</h2><ul>{% for item in highlights %}<li>{{ item }}</li>{% endfor %}</ul></div>{% endif %}
+    </section>
+    {% endif %}
+
+    <div class="sbar"><input type="text" id="searchInput" placeholder="在「{{ coll_title }}」中搜索..." oninput="filterTable()" autocomplete="off"></div>
+
+    <div class="rt">
+        <table id="resourceTable"><thead><tr><th onclick="sortTable(0)">资源名称</th><th onclick="sortTable(1)">大小</th><th>类型</th></tr></thead>
+        <tbody>{% for r in resources %}<tr data-search="{{ r.title }} {{ r.category or '' }}"><td><a href="/go/{{ r.res_id }}">{{ r.title }}</a></td><td>{{ r.size or '-' }}</td><td>{{ r.category or '-' }}</td></tr>{% endfor %}</tbody></table>
+        <div class="pg" id="pagination"></div>
     </div>
+
+    {% if faq_html %}
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{% for item in faq_html %}{"@type":"Question","name":{{ item.q|tojson }},"acceptedAnswer":{"@type":"Answer","text":{{ item.a|tojson }}}}{%- if not loop.last %},{% endif %}{% endfor %}]}</script>
+    <section class="faq"><h2>常见问题</h2>{% for item in faq_html %}<details><summary>{{ item.q }}</summary><p class="a">{{ item.a }}</p></details>{% endfor %}</section>
     {% endif %}
-    {% if why_collect %}
-    <div style="margin-bottom:20px;">
-        <h2 style="font-size:16px;font-weight:600;margin-bottom:6px;color:var(--text);">⭐ 为什么值得收藏</h2>
-        <p style="font-size:14px;color:var(--secondary);line-height:1.7;">{{ why_collect }}</p>
-    </div>
-    {% endif %}
-    {% if audience %}
-    <div style="margin-bottom:20px;">
-        <h2 style="font-size:16px;font-weight:600;margin-bottom:6px;color:var(--text);">👥 适合人群</h2>
-        <p style="font-size:14px;color:var(--secondary);line-height:1.7;">{{ audience }}</p>
-    </div>
-    {% endif %}
-    {% if highlights %}
-    <div style="margin-bottom:20px;">
-        <h2 style="font-size:16px;font-weight:600;margin-bottom:6px;color:var(--text);">🌟 精选亮点</h2>
-        <ul style="font-size:14px;color:var(--secondary);line-height:1.8;padding-left:20px;">
-        {% for item in highlights %}
-            <li>{{ item }}</li>
-        {% endfor %}
-        </ul>
-    </div>
-    {% endif %}
-</section>
-{% endif %}
 
-<!-- 搜索和筛选 (同 list.html) -->
-<div class="search-box">
-    <input type="text" id="searchInput" placeholder="在当前专题内搜索..." oninput="filterTable()" autocomplete="off">
-</div>
-
-<div class="tags" id="catTags">
-    <span class="active" onclick="showAll()">全部 ({{ resources|length }})</span>
-</div>
-
-<table id="resourceTable">
-    <thead>
-        <tr>
-            <th onclick="sortTable(0)">资源名称</th>
-            <th onclick="sortTable(1)">大小</th>
-            <th>类型</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for r in resources %}
-        <tr data-search="{{ r.title }} {{ r.category or '' }}" data-category="{{ r.category or '' }}">
-            <td><a href="/go/{{ r.res_id }}">{{ r.title }}</a></td>
-            <td>{{ r.size or '-' }}</td>
-            <td>{{ r.category or '-' }}</td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
-
-<div style="text-align:center;margin-top:16px;" id="pagination"></div>
-
-{% if faq_html %}
-<!-- FAQ Structured Data (Schema.org) -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "mainEntity": [
-    {% for item in faq_html %}
-    {"@type":"Question","name":{{ item.q|tojson }},"acceptedAnswer":{"@type":"Answer","text":{{ item.a|tojson }}}}
-    {%- if not loop.last %},{% endif %}
-    {% endfor %}
-  ]
-}
-</script>
-<section class="collection-faq" style="max-width:680px;margin:40px auto 0;padding:24px 20px;border-top:1px solid var(--border);">
-    <h2 style="font-size:18px;font-weight:600;margin-bottom:16px;color:var(--text);">常见问题</h2>
-    {% for item in faq_html %}
-    <details style="margin-bottom:12px;padding:12px 16px;background:var(--card-bg);border-radius:4px;">
-        <summary style="cursor:pointer;font-size:14px;font-weight:500;color:var(--text);">{{ item.q }}</summary>
-        <p style="margin-top:8px;font-size:13px;color:var(--secondary);line-height:1.6;">{{ item.a }}</p>
-    </details>
-    {% endfor %}
-</section>
-{% endif %}
-
-<div class="collection-footer">
-    <a href="/list.html">← 返回完整资源列表</a>
+    <div class="cf"><a href="/collection/index.html">← 浏览全部专题</a> &nbsp;·&nbsp; <a href="/list.html">完整资源列表</a></div>
 </div>
 
 <script>
-var allRows, pageSize=50, currentPage=1;
-(function init(){
-    allRows = Array.from(document.querySelectorAll('#resourceTable tbody tr'));
-    renderPage();
-})();
-function filterTable(){
-    var q = (document.getElementById('searchInput').value||'').toLowerCase();
-    allRows.forEach(function(tr){
-        tr.style.display = q ? (tr.dataset.search.toLowerCase().indexOf(q)>=0 ? '' : 'none') : '';
-    });
-    currentPage=1; renderPage();
-}
-function sortTable(col){
-    var tbody = document.querySelector('#resourceTable tbody');
-    var rows = Array.from(tbody.querySelectorAll('tr'));
-    rows.sort(function(a,b){
-        var va = (a.cells[col].textContent||'').trim(), vb = (b.cells[col].textContent||'').trim();
-        if(col===1){ return (parseFloat(va)||0) - (parseFloat(vb)||0); }
-        return va.localeCompare(vb,'zh');
-    });
-    rows.forEach(function(r){ tbody.appendChild(r); });
-    allRows = rows; currentPage=1; renderPage();
-}
-function showAll(){ document.getElementById('searchInput').value=''; filterTable(); }
-function renderPage(){
-    var total=allRows.length, pages=Math.ceil(total/pageSize), start=(currentPage-1)*pageSize;
-    allRows.forEach(function(r,i){ r.style.display=(i>=start&&i<start+pageSize) ? '' : 'none'; });
-    var html=''; for(var i=1;i<=pages;i++){ html+='<button class=page-btn onclick=goPage('+i+')'+(i===currentPage?' disabled':'')+'>'+i+'</button>'; }
-    document.getElementById('pagination').innerHTML=html+'<span id=pageInfo>'+currentPage+'/'+pages+' 页</span>';
-}
-function goPage(n){ currentPage=n; renderPage(); window.scrollTo(0,0); }
+var allRows,pageSize=50,currentPage=1;
+(function(){allRows=Array.from(document.querySelectorAll('#resourceTable tbody tr'));renderPage();})();
+function filterTable(){var q=(document.getElementById('searchInput').value||'').toLowerCase();allRows.forEach(function(tr){tr.style.display=q?(tr.dataset.search.toLowerCase().indexOf(q)>=0?'':'none'):''});currentPage=1;renderPage();}
+function sortTable(col){var tb=document.querySelector('#resourceTable tbody'),rows=Array.from(tb.querySelectorAll('tr'));rows.sort(function(a,b){var va=(a.cells[col].textContent||'').trim(),vb=(b.cells[col].textContent||'').trim();if(col===1)return(parseFloat(va)||0)-(parseFloat(vb)||0);return va.localeCompare(vb,'zh')});rows.forEach(function(r){tb.appendChild(r)});allRows=rows;currentPage=1;renderPage();}
+function renderPage(){var t=allRows.length,p=Math.ceil(t/pageSize),s=(currentPage-1)*pageSize;allRows.forEach(function(r,i){r.style.display=(i>=s&&i<s+pageSize)?'':'none'});var h='';for(var i=1;i<=p;i++)h+='<button class=pg-btn onclick=goPage('+i+')'+(i===currentPage?' disabled':'')+'>'+i+'</button>';document.getElementById('pagination').innerHTML=h+'<span class=pg-info>'+currentPage+'/'+p+' 页</span>';}
+function goPage(n){currentPage=n;renderPage();window.scrollTo(0,0);}
 </script>
 {% endblock %}
