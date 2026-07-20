@@ -1,6 +1,8 @@
 # BigPRC 日常工作流与维护手册
 
 > **如果你只记得一件事：** 手工页面改 `root/custom-pages/`，生成页面改 Excel 跑脚本。改完 `git push`，然后 VPS 跑 `cd /root/bigprc-deploy && bash deploy.sh && cd /root/scripts && python3 auto_generate.py`。
+> 
+> **v2 完整流水线：** Excel 更新 → `pantools_sync_v2.py` → `ai_classifier.py` → `ai_seo_writer.py` → `ai_tag_generator.py` → `collection_generator.py` → `collection_faq.py` → `auto_generate.py`。详见 [V2_UPGRADE_COMPLETED.md](docs/V2_UPGRADE_COMPLETED.md)。
 
 ---
 
@@ -182,5 +184,44 @@ ssh -p 2222 root@37.27.246.3 "cd /root/bigprc-deploy && bash deploy.sh && cd /ro
 
 ---
 
-> 详细文档: **[DEVELOPER_MANUAL.md](DEVELOPER_MANUAL.md)** · 设计规范: **[docs/DESIGN_SPEC_FLAT_REDESIGN.md](docs/DESIGN_SPEC_FLAT_REDESIGN.md)**  
-> 项目结构: **[docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)** · 评估方案: **[docs/EVALUATION_AND_IMPROVEMENT_PLAN.md](docs/EVALUATION_AND_IMPROVEMENT_PLAN.md)**
+## v2.0 AI 内容流水线 (全链路)
+
+**完整升级文档**: [docs/V2_UPGRADE_COMPLETED.md](docs/V2_UPGRADE_COMPLETED.md)
+
+### 资源更新后需依次执行
+
+```bash
+cd /root/scripts
+
+# 1. Excel → DB 同步
+python3 pantools_sync_v2.py
+
+# 2. AI 资源分类 (category/platform/resource_type)
+python3 ai_classifier.py
+
+# 3. AI SEO 内容生成 (tagline/summary/keywords/reason)
+python3 ai_seo_writer.py --round 1 --force
+python3 ai_seo_writer.py --round 2 --force
+python3 ai_seo_writer.py --audit    # 质量巡检
+
+# 4. AI 标签提取 (tags + resource_tags)
+python3 ai_tag_generator.py
+python3 tag_normalize.py             # 归一化碎片标签
+
+# 5. 专题刷新 (collections + resource_collections)
+python3 collection_generator.py --rebuild
+python3 collection_faq.py            # FAQ 生成
+
+# 6. 全站静态生成
+python3 auto_generate.py
+```
+
+### 质量维护
+
+```bash
+python3 ai_seo_writer.py --audit    # AI 内容质量报告
+python3 ai_seo_writer.py --repair   # 自动修复违规词
+python3 migration.py validate       # 数据库完整性
+```
+
+---

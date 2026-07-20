@@ -2,11 +2,12 @@
 
 > **站点**: https://www.bigprc.com
 > **仓库**: https://github.com/chiangprc/bigprc-deploy
-> **最后更新**: 2026-07-14 (VPS-Local 全量审计同步)
+> **最后更新**: 2026-07-20 (P0-B + P1 数据层升级完成，AI 流水线全链路闭环)
 
 ---
 
 > 🔴 **日常操作看这里 → [WORKFLOW_DAILY.md](WORKFLOW_DAILY.md)**
+> 🟢 **v2.0 升级报告 → [docs/V2_UPGRADE_COMPLETED.md](docs/V2_UPGRADE_COMPLETED.md)**
 > 本文档是完整的系统架构和配置参考。日常改页面、更新资源、部署上线等操作，请优先查阅《开发者日常工作流》。
 
 ---
