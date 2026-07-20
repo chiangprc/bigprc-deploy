@@ -92,6 +92,7 @@
         <div class="badge">精选专题</div>
         <h1>{{ coll_title }}</h1>
         {% if coll_intro %}<p class="desc">{{ coll_intro }}</p>{% endif %}
+        {% if cat_tags %}<div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px;">{% for c in cat_tags %}<span style="padding:3px 12px;border-radius:12px;font-size:12px;background:var(--card-bg);border:1px solid var(--border);color:var(--secondary);">{{ c }}</span>{% endfor %}</div>{% endif %}
         <div class="stat-row">
             <div class="stat"><div class="n">{{ resources|length }}</div><div class="l">精选资源</div></div>
             <div class="stat"><div class="n">{{ (resources|map(attribute='category')|select|list|unique|list)|length }}</div><div class="l">覆盖分类</div></div>
@@ -111,6 +112,20 @@
     {% if highlights %}
     <section class="hl-grid">
         {% for item in highlights %}<div class="hl-card"><div class="t">{{ item }}</div></div>{% endfor %}
+    </section>
+    {% endif %}
+
+    {% if related_collections %}
+    <section style="padding:0 0 32px;">
+        <h3 style="font-size:16px;font-weight:700;margin-bottom:12px;">🔗 相关专题</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;">
+        {% for rc in related_collections %}
+            <a href="/collection/{{ rc.id }}.html" style="display:block;padding:14px 16px;border:1px solid var(--border);border-radius:8px;background:var(--card-bg);text-decoration:none;transition:border-color 0.15s;">
+                <div style="font-size:13px;font-weight:600;color:var(--text);">{{ rc.title }}</div>
+                <div style="font-size:11px;color:var(--secondary);margin-top:4px;">{{ rc.count }} 部资源</div>
+            </a>
+        {% endfor %}
+        </div>
     </section>
     {% endif %}
 

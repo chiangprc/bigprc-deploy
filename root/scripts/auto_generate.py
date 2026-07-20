@@ -277,6 +277,27 @@ def build_collection_pages():
                               for item in faq_list]})
         schema_json = json.dumps({"@context":"https://schema.org","@graph":schema_graph}, ensure_ascii=False)
 
+        # Phase 4.5: 计算相关专题 (基于共享 resource_tags)
+        my_tags = set(r[0] for r in cursor.execute(
+            "SELECT DISTINCT t.name FROM resource_tags rt JOIN tags t ON rt.tag_id=t.id WHERE rt.resource_id IN (SELECT resource_id FROM resource_collections WHERE collection_id=?)",
+            (slug,)).fetchall())
+        related = []
+        for other in collections:
+            oslug = other["coll"]["id"]
+            if oslug == slug:
+                continue
+            o_tags = set(r[0] for r in cursor.execute(
+                "SELECT DISTINCT t.name FROM resource_tags rt JOIN tags t ON rt.tag_id=t.id WHERE rt.resource_id IN (SELECT resource_id FROM resource_collections WHERE collection_id=?)",
+                (oslug,)).fetchall())
+            overlap = len(my_tags & o_tags)
+            if overlap >= 3:
+                related.append({"id": oslug, "title": other["coll"]["title"], "count": len(other["resources"]), "overlap": overlap})
+        related.sort(key=lambda x: -x["overlap"])
+        related = related[:4]
+
+        # 获取 category 标签 (hero 展示用)
+        cat_tags = list(set(r.get("category","") for r in coll_res if r.get("category")))[:4]
+
         html = coll_template.render(
             resources=coll_res,
             coll_title=coll["title"],
@@ -288,6 +309,8 @@ def build_collection_pages():
             why_collect=coll.get("why_collect", ""),
             audience=coll.get("audience", ""),
             highlights=json.loads(coll.get("highlights", "[]")) if coll.get("highlights") else [],
+            related_collections=related,
+            cat_tags=cat_tags,
             schema_json=schema_json,
             admin_email=ADMIN_EMAIL, clarity_id=CLARITY_ID
         )
