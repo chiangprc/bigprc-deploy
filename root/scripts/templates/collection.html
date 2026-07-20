@@ -1,0 +1,141 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ seo_title or coll_title }} - BigPRC{% endblock %}
+{% block description %}{{ seo_desc or coll_intro|striptags|truncate(160, true) }}{% endblock %}
+{% block og_title %}{{ seo_title or coll_title }} - BigPRC 精选专题{% endblock %}
+{% block og_description %}{{ seo_desc or coll_intro|striptags|truncate(200, true) }}{% endblock %}
+
+{% block extra_css %}
+    <link rel="preload" href="/index.json" as="fetch" crossorigin="anonymous">
+
+    .collection-hero {
+        max-width: 680px; margin: 0 auto 32px; text-align: center;
+        padding: 32px 20px; border-bottom: 1px solid var(--border);
+    }
+    .collection-hero h1 { font-size: 24px; font-weight: 700; margin-bottom: 12px; color: var(--text); }
+    .collection-hero .intro { font-size: 15px; color: var(--secondary); line-height: 1.6; max-width: 560px; margin: 0 auto 8px; }
+    .collection-hero .seo-desc { font-size: 12px; color: var(--secondary); opacity: 0.7; margin-top: 4px; }
+    .collection-hero .count { font-size: 13px; color: var(--primary); margin-top: 8px; font-weight: 500; }
+
+    .tags { text-align: center; margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+    .tags span {
+        padding: 6px 14px; border-radius: 14px; font-size: 12px; cursor: pointer;
+        border: 1px solid var(--border); color: var(--secondary); background: var(--bg);
+        transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+    }
+    .tags span.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .tags span:hover:not(.active) { border-color: var(--primary); color: var(--primary); }
+
+    .search-box { text-align: center; margin-bottom: 20px; }
+    .search-box input {
+        width: 100%; max-width: 400px; height: 40px; padding: 0 16px;
+        font-size: 14px; border: 1px solid var(--border); border-radius: 4px;
+        background: var(--bg); color: var(--text); outline: none; font-family: inherit;
+        text-align: center;
+    }
+    .search-box input:focus { border-color: var(--primary); }
+
+    table { width: 100%; max-width: 800px; margin: 0 auto; border-collapse: collapse; }
+    th { background: var(--card-bg); border-bottom: 2px solid var(--border); padding: 10px 8px; font-size: 12px; color: var(--secondary); cursor: pointer; user-select: none; font-weight: 500; }
+    th:hover { color: var(--primary); }
+    td { padding: 10px 8px; border-bottom: 1px solid var(--border); text-align: center; font-size: 13px; }
+    tr:hover td { background: var(--card-bg); }
+    td a { color: var(--text); }
+    table th:nth-child(1), table td:nth-child(1) { text-align: left !important; }
+    table th:nth-child(2), table td:nth-child(2) { text-align: right !important; padding-right: 24px !important; }
+    table th:nth-child(3), table td:nth-child(3) { text-align: center !important; }
+    td a:hover { color: var(--primary); text-decoration: none; }
+
+    .page-btn {
+        padding: 8px 14px; background: var(--bg); border: 1px solid var(--border);
+        color: var(--text); border-radius: 4px; cursor: pointer; font-size: 13px; margin: 0 2px;
+        min-width: 44px; transition: all 0.15s; font-family: inherit;
+    }
+    .page-btn:hover:not(:disabled) { border-color: var(--primary); }
+    .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    #pageInfo { font-size: 13px; color: var(--secondary); margin: 0 8px; }
+
+    .collection-footer { max-width: 680px; margin: 32px auto 0; text-align: center; padding-top: 24px; border-top: 1px solid var(--border); }
+    .collection-footer a { color: var(--primary); font-size: 14px; }
+{% endblock %}
+
+{% block content %}
+<section class="collection-hero">
+    <h1>{{ coll_title }}</h1>
+    {% if coll_intro %}
+    <p class="intro">{{ coll_intro }}</p>
+    {% endif %}
+    {% if seo_desc %}
+    <p class="seo-desc">{{ seo_desc }}</p>
+    {% endif %}
+    <p class="count">{{ resources|length }} 个精选资源</p>
+</section>
+
+<!-- 搜索和筛选 (同 list.html) -->
+<div class="search-box">
+    <input type="text" id="searchInput" placeholder="在当前专题内搜索..." oninput="filterTable()" autocomplete="off">
+</div>
+
+<div class="tags" id="catTags">
+    <span class="active" onclick="showAll()">全部 ({{ resources|length }})</span>
+</div>
+
+<table id="resourceTable">
+    <thead>
+        <tr>
+            <th onclick="sortTable(0)">资源名称</th>
+            <th onclick="sortTable(1)">大小</th>
+            <th>类型</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for r in resources %}
+        <tr data-search="{{ r.title }} {{ r.category or '' }}" data-category="{{ r.category or '' }}">
+            <td><a href="/go/{{ r.res_id }}">{{ r.title }}</a></td>
+            <td>{{ r.size or '-' }}</td>
+            <td>{{ r.category or '-' }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<div style="text-align:center;margin-top:16px;" id="pagination"></div>
+
+<div class="collection-footer">
+    <a href="/list.html">← 返回完整资源列表</a>
+</div>
+
+<script>
+var allRows, pageSize=50, currentPage=1;
+(function init(){
+    allRows = Array.from(document.querySelectorAll('#resourceTable tbody tr'));
+    renderPage();
+})();
+function filterTable(){
+    var q = (document.getElementById('searchInput').value||'').toLowerCase();
+    allRows.forEach(function(tr){
+        tr.style.display = q ? (tr.dataset.search.toLowerCase().indexOf(q)>=0 ? '' : 'none') : '';
+    });
+    currentPage=1; renderPage();
+}
+function sortTable(col){
+    var tbody = document.querySelector('#resourceTable tbody');
+    var rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort(function(a,b){
+        var va = (a.cells[col].textContent||'').trim(), vb = (b.cells[col].textContent||'').trim();
+        if(col===1){ return (parseFloat(va)||0) - (parseFloat(vb)||0); }
+        return va.localeCompare(vb,'zh');
+    });
+    rows.forEach(function(r){ tbody.appendChild(r); });
+    allRows = rows; currentPage=1; renderPage();
+}
+function showAll(){ document.getElementById('searchInput').value=''; filterTable(); }
+function renderPage(){
+    var total=allRows.length, pages=Math.ceil(total/pageSize), start=(currentPage-1)*pageSize;
+    allRows.forEach(function(r,i){ r.style.display=(i>=start&&i<start+pageSize) ? '' : 'none'; });
+    var html=''; for(var i=1;i<=pages;i++){ html+='<button class=page-btn onclick=goPage('+i+')'+(i===currentPage?' disabled':'')+'>'+i+'</button>'; }
+    document.getElementById('pagination').innerHTML=html+'<span id=pageInfo>'+currentPage+'/'+pages+' 页</span>';
+}
+function goPage(n){ currentPage=n; renderPage(); window.scrollTo(0,0); }
+</script>
+{% endblock %}

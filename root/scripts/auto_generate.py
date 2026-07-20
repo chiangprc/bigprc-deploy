@@ -201,15 +201,82 @@ def build_static_site(resources):
 
     print("✅ 全站纯静态 HTML 矩阵生成完毕！(已注入 5 秒防刷与内链蜘蛛网)")
 
+# ================= 4b. 合集/专题页面 (P1-3) =================
+def fetch_collections_from_db():
+    """从 SQLite 读取合集+关联资源，返回结构化列表."""
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    colls = cursor.execute("""
+        SELECT c.id, c.title, c.is_featured,
+               cc.intro, cc.seo_title, cc.seo_desc
+        FROM collections c
+        LEFT JOIN collection_content cc ON c.id = cc.collection_id
+        ORDER BY c.sort_order
+    """).fetchall()
+    result = []
+    for coll in colls:
+        res_rows = cursor.execute("""
+            SELECT r.* FROM resources r
+            JOIN resource_collections rc ON r.res_id = rc.resource_id
+            WHERE rc.collection_id = ?
+            ORDER BY rc.score DESC
+        """, (coll["id"],)).fetchall()
+        if res_rows:
+            result.append({"coll": dict(coll), "resources": [dict(r) for r in res_rows]})
+    conn.close()
+    return result
+
+
+def build_collection_pages():
+    """为每个合集生成独立专题页 (collection.html 模板)."""
+    collections = fetch_collections_from_db()
+    if not collections:
+        print("  📭 无合集数据，跳过专题页")
+        return []
+
+    from jinja2 import Environment, FileSystemLoader
+    coll_template = Environment(loader=FileSystemLoader(_template_dir)).get_template('collection.html')
+    web_root = os.path.dirname(INDEX_FILE)
+    coll_dir = os.path.join(web_root, "collection")
+    os.makedirs(coll_dir, exist_ok=True)
+    coll_urls = []
+
+    for item in collections:
+        coll = item["coll"]
+        coll_res = item["resources"]
+        slug = coll["id"]
+
+        html = coll_template.render(
+            resources=coll_res,
+            coll_title=coll["title"],
+            coll_intro=coll.get("intro", ""),
+            seo_title=coll.get("seo_title", ""),
+            seo_desc=coll.get("seo_desc", ""),
+            admin_email=ADMIN_EMAIL, clarity_id=CLARITY_ID
+        )
+        path = os.path.join(coll_dir, f"{slug}.html")
+        with open(path, 'w', encoding='utf-8') as f:
+            f.write(html)
+        coll_urls.append(f"/collection/{slug}.html")
+        print(f"  📚 {coll['title']}: {len(coll_res)} 条 → {path}")
+
+    print(f"✅ {len(coll_urls)} 个专题页生成完毕")
+    return coll_urls
+
+
 # ================= 5. SEO 地图与 API 推送 =================
-def generate_sitemap(resources):
-    """生成 XML 地图"""
+def generate_sitemap(resources, coll_urls=None):
+    """生成 XML 地图 (含合集页面)."""
     print("🗺️ 正在生成 XML 网站地图...")
     current_date = datetime.now().strftime("%Y-%m-%d")
     urls = [f"<url><loc>{DOMAIN}/</loc><lastmod>{current_date}</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>"]
     for res in resources:
         urls.append(f"<url><loc>{DOMAIN}/go/{res['res_id']}</loc><lastmod>{current_date}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>")
-    
+    if coll_urls:
+        for u in coll_urls:
+            urls.append(f"<url><loc>{DOMAIN}{u}</loc><lastmod>{current_date}</lastmod><changefreq>daily</changefreq><priority>0.9</priority></url>")
+
     sitemap_content = f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n    {"".join(urls)}\n</urlset>'
     with open(SITEMAP_FILE, "w", encoding="utf-8") as f:
         f.write(sitemap_content)
@@ -265,11 +332,12 @@ if __name__ == "__main__":
         exit()
         
     build_static_site(data)
+    coll_urls = build_collection_pages()
     try:
         safe_update_nginx(data)
     except Exception as e:
         print(f"[SKIP] Nginx update skipped (local/dev environment): {e}")
-    generate_sitemap(data)
+    generate_sitemap(data, coll_urls)
     try:
         smart_push_engine(data)
     except Exception as e:
