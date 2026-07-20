@@ -315,6 +315,7 @@ def build_collection_pages():
             related_collections=related,
             cat_tags=cat_tags,
             schema_json=schema_json,
+            canonical_url=coll_url,
             admin_email=ADMIN_EMAIL, clarity_id=CLARITY_ID
         )
         path = os.path.join(coll_dir, f"{slug}.html")

@@ -1,0 +1,21 @@
+User-agent: *
+Allow: /
+Disallow: /go/
+
+# AI search bots: allow for search/discovery, disallow for training
+User-agent: GPTBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+Sitemap: https://www.bigprc.com/sitemap.xml
