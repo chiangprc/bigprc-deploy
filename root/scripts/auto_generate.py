@@ -215,13 +215,16 @@ def fetch_collections_from_db():
         LEFT JOIN collection_content cc ON c.id = cc.collection_id
         ORDER BY c.sort_order
     """).fetchall()
-    # 预计算每个专题的标签集合 (用于 Phase 4.5 互链)
+    # 预计算每个专题的标签集合 + 资源数量 (用于 Phase 4.5 互链)
     tag_sets = {}
+    resource_counts = {}
     for coll in colls:
         tags = set(r[0] for r in cursor.execute(
             "SELECT DISTINCT t.name FROM resource_tags rt JOIN tags t ON rt.tag_id=t.id WHERE rt.resource_id IN (SELECT resource_id FROM resource_collections WHERE collection_id=?)",
             (coll["id"],)).fetchall())
         tag_sets[coll["id"]] = tags
+        cnt = cursor.execute("SELECT COUNT(*) FROM resource_collections WHERE collection_id=?", (coll["id"],)).fetchone()[0]
+        resource_counts[coll["id"]] = cnt
 
     result = []
     for coll in colls:
@@ -239,11 +242,8 @@ def fetch_collections_from_db():
                 if oid == coll["id"]: continue
                 overlap = len(my_tags & tag_sets.get(oid, set()))
                 if overlap >= 3:
-                    related.append({"id": oid, "title": other["title"], "count": len(res_rows) if oid == coll["id"] else 0, "overlap": overlap})
+                    related.append({"id": oid, "title": other["title"], "count": resource_counts.get(oid, 0), "overlap": overlap})
             related.sort(key=lambda x: -x["overlap"])
-            # Fix count for related items
-            for rc in related:
-                rc["count"] = len([c for c in colls if c["id"] == rc["id"]][0]["resources"]) if any(c["id"]==rc["id"] for c in colls) else 0
             result.append({"coll": dict(coll), "resources": [dict(r) for r in res_rows], "related": related[:4]})
     conn.close()
     return result
