@@ -1,9 +1,13 @@
 User-agent: *
 Allow: /
+Disallow: /admin/
+Disallow: /backup/
+Disallow: /logs/
+Disallow: /go/
 
 Sitemap: https://www.bigprc.com/sitemap.xml
 
-# AI Search Bots — allow discovery & citation
+# AI Search / Answer Engines — allow discovery & citation
 User-agent: GPTBot
 Allow: /
 
@@ -19,15 +23,9 @@ Allow: /
 User-agent: anthropic-ai
 Allow: /
 
-# Non-beneficial crawlers — disallow
+# Block low-value crawlers
 User-agent: Bytespider
 Disallow: /
 
 User-agent: CCBot
 Disallow: /
-
-# Admin / sensitive paths
-User-agent: *
-Disallow: /admin/
-Disallow: /backup/
-Disallow: /logs/
