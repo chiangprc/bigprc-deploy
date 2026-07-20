@@ -250,6 +250,33 @@ def build_collection_pages():
 
         faq_json = coll.get("faq_json", "")
         faq_list = json.loads(faq_json) if faq_json else []
+
+        # Schema.org: CollectionPage + BreadcrumbList + ItemList + FAQPage
+        coll_url = f"{DOMAIN}/collection/{slug}.html"
+        schema_graph = [
+            {"@type":"CollectionPage","@id":coll_url,"url":coll_url,
+             "name":coll["title"],
+             "description":coll.get("seo_desc") or coll.get("intro",""),
+             "isPartOf":{"@type":"WebSite","name":"BigPRC","url":DOMAIN},
+             "about":{"@type":"Thing","name":coll["title"]},
+             "mainEntity":{"@type":"ItemList",
+                "name":f"{coll['title']}精选资源",
+                "numberOfItems":len(coll_res),
+                "itemListElement":[{"@type":"ListItem","position":i+1,"url":f"{DOMAIN}/go/{r['res_id']}"}
+                                   for i,r in enumerate(coll_res[:20])]}},
+            {"@type":"BreadcrumbList",
+             "itemListElement":[
+                 {"@type":"ListItem","position":1,"name":"BigPRC","item":DOMAIN},
+                 {"@type":"ListItem","position":2,"name":"精选专题","item":f"{DOMAIN}/collection/index.html"},
+                 {"@type":"ListItem","position":3,"name":coll["title"],"item":coll_url}]}
+        ]
+        if faq_list:
+            schema_graph.append({"@type":"FAQPage",
+                "mainEntity":[{"@type":"Question","name":item["q"],
+                               "acceptedAnswer":{"@type":"Answer","text":item["a"]}}
+                              for item in faq_list]})
+        schema_json = json.dumps({"@context":"https://schema.org","@graph":schema_graph}, ensure_ascii=False)
+
         html = coll_template.render(
             resources=coll_res,
             coll_title=coll["title"],
@@ -261,6 +288,7 @@ def build_collection_pages():
             why_collect=coll.get("why_collect", ""),
             audience=coll.get("audience", ""),
             highlights=json.loads(coll.get("highlights", "[]")) if coll.get("highlights") else [],
+            schema_json=schema_json,
             admin_email=ADMIN_EMAIL, clarity_id=CLARITY_ID
         )
         path = os.path.join(coll_dir, f"{slug}.html")

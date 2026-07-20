@@ -74,8 +74,8 @@
         <div class="pg" id="pagination"></div>
     </div>
 
+    {% if schema_json %}<script type="application/ld+json">{{ schema_json }}</script>{% endif %}
     {% if faq_html %}
-    <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{% for item in faq_html %}{"@type":"Question","name":{{ item.q|tojson }},"acceptedAnswer":{"@type":"Answer","text":{{ item.a|tojson }}}}{%- if not loop.last %},{% endif %}{% endfor %}]}</script>
     <section class="faq"><h2>常见问题</h2>{% for item in faq_html %}<details><summary>{{ item.q }}</summary><p class="a">{{ item.a }}</p></details>{% endfor %}</section>
     {% endif %}
 
