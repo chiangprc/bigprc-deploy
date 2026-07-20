@@ -215,6 +215,14 @@ def fetch_collections_from_db():
         LEFT JOIN collection_content cc ON c.id = cc.collection_id
         ORDER BY c.sort_order
     """).fetchall()
+    # 预计算每个专题的标签集合 (用于 Phase 4.5 互链)
+    tag_sets = {}
+    for coll in colls:
+        tags = set(r[0] for r in cursor.execute(
+            "SELECT DISTINCT t.name FROM resource_tags rt JOIN tags t ON rt.tag_id=t.id WHERE rt.resource_id IN (SELECT resource_id FROM resource_collections WHERE collection_id=?)",
+            (coll["id"],)).fetchall())
+        tag_sets[coll["id"]] = tags
+
     result = []
     for coll in colls:
         res_rows = cursor.execute("""
@@ -224,7 +232,19 @@ def fetch_collections_from_db():
             ORDER BY rc.score DESC
         """, (coll["id"],)).fetchall()
         if res_rows:
-            result.append({"coll": dict(coll), "resources": [dict(r) for r in res_rows]})
+            my_tags = tag_sets.get(coll["id"], set())
+            related = []
+            for other in colls:
+                oid = other["id"]
+                if oid == coll["id"]: continue
+                overlap = len(my_tags & tag_sets.get(oid, set()))
+                if overlap >= 3:
+                    related.append({"id": oid, "title": other["title"], "count": len(res_rows) if oid == coll["id"] else 0, "overlap": overlap})
+            related.sort(key=lambda x: -x["overlap"])
+            # Fix count for related items
+            for rc in related:
+                rc["count"] = len([c for c in colls if c["id"] == rc["id"]][0]["resources"]) if any(c["id"]==rc["id"] for c in colls) else 0
+            result.append({"coll": dict(coll), "resources": [dict(r) for r in res_rows], "related": related[:4]})
     conn.close()
     return result
 
@@ -277,25 +297,8 @@ def build_collection_pages():
                               for item in faq_list]})
         schema_json = json.dumps({"@context":"https://schema.org","@graph":schema_graph}, ensure_ascii=False)
 
-        # Phase 4.5: 计算相关专题 (基于共享 resource_tags)
-        my_tags = set(r[0] for r in cursor.execute(
-            "SELECT DISTINCT t.name FROM resource_tags rt JOIN tags t ON rt.tag_id=t.id WHERE rt.resource_id IN (SELECT resource_id FROM resource_collections WHERE collection_id=?)",
-            (slug,)).fetchall())
-        related = []
-        for other in collections:
-            oslug = other["coll"]["id"]
-            if oslug == slug:
-                continue
-            o_tags = set(r[0] for r in cursor.execute(
-                "SELECT DISTINCT t.name FROM resource_tags rt JOIN tags t ON rt.tag_id=t.id WHERE rt.resource_id IN (SELECT resource_id FROM resource_collections WHERE collection_id=?)",
-                (oslug,)).fetchall())
-            overlap = len(my_tags & o_tags)
-            if overlap >= 3:
-                related.append({"id": oslug, "title": other["coll"]["title"], "count": len(other["resources"]), "overlap": overlap})
-        related.sort(key=lambda x: -x["overlap"])
-        related = related[:4]
-
-        # 获取 category 标签 (hero 展示用)
+        # Phase 4.5: 从预计算数据中取相关专题 + category 标签
+        related = item.get("related", [])[:4]
         cat_tags = list(set(r.get("category","") for r in coll_res if r.get("category")))[:4]
 
         html = coll_template.render(
