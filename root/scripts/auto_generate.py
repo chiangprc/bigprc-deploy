@@ -209,7 +209,7 @@ def fetch_collections_from_db():
     cursor = conn.cursor()
     colls = cursor.execute("""
         SELECT c.id, c.title, c.is_featured,
-               cc.intro, cc.seo_title, cc.seo_desc
+               cc.intro, cc.seo_title, cc.seo_desc, cc.faq_json
         FROM collections c
         LEFT JOIN collection_content cc ON c.id = cc.collection_id
         ORDER BY c.sort_order
@@ -247,12 +247,15 @@ def build_collection_pages():
         coll_res = item["resources"]
         slug = coll["id"]
 
+        faq_json = coll.get("faq_json", "")
+        faq_list = json.loads(faq_json) if faq_json else []
         html = coll_template.render(
             resources=coll_res,
             coll_title=coll["title"],
             coll_intro=coll.get("intro", ""),
             seo_title=coll.get("seo_title", ""),
             seo_desc=coll.get("seo_desc", ""),
+            faq_html=faq_list,
             admin_email=ADMIN_EMAIL, clarity_id=CLARITY_ID
         )
         path = os.path.join(coll_dir, f"{slug}.html")
@@ -260,6 +263,24 @@ def build_collection_pages():
             f.write(html)
         coll_urls.append(f"/collection/{slug}.html")
         print(f"  📚 {coll['title']}: {len(coll_res)} 条 → {path}")
+
+    # 生成专题索引页
+    idx_template = Environment(loader=FileSystemLoader(_template_dir)).get_template('collection_index.html')
+    idx_data = [{"id": c["id"], "title": c["title"], "intro": c.get("intro",""),
+                 "count": len(r["resources"]), "featured": c.get("is_featured",0)}
+                for c, r in [(item["coll"], item) for item in collections]]
+    idx_html = idx_template.render(collections=idx_data, admin_email=ADMIN_EMAIL, clarity_id=CLARITY_ID)
+    idx_path = os.path.join(coll_dir, "index.html")
+    with open(idx_path, 'w', encoding='utf-8') as f:
+        f.write(idx_html)
+    coll_urls.append("/collection/index.html")
+    print(f"  📚 专题索引页: {len(idx_data)} 个专题 → {idx_path}")
+
+    # 生成 collections.json 供首页 JS 渲染
+    json_path = os.path.join(web_root, "collections.json")
+    with open(json_path, 'w', encoding='utf-8') as f:
+        json.dump(idx_data, f, ensure_ascii=False)
+    print(f"  collections.json: {len(idx_data)} 专题, {os.path.getsize(json_path)}B")
 
     print(f"✅ {len(coll_urls)} 个专题页生成完毕")
     return coll_urls
