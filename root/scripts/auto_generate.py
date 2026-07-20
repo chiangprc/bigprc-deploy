@@ -260,7 +260,7 @@ def build_collection_pages():
             editor_note=coll.get("editor_note", ""),
             why_collect=coll.get("why_collect", ""),
             audience=coll.get("audience", ""),
-            highlights=coll.get("highlights", ""),
+            highlights=json.loads(coll.get("highlights", "[]")) if coll.get("highlights") else [],
             admin_email=ADMIN_EMAIL, clarity_id=CLARITY_ID
         )
         path = os.path.join(coll_dir, f"{slug}.html")

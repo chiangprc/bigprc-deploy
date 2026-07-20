@@ -93,8 +93,12 @@
     {% endif %}
     {% if highlights %}
     <div style="margin-bottom:20px;">
-        <h2 style="font-size:16px;font-weight:600;margin-bottom:6px;color:var(--text);">🌟 精选资源</h2>
-        <p style="font-size:14px;color:var(--secondary);line-height:1.7;">{{ highlights }}</p>
+        <h2 style="font-size:16px;font-weight:600;margin-bottom:6px;color:var(--text);">🌟 精选亮点</h2>
+        <ul style="font-size:14px;color:var(--secondary);line-height:1.8;padding-left:20px;">
+        {% for item in highlights %}
+            <li>{{ item }}</li>
+        {% endfor %}
+        </ul>
     </div>
     {% endif %}
 </section>
@@ -131,6 +135,19 @@
 <div style="text-align:center;margin-top:16px;" id="pagination"></div>
 
 {% if faq_html %}
+<!-- FAQ Structured Data (Schema.org) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {% for item in faq_html %}
+    {"@type":"Question","name":{{ item.q|tojson }},"acceptedAnswer":{"@type":"Answer","text":{{ item.a|tojson }}}}
+    {%- if not loop.last %},{% endif %}
+    {% endfor %}
+  ]
+}
+</script>
 <section class="collection-faq" style="max-width:680px;margin:40px auto 0;padding:24px 20px;border-top:1px solid var(--border);">
     <h2 style="font-size:18px;font-weight:600;margin-bottom:16px;color:var(--text);">常见问题</h2>
     {% for item in faq_html %}
