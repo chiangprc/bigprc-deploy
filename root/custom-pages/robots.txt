@@ -1,9 +1,13 @@
 User-agent: *
 Allow: /
-Disallow: /go/
 
-# AI search bots: allow for search/discovery, disallow for training
+Sitemap: https://www.bigprc.com/sitemap.xml
+
+# AI Search Bots — allow discovery & citation
 User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
 Allow: /
 
 User-agent: Claude-Web
@@ -12,10 +16,18 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
-User-agent: Bytespider
-Allow: /
-
 User-agent: anthropic-ai
 Allow: /
 
-Sitemap: https://www.bigprc.com/sitemap.xml
+# Non-beneficial crawlers — disallow
+User-agent: Bytespider
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+# Admin / sensitive paths
+User-agent: *
+Disallow: /admin/
+Disallow: /backup/
+Disallow: /logs/
