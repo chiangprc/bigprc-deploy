@@ -3,7 +3,6 @@ Allow: /
 Disallow: /admin/
 Disallow: /backup/
 Disallow: /logs/
-Disallow: /go/
 
 Sitemap: https://www.bigprc.com/sitemap.xml
 
