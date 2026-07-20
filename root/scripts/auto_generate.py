@@ -209,7 +209,8 @@ def fetch_collections_from_db():
     cursor = conn.cursor()
     colls = cursor.execute("""
         SELECT c.id, c.title, c.is_featured,
-               cc.intro, cc.seo_title, cc.seo_desc, cc.faq_json
+               cc.intro, cc.seo_title, cc.seo_desc, cc.faq_json,
+               cc.editor_note, cc.why_collect, cc.audience, cc.highlights
         FROM collections c
         LEFT JOIN collection_content cc ON c.id = cc.collection_id
         ORDER BY c.sort_order
@@ -256,6 +257,10 @@ def build_collection_pages():
             seo_title=coll.get("seo_title", ""),
             seo_desc=coll.get("seo_desc", ""),
             faq_html=faq_list,
+            editor_note=coll.get("editor_note", ""),
+            why_collect=coll.get("why_collect", ""),
+            audience=coll.get("audience", ""),
+            highlights=coll.get("highlights", ""),
             admin_email=ADMIN_EMAIL, clarity_id=CLARITY_ID
         )
         path = os.path.join(coll_dir, f"{slug}.html")

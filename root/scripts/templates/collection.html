@@ -71,6 +71,35 @@
     <p class="count">{{ resources|length }} 个精选资源</p>
 </section>
 
+{% if editor_note or why_collect or audience %}
+<section class="collection-editorial" style="max-width:680px;margin:0 auto 32px;padding:0 20px;">
+    {% if editor_note %}
+    <div style="margin-bottom:20px;">
+        <h2 style="font-size:16px;font-weight:600;margin-bottom:6px;color:var(--text);">📝 编辑推荐</h2>
+        <p style="font-size:14px;color:var(--secondary);line-height:1.7;">{{ editor_note }}</p>
+    </div>
+    {% endif %}
+    {% if why_collect %}
+    <div style="margin-bottom:20px;">
+        <h2 style="font-size:16px;font-weight:600;margin-bottom:6px;color:var(--text);">⭐ 为什么值得收藏</h2>
+        <p style="font-size:14px;color:var(--secondary);line-height:1.7;">{{ why_collect }}</p>
+    </div>
+    {% endif %}
+    {% if audience %}
+    <div style="margin-bottom:20px;">
+        <h2 style="font-size:16px;font-weight:600;margin-bottom:6px;color:var(--text);">👥 适合人群</h2>
+        <p style="font-size:14px;color:var(--secondary);line-height:1.7;">{{ audience }}</p>
+    </div>
+    {% endif %}
+    {% if highlights %}
+    <div style="margin-bottom:20px;">
+        <h2 style="font-size:16px;font-weight:600;margin-bottom:6px;color:var(--text);">🌟 精选资源</h2>
+        <p style="font-size:14px;color:var(--secondary);line-height:1.7;">{{ highlights }}</p>
+    </div>
+    {% endif %}
+</section>
+{% endif %}
+
 <!-- 搜索和筛选 (同 list.html) -->
 <div class="search-box">
     <input type="text" id="searchInput" placeholder="在当前专题内搜索..." oninput="filterTable()" autocomplete="off">
