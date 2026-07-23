@@ -101,7 +101,7 @@
         {% endif %}
     </div>
 
-    <p style="text-align:center;font-size:12px;color:var(--secondary);">收录于 BigPRC 资源索引引擎</p>
+    <p style="text-align:center;font-size:12px;color:var(--secondary);">收录于 BigPRC 数字资源策展库</p>
 
     <div class="feedback-row">
         链接失效？<a href="mailto:{{ admin_email }}?subject=%5B%E5%A4%B1%E6%95%88%E5%8F%8D%E9%A6%88%5D%20{{ title }}%20({{ res_id }})">报告失效</a>
@@ -113,6 +113,19 @@
         <div class="ai-disclaimer">内容由 AI 辅助生成，仅供参考</div>
         {% endif %}
     </div>
+
+    {% if collections %}
+    <div class="related-box" style="margin-top:24px;border-top:1px solid var(--border);padding-top:20px;">
+        <h3>精选专题</h3>
+        <div class="related-list">
+            {% for c in collections %}
+            <a href="/collection/{{ c.id }}.html" style="display:inline-flex;align-items:center;gap:6px;padding:4px 14px;border:1px solid var(--border);border-radius:14px;font-size:13px;color:var(--text);">
+                {{ c.title }}<span style="font-size:11px;color:var(--secondary);">{{ c.count }} 项</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 
     {% if related_resources %}
     <div class="related-box">

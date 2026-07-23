@@ -8,8 +8,9 @@ import random
 import re
 import json
 from datetime import datetime
-from collections import Counter
+from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from jinja2 import Environment, FileSystemLoader
 from dotenv import load_dotenv
 
@@ -106,11 +107,13 @@ def safe_update_nginx(resources):
         if os.path.exists(tmp_file): os.remove(tmp_file)
 
 # ================= 4. 高并发渲染引擎 =================
-def render_single_page(res):
+def render_single_page(res, coll_map=None):
     """渲染单一静态页的微进程"""
     # 动态附加网盘名称
     res['drive_name'] = identify_drive(res.get('short_url') or res.get('normal_url'))
-    
+    # 所属专题 (Phase 5.2A)
+    collections = sorted(coll_map.get(res['res_id'], []), key=lambda x: -x.get('count', 0)) if coll_map else []
+
     # ✅ 1. 生成详情页 (新增了 related_resources 参数，完成第三步内部蜘蛛网注入)
     html_content = detail_template.render(
         title=res['title'], seo_desc=res['seo_desc'], size=res['size'],
@@ -118,6 +121,7 @@ def render_single_page(res):
         drive_name=res['drive_name'], admin_email=ADMIN_EMAIL, clarity_id=CLARITY_ID,
         canonical_url=f"{DOMAIN}/go/{res['res_id']}",
         related_resources=res.get('related', []),
+        collections=collections,
         category=res.get('category'), platform=res.get('platform'),
         version=res.get('version'), password=res.get('password'), rating=res.get('rating'),
         ai_generated=res.get('ai_generated', False)
@@ -149,15 +153,25 @@ def build_static_site(resources):
     """多线程并发生成全站"""
     print(f"⚡ 启动多线程并发渲染引擎，目标: {len(resources)} 个独立页面与倒计时中转页...")
     
-    # ✅ 织网行动：为每个资源随机注入 4 个“猜你喜欢”的内链
+    # ✅ 织网行动：为每个资源随机注入 4 个"猜你喜欢"的内链
     for res in resources:
         candidates = [r for r in resources if r['res_id'] != res['res_id']]
-        # 如果总资源大于4个，就随机抽4个；不够就全拿
         res['related'] = random.sample(candidates, min(4, len(candidates)))
-    
+
+    # Phase 5.2A: 批量查询资源→专题映射
+    conn = sqlite3.connect(DB_FILE)
+    coll_map = defaultdict(list)
+    for row in conn.execute('''
+        SELECT rc.resource_id, c.id, c.title,
+               (SELECT COUNT(*) FROM resource_collections WHERE collection_id=c.id) AS cnt
+        FROM resource_collections rc JOIN collections c ON rc.collection_id = c.id
+    '''):
+        coll_map[row[0]].append({"id": row[1], "title": row[2], "count": row[3]})
+    conn.close()
+
     # 1. 多线程并发生成独立详情页与中转页
     with ThreadPoolExecutor(max_workers=10) as executor:
-        executor.map(render_single_page, resources)
+        executor.map(partial(render_single_page, coll_map=coll_map), resources)
     
     # 2. 生成独立 index.json (异步拉取 + Preload 预加载)
     web_root = os.path.dirname(INDEX_FILE)  # var/www/site/web
