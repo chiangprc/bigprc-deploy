@@ -256,6 +256,24 @@ def main():
         cursor.execute("UPDATE collections SET sort_order=? WHERE id=?", (i+1, coll["id"]))
     conn.commit()
 
+    # Phase 5.3A: Rule Engine 双写验证 (set-level diff)
+    if not plan_only:
+        try:
+            from rule_engine import match_all, diff_collection
+            engine_results = match_all(cursor)
+            diffs = 0
+            for d in COLLECTION_DEFS:
+                cid = d["id"]
+                diff = diff_collection(cursor, cid)
+                if diff.get("missing") or diff.get("extra"):
+                    diffs += 1
+                    print(f"  ⚠️  {cid}: engine={diff['engine_count']} db={diff['db_count']} "
+                          f"missing={len(diff['missing'])} extra={len(diff['extra'])}")
+            if diffs == 0:
+                print(f"  ✅ Rule Engine ↔ DEFS: {len(COLLECTION_DEFS)}/22 exact match")
+        except ImportError:
+            pass  # rule_engine.py not yet deployed
+
     # 输出
     print()
     print("=" * 60)
