@@ -48,7 +48,7 @@ h1{font-size:22px;font-weight:700;margin-bottom:4px}
 <div id="content"><div class="loading">加载中...</div></div>
 </div>
 <script>
-var allGroups = [], currentFilter = 'ALL';
+var allGroups = [], currentFilter = 'ALL', currentSort = 'match';
 
 function actionStyle(a) {
     var m = {'KEEP':'background:#e8f5e9;color:#1a6b4f','EXPAND_RULE':'background:#fef9f0;color:#b06000','NEW_COLLECTION':'background:#e8f0fe;color:#1a56db','MERGE_REVIEW':'background:#fde8e8;color:#c5221f'};
@@ -77,16 +77,35 @@ function F(filter) {
     renderCards();
 }
 
+function S(sort) {
+    currentSort = sort;
+    var btns = document.querySelectorAll('.sort-row button');
+    btns.forEach(function(b){b.className = b.textContent.indexOf(sort==='match'?'发现':sort==='uncovered'?'未覆盖':'覆盖率')>=0 ? 'active' : ''});
+    renderCards();
+}
+
 function renderCards() {
-    var groups = currentFilter === 'ALL' ? allGroups : allGroups.filter(function(g){return g.action===currentFilter});
-    var h = '';
+    var groups = currentFilter === 'ALL' ? allGroups.slice() : allGroups.filter(function(g){return g.action===currentFilter});
+    if (currentSort === 'uncovered') groups.sort(function(a,b){return b.uncovered_count - a.uncovered_count});
+    else if (currentSort === 'coverage') groups.sort(function(a,b){return a.coverage_pct - b.coverage_pct});
+    else groups.sort(function(a,b){return b.match_count - a.match_count});
+
+    var h = '<div class="sort-row filters" style="margin-bottom:12px">' +
+        '<span style="font-size:12px;color:var(--sec);padding:6px 8px 6px 0">排序:</span>' +
+        '<button class="'+(currentSort==='match'?'active':'')+'" onclick=S("match")">发现数量 ↓</button>' +
+        '<button class="'+(currentSort==='uncovered'?'active':'')+'" onclick=S("uncovered")">未覆盖数量 ↓</button>' +
+        '<button class="'+(currentSort==='coverage'?'active':'')+'" onclick=S("coverage")">覆盖率 ↑</button>' +
+        '</div>';
     groups.forEach(function(g){
         var tags = g.candidate_tags.join(' ');
         h += '<div class="card '+g.action+'">' +
             '<div class=hdr><span class=tags>'+tags+'</span><span class=action style="'+actionStyle(g.action)+'">'+g.action_label+'</span></div>' +
             '<div class=meta>发现 <b>'+g.match_count+'</b> 条 · 覆盖 <b>'+g.covered_count+'</b> 条 · 未覆盖 <b>'+g.uncovered_count+'</b> 条 · 覆盖率 <b>'+g.coverage_pct+'%</b></div>' +
-            '<div class=meta>最佳匹配: <b>'+(g.best_match?g.best_match.title:'—')+'</b>'+(g.best_match?' ('+g.best_match.covered_count+' 条)':'')+'</div>' +
-            '<div class=reason>'+g.reason+'</div>';
+            '<div class=meta>最佳匹配: <b>'+(g.best_match?g.best_match.title:'—')+'</b>'+(g.best_match?' ('+g.best_match.covered_count+' 条)':'')+'</div>';
+        if (g.representative_tags && g.representative_tags.length) {
+            h += '<div class=meta style="font-size:12px;color:var(--sec)">标签: '+g.representative_tags.slice(0,8).join(' · ')+'</div>';
+        }
+        h += '<div class=reason>'+g.reason+'</div>';
         if (g.top_matches && g.top_matches.length >= 2 && g.action === 'MERGE_REVIEW') {
             h += '<div style="font-size:12px;color:var(--sec);margin-top:4px;">';
             g.top_matches.forEach(function(m){h += m.title + ' (' + m.covered_count + ') · ';});
@@ -94,11 +113,13 @@ function renderCards() {
         }
         if (g.resource_samples && g.resource_samples.length > 0) {
             h += '<span class=toggle onclick="T(this)">▶ 查看资源 ('+g.match_count+' 条)</span>';
-            h += '<div class=details><table class=sample-table><tr><th>ID</th><th>标题</th><th>当前所属专题</th></tr>';
+            h += '<div class=details><table class=sample-table><tr><th></th><th>ID</th><th>标题</th><th>当前所属专题</th></tr>';
             g.resource_samples.forEach(function(s){
-                h += '<tr><td>'+s.id+'</td><td><a href="/go/'+s.id+'">'+s.title+'</a></td><td>'+(s.current_collections.length?s.current_collections.join(', '):'—')+'</td></tr>';
+                var dot = s.covered ? '<span style="color:#1a6b4f;font-weight:700">●</span>' : '<span style="color:#c0392b;font-weight:700">●</span>';
+                var colls = s.collections && s.collections.length ? s.collections.map(function(c){return c.title}).join(', ') : (s.covered ? '—' : '<span style="color:#c0392b">未归属</span>');
+                h += '<tr><td>'+dot+'</td><td>'+s.id+'</td><td><a href="/go/'+s.id+'">'+s.title+'</a></td><td>'+colls+'</td></tr>';
             });
-            if (g.match_count > 20) h += '<tr><td colspan=3 style="color:var(--sec)">... 仅展示前 20 条，共 '+g.match_count+' 条</td></tr>';
+            if (g.match_count > 20) h += '<tr><td colspan=4 style="color:var(--sec)">... 仅展示前 20 条，共 '+g.match_count+' 条</td></tr>';
             h += '</table></div>';
         }
         h += '</div>';
@@ -113,7 +134,6 @@ function T(el) {
     el.textContent = open ? '▶ 查看资源 (' + (el.textContent.match(/\d+/)||[0])[0] + ' 条)' : '▼ 收起资源';
 }
 
-// Fetch
 fetch('/admin/data/review-data.json')
     .then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
     .then(function(d){allGroups=d.groups;renderSummary(d);renderCards()})

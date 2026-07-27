@@ -141,7 +141,7 @@ def analyze_group(cursor, group):
         semantic_overlap=semantic_overlap,
     )
 
-    # resource_samples: 前 20 条资源 (title + 当前所属专题)
+    # resource_samples: 前 20 条资源 (title + covered status + collection objects)
     samples = []
     res_list = sorted(resource_ids)[:20]
     if res_list:
@@ -150,10 +150,17 @@ def analyze_group(cursor, group):
             f"SELECT res_id, title FROM resources WHERE res_id IN ({placeholders})",
             res_list).fetchall()}
         for rid in res_list:
-            in_colls = [m["title"] for m in matches
-                        if cursor.execute("SELECT 1 FROM resource_collections WHERE resource_id=? AND collection_id=?",
-                                          (rid, m["id"])).fetchone()]
-            samples.append({"id": rid, "title": title_rows.get(rid, ""), "current_collections": in_colls})
+            in_colls = []
+            for m in matches:
+                if cursor.execute("SELECT 1 FROM resource_collections WHERE resource_id=? AND collection_id=?",
+                                  (rid, m["id"])).fetchone():
+                    in_colls.append({"id": m["id"], "title": m["title"]})
+            samples.append({
+                "id": rid,
+                "title": title_rows.get(rid, ""),
+                "covered": rid in all_covered,
+                "collections": in_colls,
+            })
 
     # Generate reason text
     if action == "KEEP":
@@ -172,6 +179,8 @@ def analyze_group(cursor, group):
 
     return {
         "candidate_tags": group["candidate_tags"],
+        "representative_tags": group.get("representative_tags", []),
+        "title_keywords": group.get("title_keywords", []),
         "match_count": total,
         "covered_count": len(all_covered),
         "uncovered_count": uncovered_count,
