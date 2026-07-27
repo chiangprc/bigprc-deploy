@@ -53,7 +53,7 @@ fetch('/admin/data/collections.json')
           '<td><span class=badge style="background:'+qualityColor(c.quality)+'20;color:'+qualityColor(c.quality)+'">'+c.quality+'</span></td>'+
           '<td><span class=badge style="background:'+healthColor(c.health)+'20;color:'+healthColor(c.health)+'">'+c.health+'</span></td>'+
           '<td><span class=rule-preview>'+ruleText.substring(0,60)+(ruleText.length>60?'...':'')+'</span><div class=rule-full>'+ruleText+'</div></td>'+
-          '<td><a href="/collection/'+c.id+'.html">查看</a></td>'+
+          '<td><a href="/admin/collection-detail.html?id='+c.id+'">详情</a></td>'+
           '</tr>';
     });
     html+='</tbody></table>';

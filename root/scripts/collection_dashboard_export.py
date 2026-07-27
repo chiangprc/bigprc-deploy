@@ -152,6 +152,138 @@ def build_collections(cursor):
     return sorted(result, key=lambda x: -x["resource_count"])
 
 
+def build_collection_details(cursor):
+    """每个专题的深度分析: rule engine summary, top tags, shared collections, samples."""
+    from rule_engine import match_collection
+
+    colls = cursor.execute(
+        "SELECT id, title, rule_json, is_featured, auto_generated FROM collections WHERE status='published' ORDER BY title"
+    ).fetchall()
+    result = []
+    total_resources = cursor.execute("SELECT COUNT(*) FROM resources").fetchone()[0]
+
+    for cid, ctitle, rule_raw, featured, auto_gen in colls:
+        cnt = cursor.execute(
+            "SELECT COUNT(*) FROM resource_collections WHERE collection_id=?", (cid,)).fetchone()[0]
+        if cnt >= 100: quality = "CORE"
+        elif cnt >= 20: quality = "SOLID"
+        elif cnt >= 5: quality = "NICHE"
+        else: quality = "THIN" if cnt > 0 else "EMPTY"
+
+        # Health
+        health = "stable"
+        engine_match = cnt
+        engine_delta_pct = 0
+        engine_summary = {}
+        if rule_raw:
+            try:
+                rule = json.loads(rule_raw)
+                m = match_collection(cursor, rule, collection_id=cid)
+                engine_match = m.count
+                engine_delta_pct = round(100 * abs(m.count - cnt) / max(cnt, 1), 1)
+                if engine_delta_pct >= 20: health = "unstable"
+                elif engine_delta_pct >= 5: health = "warning"
+                # Rule engine summary: per-condition hit counts
+                engine_summary = _engine_summary(cursor, rule, m.resource_ids)
+            except (json.JSONDecodeError, TypeError):
+                health = "broken"
+
+        # Exclusive / shared
+        shared = cursor.execute("""
+            SELECT COUNT(DISTINCT rc1.resource_id)
+            FROM resource_collections rc1
+            JOIN resource_collections rc2 ON rc1.resource_id = rc2.resource_id AND rc2.collection_id != rc1.collection_id
+            WHERE rc1.collection_id = ?
+        """, (cid,)).fetchone()[0]
+        exclusive = cnt - shared
+        exclusive_pct = round(100 * exclusive / cnt) if cnt > 0 else 0
+
+        # Top Tags
+        top_tags = []
+        if cnt > 0:
+            for row in cursor.execute("""
+                SELECT t.name, COUNT(*) as n FROM resource_tags rt
+                JOIN tags t ON rt.tag_id = t.id
+                WHERE rt.resource_id IN (SELECT resource_id FROM resource_collections WHERE collection_id=?)
+                GROUP BY t.name ORDER BY n DESC LIMIT 12
+            """, (cid,)).fetchall():
+                top_tags.append({"name": row[0], "count": row[1]})
+
+        # Shared collections
+        shared_colls = []
+        if cnt > 0:
+            for row in cursor.execute("""
+                SELECT c2.id, c2.title, COUNT(DISTINCT rc1.resource_id) as shared
+                FROM resource_collections rc1
+                JOIN resource_collections rc2 ON rc1.resource_id = rc2.resource_id AND rc2.collection_id != rc1.collection_id
+                JOIN collections c2 ON rc2.collection_id = c2.id
+                WHERE rc1.collection_id = ?
+                GROUP BY c2.id ORDER BY shared DESC LIMIT 5
+            """, (cid,)).fetchall():
+                shared_colls.append({
+                    "id": row[0], "title": row[1],
+                    "shared": row[2],
+                    "shared_pct": round(100 * row[2] / cnt, 1),
+                })
+
+        # Samples (first 50)
+        samples = []
+        if cnt > 0:
+            for row in cursor.execute("""
+                SELECT r.res_id, r.title, r.category FROM resources r
+                JOIN resource_collections rc ON r.res_id = rc.resource_id
+                WHERE rc.collection_id = ? ORDER BY rc.score DESC LIMIT 50
+            """, (cid,)).fetchall():
+                samples.append({"id": row[0], "title": row[1], "category": row[2]})
+
+        # Coverage
+        coverage_pct = round(100 * cnt / total_resources, 2)
+
+        result.append({
+            "id": cid, "title": ctitle, "quality": quality, "health": health,
+            "featured": bool(featured), "auto_generated": bool(auto_gen),
+            "resource_count": cnt,
+            "exclusive_count": exclusive, "shared_count": shared,
+            "exclusive_pct": exclusive_pct, "coverage_pct": coverage_pct,
+            "rule_json": rule_raw,
+            "engine_match": engine_match, "engine_delta_pct": engine_delta_pct,
+            "engine_summary": engine_summary,
+            "top_tags": top_tags,
+            "shared_collections": shared_colls,
+            "samples": samples,
+            "editor_notes": None,
+            "recent_changes": None,
+            "ai_suggestion": None,
+        })
+
+    return sorted(result, key=lambda x: -x["resource_count"])
+
+
+def _engine_summary(cursor, rule, matched_ids):
+    """Per-condition hit count breakdown for Rule Engine debugging."""
+    summary = {"total_matched": len(matched_ids)}
+    if rule.get("tags"):
+        for tag in rule["tags"]:
+            cnt = cursor.execute("""
+                SELECT COUNT(DISTINCT rt.resource_id) FROM resource_tags rt
+                JOIN tags t ON rt.tag_id = t.id WHERE t.name = ?
+            """, (tag,)).fetchone()[0]
+            summary[f"tag:{tag}"] = cnt
+    if rule.get("tags_or"):
+        for tag in rule["tags_or"]:
+            cnt = cursor.execute("""
+                SELECT COUNT(DISTINCT rt.resource_id) FROM resource_tags rt
+                JOIN tags t ON rt.tag_id = t.id WHERE t.name = ?
+            """, (tag,)).fetchone()[0]
+            summary[f"tag_or:{tag}"] = cnt
+    if rule.get("cats"):
+        for cat in rule["cats"]:
+            cnt = cursor.execute(
+                "SELECT COUNT(*) FROM resources WHERE category = ?", (cat,)).fetchone()[0]
+            summary[f"cat:{cat}"] = cnt
+    return summary
+
+
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)
     conn = sqlite3.connect(DB_FILE)
@@ -159,9 +291,11 @@ def main():
 
     dashboard = build_dashboard(cursor)
     collections = build_collections(cursor)
+    details = build_collection_details(cursor)
     conn.close()
 
-    for name, data in [("dashboard.json", dashboard), ("collections.json", collections)]:
+    for name, data in [("dashboard.json", dashboard), ("collections.json", collections),
+                        ("collection-details.json", details)]:
         path = os.path.join(OUT_DIR, name)
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False)
