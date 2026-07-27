@@ -93,3 +93,4 @@ Thumbs.db
 *.sublime-*
 ._*
 root/scripts/collection_drafts/*.json
+root/scripts/test/
