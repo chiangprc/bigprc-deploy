@@ -30,16 +30,38 @@ import sqlite3
 import itertools
 from collections import defaultdict
 from dotenv import load_dotenv
-from tag_normalize import BRAND_NORMALIZE, SPELLING_FIX, TYPE_TAGS, BRAND_TAGS
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-env_local = os.path.join(SCRIPT_DIR, ".env")
-env_vps = "/root/scripts/.env"
-if os.path.exists(env_local):
-    load_dotenv(env_local)
-elif os.path.exists(env_vps):
-    load_dotenv(env_vps)
-DB_FILE = os.getenv("DB_FILE") or "/root/scripts/database.db"
+load_dotenv(os.path.join(SCRIPT_DIR, ".env"))
+DB_FILE = os.getenv("DB_FILE")
+
+if not DB_FILE:
+    print("❌ DB_FILE not set in .env")
+    print("   Add: DB_FILE=/root/scripts/database.db")
+    sys.exit(1)
+
+# Tag normalize constants (inlined from tag_normalize to avoid import-side-effect)
+BRAND_NORMALIZE = {
+    "安卓": "Android", "安卓应用": "Android", "安卓软件": "Android",
+    "安卓工具": "Android", "android": "Android",
+    "windows": "Windows", "Windows7": "Windows", "Windows10": "Windows",
+    "Windows11": "Windows", "windows软件": "Windows", "windows工具": "Windows",
+    "macos": "Mac", "mac": "Mac", "apple": "Apple",
+    "nationalgeographic": "国家地理", "natgeo": "国家地理", "nat geo": "国家地理",
+    "imax": "IMAX", "bbc": "BBC", "discovery": "Discovery",
+    "historychannel": "History", "pbs": "PBS", "cctv": "CCTV",
+}
+SPELLING_FIX = {
+    "视频编辑": "视频剪辑", "视频制作": "视频剪辑", "影像编辑": "视频剪辑",
+    "影片剪辑": "视频剪辑", "剪辑视频": "视频剪辑", "剪映": "视频剪辑",
+    "capcut": "视频剪辑", "直播电商": "直播带货", "电商直播": "直播带货",
+    "自媒体运营": "自媒体", "新媒体运营": "自媒体", "短视频运营": "自媒体",
+}
+TYPE_TAGS = {"纪录片", "电影", "动画", "剧集", "电子书", "课程", "软件",
+             "PDF", "APK", "游戏", "模组", "模板", "素材"}
+BRAND_TAGS = {"BBC", "Discovery", "IMAX", "国家地理", "History", "PBS",
+              "CCTV", "Apple", "Google", "Microsoft", "Adobe", "OpenAI",
+              "Android", "Windows", "Mac", "Linux", "iOS"}
 
 # ============================================================
 # Stop Tags (可配置)
