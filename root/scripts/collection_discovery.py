@@ -33,7 +33,12 @@ from dotenv import load_dotenv
 from tag_normalize import BRAND_NORMALIZE, SPELLING_FIX, TYPE_TAGS, BRAND_TAGS
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-load_dotenv(os.path.join(SCRIPT_DIR, ".env"))
+env_local = os.path.join(SCRIPT_DIR, ".env")
+env_vps = "/root/scripts/.env"
+if os.path.exists(env_local):
+    load_dotenv(env_local)
+elif os.path.exists(env_vps):
+    load_dotenv(env_vps)
 DB_FILE = os.getenv("DB_FILE")
 
 if not DB_FILE:
