@@ -93,6 +93,20 @@ def apply_normalize_to_rmap(rmap, tag_id_to_name):
                 normalized[res_id].add(name)
     return normalized
 
+
+# ============================================================
+# Title Stop Words (关键词提取用)
+# ============================================================
+
+TITLE_STOP_WORDS = {
+    "的", "和", "与", "及", "或", "是", "了", "在", "为", "等",
+    "全", "新", "版", "本", "大", "中", "小", "上", "下", "之",
+    "第", "一", "个", "部", "套", "册", "卷", "篇", "集", "期",
+    "年", "月", "日", "1", "2", "3", "4", "5",
+    "720P", "1080P", "1080p", "720p", "4K", "高清", "超清", "蓝光",
+    "BBC", "Discovery", "IMAX", "国家地理", "CCTV",
+}
+
 # ============================================================
 # Core Algorithm
 # ============================================================
@@ -177,6 +191,37 @@ def maximal_itemsets(groups):
     return keep
 
 
+def extract_representative_tags(cursor, res_ids, group_tags, top_n=8):
+    """统计匹配资源中除 group_tags 外的其他高频 Tag."""
+    counts = defaultdict(int)
+    for row in cursor.execute("""
+        SELECT t.name FROM resource_tags rt
+        JOIN tags t ON rt.tag_id = t.id
+        WHERE rt.resource_id IN ({})
+    """.format(",".join("?" * len(res_ids))), res_ids).fetchall():
+        if row[0] not in group_tags and row[0] not in DEFAULT_STOP_TAGS:
+            counts[row[0]] += 1
+    return [t for t, _ in sorted(counts.items(), key=lambda x: -x[1])[:top_n]]
+
+
+def extract_title_keywords(cursor, res_ids, top_n=10):
+    """从匹配资源标题中提取高频词 (去停用词)."""
+    word_freq = defaultdict(int)
+    for row in cursor.execute("""
+        SELECT title FROM resources WHERE res_id IN ({})
+    """.format(",".join("?" * len(res_ids))), res_ids).fetchall():
+        title = row[0] or ""
+        # 简单分词: 按常见分隔符切分
+        import re
+        tokens = re.split(r'[\s·\-—、《》（）()\[\]【】,，。.：:！!？?~|/]+', title)
+        for token in tokens:
+            token = token.strip()
+            if len(token) >= 2 and token not in TITLE_STOP_WORDS and not token.isdigit():
+                word_freq[token] += 1
+    # 去低频 (只在 ≤2 条资源中出现)
+    return [w for w, _ in sorted(word_freq.items(), key=lambda x: -x[1])[:top_n] if word_freq[w] >= 3]
+
+
 def enrich_groups(cursor, groups):
     """Step 5: 补充 metadata — category 分布、示例资源."""
     result = []
@@ -212,6 +257,10 @@ def enrich_groups(cursor, groups):
             "samples": samples,
             "resource_ids": res_list,
         })
+
+        result[-1]["representative_tags"] = extract_representative_tags(
+            cursor, res_list, set(tag_tuple))
+        result[-1]["title_keywords"] = extract_title_keywords(cursor, res_list)
 
     return sorted(result, key=lambda x: -x["match_count"])
 
