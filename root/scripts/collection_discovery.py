@@ -30,6 +30,7 @@ import sqlite3
 import itertools
 from collections import defaultdict
 from dotenv import load_dotenv
+from tag_normalize import BRAND_NORMALIZE, SPELLING_FIX, TYPE_TAGS, BRAND_TAGS
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(SCRIPT_DIR, ".env"))
@@ -49,39 +50,85 @@ DEFAULT_STOP_TAGS = {
     "工具", "资源", "其他", "视频", "音频", "合集", "书", "资料",
 }
 
+
+# ============================================================
+# Tag Normalize (内存, 不写库)
+# ============================================================
+
+def normalize_tag(name):
+    """应用 tag_normalize 规则, 返回 canonical 名称."""
+    # ① Brand normalize
+    if name.lower() in BRAND_NORMALIZE:
+        return BRAND_NORMALIZE[name.lower()]
+    if name in BRAND_NORMALIZE:
+        return BRAND_NORMALIZE[name]
+    # ② Spelling fix
+    if name in SPELLING_FIX:
+        return SPELLING_FIX[name]
+    # ③ Compound split: "BBC纪录片" -> None (discard, keeps brand + type separate)
+    for brand in BRAND_TAGS:
+        for ttype in TYPE_TAGS:
+            if name == brand + ttype:
+                return None
+    return name
+
+
+def get_normalized_tags(cursor):
+    """返回 {tag_id: canonical_name} 映射 (内存, 不写库)."""
+    mapping = {}
+    for row in cursor.execute("SELECT id, name FROM tags").fetchall():
+        n = normalize_tag(row[1])
+        if n:
+            mapping[row[0]] = n
+    return mapping
+
+
+def apply_normalize_to_rmap(rmap, tag_id_to_name):
+    """将 rmap 中的 tag_id 替换为 normalized name, 去重."""
+    normalized = defaultdict(set)
+    for res_id, tag_ids in rmap.items():
+        for tid in tag_ids:
+            name = tag_id_to_name.get(tid)
+            if name:
+                normalized[res_id].add(name)
+    return normalized
+
 # ============================================================
 # Core Algorithm
 # ============================================================
 
-def get_candidate_tags(cursor, stop_tags, min_freq=5):
-    """Step 1: 筛选频率 ≥ min_freq 且非 Stop Tags 的候选标签."""
-    stop_placeholders = ",".join("?" * len(stop_tags))
-    rows = cursor.execute(f"""
-        SELECT t.name, COUNT(DISTINCT rt.resource_id) as n
-        FROM tags t
-        JOIN resource_tags rt ON t.id = rt.tag_id
-        WHERE t.name NOT IN ({stop_placeholders})
-        GROUP BY t.name
-        HAVING n >= ?
-        ORDER BY n DESC
-    """, list(stop_tags) + [min_freq]).fetchall()
-    return {r[0] for r in rows}
+def get_candidate_tags(cursor, stop_tags, tag_norm, min_freq=5):
+    """Step 1: 筛选频率 ≥ min_freq 且非 Stop Tags 的候选标签 (使用 normalized names)."""
+    # 统计 normalized tag 频率
+    norm_counts = defaultdict(int)
+    for row in cursor.execute("""
+        SELECT rt.resource_id, rt.tag_id
+        FROM resource_tags rt
+    """).fetchall():
+        name = tag_norm.get(row[1])
+        if name and name not in stop_tags:
+            norm_counts[name] += 1
+
+    # 去重 per resource (同一 normalized tag 在同一资源只算一次)
+    unique_counts = defaultdict(int)
+    for row in cursor.execute("""
+        SELECT DISTINCT rt.resource_id, rt.tag_id
+        FROM resource_tags rt
+    """).fetchall():
+        name = tag_norm.get(row[1])
+        if name and name not in stop_tags:
+            unique_counts[name] += 1
+
+    return {name for name, cnt in unique_counts.items() if cnt >= min_freq}
 
 
-def build_resource_tag_map(cursor, candidate_tags):
-    """Step 2: 每条资源 → 候选 Tag 列表 (只保留候选集中的)."""
-    rmap = defaultdict(list)
-    # 批量查询: 所有 resource_tags JOIN tags, 筛选 candidate tags
-    placeholders = ",".join("?" * len(candidate_tags))
-    if not candidate_tags:
-        return rmap
-    rows = cursor.execute(f"""
-        SELECT rt.resource_id, t.name
-        FROM resource_tags rt JOIN tags t ON rt.tag_id = t.id
-        WHERE t.name IN ({placeholders})
-    """, list(candidate_tags)).fetchall()
-    for res_id, tag_name in rows:
-        rmap[res_id].append(tag_name)
+def build_resource_tag_map(cursor, candidate_tags, tag_norm):
+    """Step 2: 每条资源 → 候选 Normalized Tag 列表 (去重)."""
+    rmap = defaultdict(set)
+    for row in cursor.execute("SELECT rt.resource_id, rt.tag_id FROM resource_tags rt").fetchall():
+        name = tag_norm.get(row[1])
+        if name and name in candidate_tags:
+            rmap[row[0]].add(name)
     return rmap
 
 
@@ -96,6 +143,38 @@ def discover_groups(rmap, min_tags=3, min_co=5):
 
     # 过滤: ≥ min_co
     return {k: v for k, v in groups.items() if len(v) >= min_co}
+
+
+
+# ============================================================
+# Maximal Itemset Dedup
+# ============================================================
+
+def maximal_itemsets(groups):
+    """去重：如果 A 的 tags 是 B 的 strict subset,
+       且 A 的 resource_ids 是 B 的 subset (>80% 重叠),
+       则删除 A (保留 maximal B).
+
+    groups: {tag_tuple: set(resource_ids)}
+    Returns: filtered dict
+    """
+    items = list(groups.items())  # [(tags, ids), ...]
+    items.sort(key=lambda x: -len(x[1]))  # sort by resource count desc
+
+    keep = {}
+    for tags_a, ids_a in items:
+        is_subsumed = False
+        for tags_b, ids_b in items:
+            if tags_a == tags_b:
+                continue
+            if set(tags_a) < set(tags_b):  # strict subset
+                overlap = len(ids_a & ids_b)
+                if overlap / max(len(ids_a), 1) > 0.8:
+                    is_subsumed = True
+                    break
+        if not is_subsumed:
+            keep[tags_a] = ids_a
+    return keep
 
 
 def enrich_groups(cursor, groups):
@@ -215,14 +294,20 @@ def main():
     cursor = conn.cursor()
     total = cursor.execute("SELECT COUNT(*) FROM resources").fetchone()[0]
 
-    # Step 1: 候选 Tags
-    cand_tags = get_candidate_tags(cursor, stop_tags, min_freq=min_co)
+    # Build normalized tag mapping (memory only)
+    tag_norm = get_normalized_tags(cursor)
 
-    # Step 2: 资源 → 候选 Tag 列表
-    rmap = build_resource_tag_map(cursor, cand_tags)
+    # Step 1: 候选 Tags
+    cand_tags = get_candidate_tags(cursor, stop_tags, tag_norm, min_freq=min_co)
+
+    # Step 2: 资源 → 候选 Normalized Tag 列表
+    rmap = build_resource_tag_map(cursor, cand_tags, tag_norm)
 
     # Step 3-4: 组合 → 分组 → 过滤
-    groups = discover_groups(rmap, min_tags=min_tags, min_co=min_co)
+    raw_groups = discover_groups(rmap, min_tags=min_tags, min_co=min_co)
+
+    # Step 4.5: Maximal Itemset 去重
+    groups = maximal_itemsets(raw_groups)
 
     # Step 5: 补充 metadata
     results = enrich_groups(cursor, groups)
