@@ -51,8 +51,8 @@ fetch('/admin/data/collection-details.json')
     var c = data.find(function(x){return x.id===id});
     if(!c){document.getElementById('content').innerHTML='<div class=error>❌ 未找到专题: '+id+'</div>';return}
 
-    var qColor = {'CORE':'#1a6b4f','SOLID':'#4285f4','NICHE':'#f0a030','THIN':'#ea4335','EMPTY':'#999'};
-    var hColor = {'stable':'#1a6b4f','warning':'#f0a030','unstable':'#ea4335','empty':'#999','broken':'#c5221f'};
+    function qColor(k){ var m={'CORE':'#1a6b4f','SOLID':'#4285f4','NICHE':'#f0a030','THIN':'#ea4335','EMPTY':'#999'}; return m[k]||'#999'; }
+    function hColor(k){ var m={'stable':'#1a6b4f','warning':'#f0a030','unstable':'#ea4335','empty':'#999','broken':'#c5221f'}; return m[k]||'#999'; }
     var ruleObj = c.rule||{};
     var ruleText = JSON.stringify(ruleObj, null, 2);
 
