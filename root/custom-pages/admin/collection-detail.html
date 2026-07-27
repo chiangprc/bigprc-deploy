@@ -53,8 +53,8 @@ fetch('/admin/data/collection-details.json')
 
     var qColor = {'CORE':'#1a6b4f','SOLID':'#4285f4','NICHE':'#f0a030','THIN':'#ea4335','EMPTY':'#999'};
     var hColor = {'stable':'#1a6b4f','warning':'#f0a030','unstable':'#ea4335','empty':'#999','broken':'#c5221f'};
-    var ruleText = '';
-    try{ruleText=JSON.stringify(JSON.parse(c.rule_json||'{}'),null,2)}catch(e){ruleText=c.rule_json||'—'}
+    var ruleObj = c.rule||{};
+    var ruleText = JSON.stringify(ruleObj, null, 2);
 
     var html = '<div class=header>'+
       '<h1>'+c.title+'</h1>'+
@@ -75,10 +75,10 @@ fetch('/admin/data/collection-details.json')
     html += '<div class=section><h2>Rule</h2><div class=rule-box>'+ruleText+'</div>'+
       '<div class=engine-summary>';
     var es = c.engine_summary||{};
-    Object.keys(es).forEach(function(k){
-        if(k==='total_matched') html += '<span>✅ matched: '+es[k]+'</span>';
-        else html += '<span>'+k+': '+es[k]+'</span>';
-    });
+    if(es.matched) html += '<span>✅ matched: '+es.matched+'</span>';
+    (es.tags||[]).forEach(function(t){html += '<span>tag: '+t.name+' ('+t.count+')</span>';});
+    (es.tags_or||[]).forEach(function(t){html += '<span>OR: '+t.name+' ('+t.count+')</span>';});
+    (es.categories||[]).forEach(function(t){html += '<span>cat: '+t.name+' ('+t.count+')</span>';});
     html += '</div></div>';
 
     // Top Tags

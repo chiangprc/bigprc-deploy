@@ -245,7 +245,7 @@ def build_collection_details(cursor):
             "resource_count": cnt,
             "exclusive_count": exclusive, "shared_count": shared,
             "exclusive_pct": exclusive_pct, "coverage_pct": coverage_pct,
-            "rule_json": rule_raw,
+            "rule": json.loads(rule_raw) if isinstance(rule_raw, str) else (rule_raw or {}),
             "engine_match": engine_match, "engine_delta_pct": engine_delta_pct,
             "engine_summary": engine_summary,
             "top_tags": top_tags,
@@ -261,26 +261,26 @@ def build_collection_details(cursor):
 
 def _engine_summary(cursor, rule, matched_ids):
     """Per-condition hit count breakdown for Rule Engine debugging."""
-    summary = {"total_matched": len(matched_ids)}
+    summary = {"matched": len(matched_ids), "tags": [], "tags_or": [], "categories": []}
     if rule.get("tags"):
         for tag in rule["tags"]:
             cnt = cursor.execute("""
                 SELECT COUNT(DISTINCT rt.resource_id) FROM resource_tags rt
                 JOIN tags t ON rt.tag_id = t.id WHERE t.name = ?
             """, (tag,)).fetchone()[0]
-            summary[f"tag:{tag}"] = cnt
+            summary["tags"].append({"name": tag, "count": cnt})
     if rule.get("tags_or"):
         for tag in rule["tags_or"]:
             cnt = cursor.execute("""
                 SELECT COUNT(DISTINCT rt.resource_id) FROM resource_tags rt
                 JOIN tags t ON rt.tag_id = t.id WHERE t.name = ?
             """, (tag,)).fetchone()[0]
-            summary[f"tag_or:{tag}"] = cnt
+            summary["tags_or"].append({"name": tag, "count": cnt})
     if rule.get("cats"):
         for cat in rule["cats"]:
             cnt = cursor.execute(
                 "SELECT COUNT(*) FROM resources WHERE category = ?", (cat,)).fetchone()[0]
-            summary[f"cat:{cat}"] = cnt
+            summary["categories"].append({"name": cat, "count": cnt})
     return summary
 
 
