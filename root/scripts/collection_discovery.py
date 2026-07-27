@@ -39,11 +39,7 @@ if os.path.exists(env_local):
     load_dotenv(env_local)
 elif os.path.exists(env_vps):
     load_dotenv(env_vps)
-DB_FILE = os.getenv("DB_FILE")
-
-if not DB_FILE:
-    print("❌ DB_FILE not set")
-    sys.exit(1)
+DB_FILE = os.getenv("DB_FILE") or "/root/scripts/database.db"
 
 # ============================================================
 # Stop Tags (可配置)
