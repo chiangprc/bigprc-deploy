@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BigPRC 编辑工作台</title>
+<style>
+:root{--bg:#fff;--text:#1a1a1a;--sec:#666;--border:#e5e5e5;--primary:#1a6b4f;--card-bg:#fafafa}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;margin:0}
+h1{font-size:20px;font-weight:700;margin:0 0 4px}
+.wrap{max-width:900px;margin:0 auto;padding:32px 20px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
+.card{text-align:center;padding:20px 12px;border-radius:8px;border:1px solid var(--border)}
+.card .n{font-size:32px;font-weight:700;color:var(--primary)}
+.card .l{font-size:12px;color:var(--sec);margin-top:4px}
+.section{margin:24px 0}
+.section h2{font-size:16px;font-weight:600;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:6px}
+.status{display:flex;gap:12px;flex-wrap:wrap}
+.status span{padding:4px 14px;border-radius:12px;font-size:12px;font-weight:500}
+.finding{display:flex;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px}
+.finding .action{font-size:11px;padding:2px 10px;border-radius:10px;font-weight:500}
+.links{display:flex;gap:16px;flex-wrap:wrap;margin-top:24px}
+.links a{display:inline-block;padding:10px 20px;border:1px solid var(--primary);border-radius:6px;color:var(--primary);text-decoration:none;font-size:13px;font-weight:500}
+.links a:hover{background:var(--primary);color:#fff}
+.error{text-align:center;padding:40px;color:#c0392b}
+@media(max-width:600px){.cards{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>BigPRC 编辑工作台</h1>
+<p style="color:var(--sec);font-size:13px">Phase 6.0 — 只读总览</p>
+<div id="content"><div style="text-align:center;padding:40px;color:var(--sec)">加载中...</div></div>
+</div>
+<script>
+fetch('/admin/data/dashboard.json')
+  .then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
+  .then(function(d){
+    var s=d.summary,h=d.health,rp=d.review_pending;
+    var h_issues=h.high+h.medium;
+    var html='<div class=cards>'+
+      '<div class=card><div class=n>'+s.total_collections+'</div><div class=l>专题</div></div>'+
+      '<div class=card><div class=n>'+s.core+'</div><div class=l>CORE</div></div>'+
+      '<div class=card><div class=n>'+rp.new_collection+'</div><div class=l>待审核</div></div>'+
+      '<div class=card><div class=n>'+rp.expand_rule+'</div><div class=l>待优化</div></div>'+
+      '</div>';
+
+    html+='<div class=section><h2>专题健康</h2><div class=status>'+
+      '<span style="background:#e8f5e9;color:#1a6b4f">🟢 stable: '+h.stable+'</span>'+
+      (h.high?'<span style="background:#fde8e8;color:#c5221f">🔴 high: '+h.high+'</span>':'')+
+      (h.medium?'<span style="background:#fef9f0;color:#b06000">🟡 medium: '+h.medium+'</span>':'')+
+      (h_issues===0?'<span style="background:#e8f5e9;color:#1a6b4f">✅ all clear</span>':'')+
+      '</div></div>';
+
+    if(d.recent_findings.length){
+      html+='<div class=section><h2>最近发现</h2>';
+      d.recent_findings.forEach(function(f){
+        var c=f.action==='NEW_COLLECTION'?'#4285f4':'#f0a030';
+        html+='<div class=finding><span>'+f.candidate_tags.join(' ')+' — '+f.match_count+' 资源</span><span class=action style="background:'+c+'20;color:'+c+'">'+f.action_label+'</span></div>';
+      });
+      html+='</div>';
+    }
+
+    html+='<div class=links>'+
+      '<a href="/admin/collection-review.html">📋 Discovery Review</a>'+
+      '<a href="/admin/collections.html">📚 专题管理</a>'+
+      '<a href="/collection/index.html">🌐 专题索引 (前台)</a>'+
+      '</div>';
+
+    document.getElementById('content').innerHTML=html;
+  })
+  .catch(function(e){document.getElementById('content').innerHTML='<div class=error>❌ 加载失败: '+e.message+'<br><small>请先运行: python3 collection_dashboard_export.py</small></div>'});
+</script>
+</body>
+</html>

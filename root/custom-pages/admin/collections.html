@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>专题管理 — BigPRC 编辑工作台</title>
+<style>
+:root{--bg:#fff;--text:#1a1a1a;--sec:#666;--border:#e5e5e5;--primary:#1a6b4f;--card-bg:#fafafa}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;margin:0}
+.wrap{max-width:1000px;margin:0 auto;padding:24px 20px}
+h1{font-size:20px;font-weight:700;margin:0 0 4px}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:16px}
+th{text-align:left;padding:10px 8px;border-bottom:2px solid var(--border);color:var(--sec);font-size:11px;font-weight:600;text-transform:uppercase}
+td{padding:9px 8px;border-bottom:1px solid var(--border)}
+tr:hover td{background:var(--card-bg)}
+.badge{padding:2px 10px;border-radius:10px;font-size:11px;font-weight:500;white-space:nowrap}
+.rule-preview{font-size:11px;color:var(--sec);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.rule-full{display:none;font-size:11px;color:var(--sec);font-family:monospace;background:var(--card-bg);padding:8px;border-radius:4px;margin-top:4px;word-break:break-all}
+.summary{display:flex;gap:16px;margin:12px 0;flex-wrap:wrap;font-size:13px;color:var(--sec)}
+.back{margin-top:20px;font-size:13px}
+.back a{color:var(--primary)}
+.error{text-align:center;padding:40px;color:#c0392b}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>专题管理</h1>
+<p style="color:var(--sec);font-size:13px;margin:0">只读浏览</p>
+<div id="content"><div style="text-align:center;padding:40px;color:var(--sec)">加载中...</div></div>
+<div class="back"><a href="/admin/dashboard.html">← 返回工作台</a></div>
+</div>
+<script>
+function qualityColor(q){
+    var m={'CORE':'#1a6b4f','SOLID':'#4285f4','NICHE':'#f0a030','THIN':'#ea4335','EMPTY':'#999'};
+    return m[q]||'#999';
+}
+function healthColor(h){
+    var m={'stable':'#1a6b4f','warning':'#f0a030','unstable':'#ea4335','empty':'#999','broken':'#c5221f'};
+    return m[h]||'#999';
+}
+fetch('/admin/data/collections.json')
+  .then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
+  .then(function(data){
+    var html='<div class=summary><span>共 '+data.length+' 个专题</span></div>';
+    html+='<table><thead><tr><th>标题</th><th>ID</th><th>资源</th><th>质量</th><th>健康</th><th>规则</th><th></th></tr></thead><tbody>';
+    data.forEach(function(c){
+        var ruleText='';
+        try{var r=JSON.parse(c.rule_json||'{}');ruleText=JSON.stringify(r)}catch(e){ruleText=c.rule_json||'—'}
+        html+='<tr>'+
+          '<td><b>'+c.title+'</b></td>'+
+          '<td style="font-family:monospace;font-size:12px">'+c.id+'</td>'+
+          '<td>'+c.resource_count+'</td>'+
+          '<td><span class=badge style="background:'+qualityColor(c.quality)+'20;color:'+qualityColor(c.quality)+'">'+c.quality+'</span></td>'+
+          '<td><span class=badge style="background:'+healthColor(c.health)+'20;color:'+healthColor(c.health)+'">'+c.health+'</span></td>'+
+          '<td><span class=rule-preview onclick="var n=this.nextElementSibling;n.style.display=n.style.display==='block'?'none':'block'">'+ruleText.substring(0,60)+(ruleText.length>60?'...':'')+'</span><div class=rule-full>'+ruleText+'</div></td>'+
+          '<td><a href="/collection/'+c.id+'.html">查看</a></td>'+
+          '</tr>';
+    });
+    html+='</tbody></table>';
+    document.getElementById('content').innerHTML=html;
+  })
+  .catch(function(e){document.getElementById('content').innerHTML='<div class=error>❌ 加载失败: '+e.message+'<br><small>请先运行: python3 collection_dashboard_export.py</small></div>'});
+</script>
+</body>
+</html>
