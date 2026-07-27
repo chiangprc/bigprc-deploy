@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Collection Review — BigPRC 编辑部</title>
+<style>
+:root{--bg:#fff;--text:#1a1a1a;--sec:#666;--border:#e5e5e5;--primary:#1a6b4f;--card-bg:#fafafa;--green:#e8f5e9;--amber:#fef9f0;--blue:#e8f0fe;--red:#fde8e8}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+h1{font-size:22px;font-weight:700;margin-bottom:4px}
+.wrap{max-width:900px;margin:0 auto;padding:32px 20px}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0}
+.sum-item{text-align:center;padding:16px;border-radius:8px;border:1px solid var(--border)}
+.sum-item .n{font-size:28px;font-weight:700;color:var(--primary)}
+.sum-item .l{font-size:12px;color:var(--sec);margin-top:2px}
+.filters{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.filters button{padding:6px 16px;border:1px solid var(--border);border-radius:16px;font-size:13px;cursor:pointer;background:var(--bg);color:var(--text);font-family:inherit}
+.filters button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.card{border:1px solid var(--border);border-radius:8px;padding:18px 20px;margin-bottom:12px;background:var(--card-bg)}
+.card.KEEP{border-left:3px solid var(--primary)}
+.card.EXPAND_RULE{border-left:3px solid #f0a030}
+.card.NEW_COLLECTION{border-left:3px solid #4285f4}
+.card.MERGE_REVIEW{border-left:3px solid #ea4335}
+.card .hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.card .hdr .tags{font-size:15px;font-weight:600}
+.card .hdr .action{font-size:12px;font-weight:500;padding:3px 10px;border-radius:12px}
+.card .meta{font-size:13px;color:var(--sec);margin-bottom:6px;line-height:1.6}
+.card .reason{font-size:12px;color:var(--sec);font-style:italic}
+.card .details{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.card .details.open{display:block}
+.card .toggle{font-size:12px;color:var(--primary);cursor:pointer;margin-top:6px;display:inline-block}
+.card .toggle:hover{text-decoration:underline}
+.sample-table{width:100%;font-size:12px;border-collapse:collapse;margin-top:8px}
+.sample-table th{text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);color:var(--sec);font-weight:500}
+.sample-table td{padding:6px 8px;border-bottom:1px solid var(--border)}
+.loading{text-align:center;padding:40px;color:var(--sec)}
+.error{text-align:center;padding:40px;color:#c0392b}
+@media(max-width:600px){.summary{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Collection Review</h1>
+<p style="color:var(--sec);font-size:13px">专题发现审核面板 · 只读</p>
+<div class="summary" id="summary"></div>
+<div class="filters" id="filters"></div>
+<div id="content"><div class="loading">加载中...</div></div>
+</div>
+<script>
+var allGroups = [], currentFilter = 'ALL';
+
+function actionStyle(a) {
+    var m = {'KEEP':'background:#e8f5e9;color:#1a6b4f','EXPAND_RULE':'background:#fef9f0;color:#b06000','NEW_COLLECTION':'background:#e8f0fe;color:#1a56db','MERGE_REVIEW':'background:#fde8e8;color:#c5221f'};
+    return m[a] || '';
+}
+
+function renderSummary(d) {
+    document.getElementById('summary').innerHTML =
+        '<div class=sum-item><div class=n>'+d.total_groups+'</div><div class=l>发现</div></div>' +
+        '<div class=sum-item><div class=n>'+(d.summary.KEEP||0)+'</div><div class=l>已覆盖</div></div>' +
+        '<div class=sum-item><div class=n>'+(d.summary.EXPAND_RULE||0)+'</div><div class=l>优化规则</div></div>' +
+        '<div class=sum-item><div class=n>'+(d.summary.NEW_COLLECTION||0)+'</div><div class=l>新专题候选</div></div>';
+
+    var fs = '<button class="active" onclick=F("ALL")>全部 ('+d.total_groups+')</button>';
+    fs += '<button onclick=F("KEEP")>✅ 已覆盖 ('+(d.summary.KEEP||0)+')</button>';
+    fs += '<button onclick=F("EXPAND_RULE")>🔧 优化规则 ('+(d.summary.EXPAND_RULE||0)+')</button>';
+    fs += '<button onclick=F("NEW_COLLECTION")>🆕 新候选 ('+(d.summary.NEW_COLLECTION||0)+')</button>';
+    fs += '<button onclick=F("MERGE_REVIEW")>🔀 重叠 ('+(d.summary.MERGE_REVIEW||0)+')</button>';
+    document.getElementById('filters').innerHTML = fs;
+}
+
+function F(filter) {
+    currentFilter = filter;
+    var btns = document.querySelectorAll('.filters button');
+    btns.forEach(function(b){b.className=(b.textContent.indexOf(filter)>=0||(filter==='ALL'&&b.textContent.indexOf('全部')>=0))?'active':''});
+    renderCards();
+}
+
+function renderCards() {
+    var groups = currentFilter === 'ALL' ? allGroups : allGroups.filter(function(g){return g.action===currentFilter});
+    var h = '';
+    groups.forEach(function(g){
+        var tags = g.candidate_tags.join(' ');
+        h += '<div class="card '+g.action+'">' +
+            '<div class=hdr><span class=tags>'+tags+'</span><span class=action style="'+actionStyle(g.action)+'">'+g.action_label+'</span></div>' +
+            '<div class=meta>发现 <b>'+g.match_count+'</b> 条 · 覆盖 <b>'+g.covered_count+'</b> 条 · 未覆盖 <b>'+g.uncovered_count+'</b> 条 · 覆盖率 <b>'+g.coverage_pct+'%</b></div>' +
+            '<div class=meta>最佳匹配: <b>'+(g.best_match?g.best_match.title:'—')+'</b>'+(g.best_match?' ('+g.best_match.covered_count+' 条)':'')+'</div>' +
+            '<div class=reason>'+g.reason+'</div>';
+        if (g.top_matches && g.top_matches.length >= 2 && g.action === 'MERGE_REVIEW') {
+            h += '<div style="font-size:12px;color:var(--sec);margin-top:4px;">';
+            g.top_matches.forEach(function(m){h += m.title + ' (' + m.covered_count + ') · ';});
+            h += '</div>';
+        }
+        if (g.resource_samples && g.resource_samples.length > 0) {
+            h += '<span class=toggle onclick="T(this)">▶ 查看资源 ('+g.match_count+' 条)</span>';
+            h += '<div class=details><table class=sample-table><tr><th>ID</th><th>标题</th><th>当前所属专题</th></tr>';
+            g.resource_samples.forEach(function(s){
+                h += '<tr><td>'+s.id+'</td><td><a href="/go/'+s.id+'">'+s.title+'</a></td><td>'+(s.current_collections.length?s.current_collections.join(', '):'—')+'</td></tr>';
+            });
+            if (g.match_count > 20) h += '<tr><td colspan=3 style="color:var(--sec)">... 仅展示前 20 条，共 '+g.match_count+' 条</td></tr>';
+            h += '</table></div>';
+        }
+        h += '</div>';
+    });
+    document.getElementById('content').innerHTML = h || '<div class=loading>无匹配结果</div>';
+}
+
+function T(el) {
+    var d = el.nextElementSibling;
+    var open = d.className.indexOf('open') >= 0;
+    d.className = open ? 'details' : 'details open';
+    el.textContent = open ? '▶ 查看资源 (' + (el.textContent.match(/\d+/)||[0])[0] + ' 条)' : '▼ 收起资源';
+}
+
+// Fetch
+fetch('/admin/data/review-data.json')
+    .then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
+    .then(function(d){allGroups=d.groups;renderSummary(d);renderCards()})
+    .catch(function(e){document.getElementById('content').innerHTML='<div class=error>❌ 加载失败: '+e.message+'<br><small>请先运行: python3 collection_review_export.py</small></div>'});
+</script>
+</body>
+</html>

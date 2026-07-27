@@ -116,6 +116,7 @@ def analyze_group(cursor, group):
     best = matches[0] if matches else None
     second = matches[1] if len(matches) >= 2 else None
     uncovered = resource_ids - all_covered
+    uncovered_count = len(uncovered)
 
     # Semantic overlap: best match's rule_tags ∩ discovery candidate_tags
     semantic_overlap = False
@@ -140,15 +141,44 @@ def analyze_group(cursor, group):
         semantic_overlap=semantic_overlap,
     )
 
+    # resource_samples: 前 20 条资源 (title + 当前所属专题)
+    samples = []
+    res_list = sorted(resource_ids)[:20]
+    if res_list:
+        placeholders = ",".join("?" * len(res_list))
+        title_rows = {r[0]: r[1] for r in cursor.execute(
+            f"SELECT res_id, title FROM resources WHERE res_id IN ({placeholders})",
+            res_list).fetchall()}
+        for rid in res_list:
+            in_colls = [m["title"] for m in matches
+                        if cursor.execute("SELECT 1 FROM resource_collections WHERE resource_id=? AND collection_id=?",
+                                          (rid, m["id"])).fetchone()]
+            samples.append({"id": rid, "title": title_rows.get(rid, ""), "current_collections": in_colls})
+
+    # Generate reason text
+    if action == "KEEP":
+        reason = "全部资源已被已有专题覆盖"
+    elif action == "EXPAND_RULE":
+        if best:
+            best_pct = round(100 * best["covered_count"] / total)
+            reason = f"{best['title']} 已覆盖 {best['covered_count']}/{total} ({best_pct}%)。{uncovered_count}条未覆盖资源可通过调整 rule_json 补全"
+        else:
+            reason = "存在匹配专题但覆盖率不足"
+    elif action == "MERGE_REVIEW":
+        names = ", ".join(m["title"] for m in matches[:3])
+        reason = f"多个专题覆盖相近: {names}"
+    else:
+        reason = "无专题显著覆盖此标签组合，建议人工评估是否创建新专题"
+
     return {
         "candidate_tags": group["candidate_tags"],
         "match_count": total,
         "covered_count": len(all_covered),
-        "uncovered_count": len(uncovered),
+        "uncovered_count": uncovered_count,
+        "coverage_pct": round(100 * len(all_covered) / total) if total > 0 else 0,
         "uncovered_ids": sorted(uncovered)[:20],
         "best_match": best,
         "top_matches": matches[:5],
-        "all_matches": matches[:5],
         "action": action,
         "action_label": {
             "KEEP": "✅ 已全覆盖",
@@ -156,6 +186,8 @@ def analyze_group(cursor, group):
             "MERGE_REVIEW": "🔀 多个专题重叠",
             "NEW_COLLECTION": "🆕 新专题候选",
         }.get(action, action),
+        "reason": reason,
+        "resource_samples": samples,
     }
 
 
