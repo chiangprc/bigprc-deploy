@@ -40,27 +40,38 @@ if not DB_FILE:
 # Core Logic
 # ============================================================
 
-def classify_action(covered_total, uncovered_total, best_match_count, second_best_count):
+def classify_action(covered_total, uncovered_total, best_match_count, second_best_count,
+                    semantic_overlap=False):
     """分类建议动作 (无硬编码阈值).
 
     KEEP:           全部资源被已有专题覆盖 (uncovered == 0)
-    EXPAND_RULE:    存在 dominant best match (覆盖 >= 70%),
-                    且 best 明显优于 second (best >= 2× second)
+    EXPAND_RULE:    存在 dominant best match (覆盖 >= 60%),
+                    或 best 的 rule tags 与 Discovery tags 语义重叠
     MERGE_REVIEW:   多个专题覆盖相近 (best 和 second 差距 < 2×),
                     可能是专题边界模糊或规则重叠
-    NEW_COLLECTION: 无 dominant best match (best < 70%),
+    NEW_COLLECTION: 无 dominant best match AND 无语义重叠,
                     这是真正的新专题机会
+
+    semantic_overlap: 最佳匹配专题的 rule tags 与 Discovery 候选 tags
+                      存在交集 → 应优先考虑扩展现有规则而非新建专题
     """
+    total = covered_total + uncovered_total
+    if total == 0:
+        return "KEEP"
     if uncovered_total == 0:
         return "KEEP"
 
-    coverage_pct = best_match_count / (covered_total + uncovered_total) if (covered_total + uncovered_total) > 0 else 0
+    coverage_pct = best_match_count / total
 
-    # Dominant: >= 70% AND clearly ahead of second (>= 2x)
-    if coverage_pct >= 0.7 and (second_best_count == 0 or best_match_count >= 2 * second_best_count):
+    # Dominant + semantic overlap: even lower coverage qualifies for EXPAND
+    if semantic_overlap and coverage_pct >= 0.3:
         return "EXPAND_RULE"
 
-    # Multiple contenders: best < 2× second
+    # Dominant: >= 60% AND clearly ahead of second (>= 2x)
+    if coverage_pct >= 0.6 and (second_best_count == 0 or best_match_count >= 2 * second_best_count):
+        return "EXPAND_RULE"
+
+    # Multiple contenders: best < 2× second, multiple collections overlap
     if second_best_count > 0 and best_match_count < 2 * second_best_count:
         return "MERGE_REVIEW"
 
@@ -106,11 +117,27 @@ def analyze_group(cursor, group):
     second = matches[1] if len(matches) >= 2 else None
     uncovered = resource_ids - all_covered
 
+    # Semantic overlap: best match's rule_tags ∩ discovery candidate_tags
+    semantic_overlap = False
+    if best:
+        rule_raw = cursor.execute(
+            "SELECT rule_json FROM collections WHERE id=?", (best["id"],)
+        ).fetchone()
+        if rule_raw and rule_raw[0]:
+            try:
+                rule = json.loads(rule_raw[0])
+                rule_tags = set(rule.get("tags", []) + rule.get("tags_or", []))
+                disc_tags = set(group["candidate_tags"])
+                semantic_overlap = bool(rule_tags & disc_tags)
+            except (json.JSONDecodeError, TypeError):
+                pass
+
     action = classify_action(
         covered_total=len(all_covered),
         uncovered_total=len(uncovered),
         best_match_count=best["covered_count"] if best else 0,
         second_best_count=second["covered_count"] if second else 0,
+        semantic_overlap=semantic_overlap,
     )
 
     return {
@@ -120,6 +147,7 @@ def analyze_group(cursor, group):
         "uncovered_count": len(uncovered),
         "uncovered_ids": sorted(uncovered)[:20],
         "best_match": best,
+        "top_matches": matches[:5],
         "all_matches": matches[:5],
         "action": action,
         "action_label": {
@@ -137,12 +165,15 @@ def analyze_group(cursor, group):
 
 def print_terminal(results):
     print()
-    print(f"{'Tag组':35s} {'发现':>4s} {'覆盖':>4s} {'未覆盖':>4s} {'动作':12s} {'最佳匹配专题'}")
+    print(f"{'Tag组':35s} {'发现':>4s} {'覆盖':>4s} {'未覆盖':>4s} {'动作':12s} {'最佳匹配'}")
     print("─" * 90)
     for r in results:
         tags_str = " ".join(r["candidate_tags"][:4])
         best_name = r["best_match"]["title"] if r["best_match"] else "—"
         print(f"{tags_str:35s} {r['match_count']:4d} {r['covered_count']:4d} {r['uncovered_count']:4d} {r['action_label']:12s} {best_name[:30]}")
+        if r["action"] == "MERGE_REVIEW" and len(r["top_matches"]) >= 2:
+            for m in r["top_matches"]:
+                print(f"  {'':35s} └─ {m['title']:30s} 覆盖 {m['covered_count']}")
     print()
 
     # Summary
