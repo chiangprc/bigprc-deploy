@@ -197,22 +197,28 @@ def cmd_apply(slug):
         conn.close()
         sys.exit(0)
 
-    # Write
-    rule_json = json.dumps(rule_suggestion, ensure_ascii=False)
-    cursor.execute(
-        "INSERT INTO collections (id, title, rule_json, status, auto_generated, is_featured) "
-        "VALUES (?,?,?,'published',1,0)",
-        (cid, ctitle, rule_json))
-    conn.commit()
-
-    inserted = 0
-    for rid in result.resource_ids:
+    # Write (single transaction: atomic)
+    try:
+        rule_json = json.dumps(rule_suggestion, ensure_ascii=False)
         cursor.execute(
-            "INSERT OR IGNORE INTO resource_collections (resource_id, collection_id, score, source) "
-            "VALUES (?,?,1.0,'auto')",
-            (rid, cid))
-        inserted += cursor.rowcount
-    conn.commit()
+            "INSERT INTO collections (id, title, rule_json, status, auto_generated, is_featured) "
+            "VALUES (?,?,?,'published',1,0)",
+            (cid, ctitle, rule_json))
+
+        inserted = 0
+        for rid in result.resource_ids:
+            cursor.execute(
+                "INSERT OR IGNORE INTO resource_collections (resource_id, collection_id, score, source) "
+                "VALUES (?,?,1.0,'auto')",
+                (rid, cid))
+            inserted += cursor.rowcount
+
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"❌ Transaction failed, rolled back: {e}")
+        conn.close()
+        sys.exit(1)
 
     # Update draft status
     draft["status"] = "applied"
