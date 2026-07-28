@@ -387,11 +387,12 @@ def build_collection_pages():
     coll_urls.append("/collection/index.html")
     print(f"  📚 专题索引页: {total_count} 个专题 → {idx_path}")
 
-    # 生成 collections.json 供首页 JS 渲染
+    # 生成 collections.json 供首页 JS 渲染 (flat list from themes)
     json_path = os.path.join(web_root, "collections.json")
+    coll_json_data = [c for t in themes for c in t["collections"]]
     with open(json_path, 'w', encoding='utf-8') as f:
-        json.dump(idx_data, f, ensure_ascii=False)
-    print(f"  collections.json: {len(idx_data)} 专题, {os.path.getsize(json_path)}B")
+        json.dump(coll_json_data, f, ensure_ascii=False)
+    print(f"  collections.json: {len(coll_json_data)} 专题, {os.path.getsize(json_path)}B")
 
     print(f"✅ {len(coll_urls)} 个专题页生成完毕")
     return coll_urls
