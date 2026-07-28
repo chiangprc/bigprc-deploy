@@ -299,6 +299,7 @@ JSON only:
 
     results = {}
     parser_used = None
+    hl_raw = None
     for name, prompt in [("editor_note", prompt_en), ("why_collect", prompt_wc),
                            ("audience", prompt_au), ("highlights", prompt_hl)]:
         time.sleep(0.2)
@@ -306,22 +307,29 @@ JSON only:
         if data and name in data:
             val = data[name]
             if name == "highlights":
+                hl_raw = val
                 parsed, parser_label = parse_highlights(val)
                 if parsed:
                     results[name] = parsed
                     parser_used = parser_label
                 else:
-                    print(f"   ⚠️  highlights parse failed (all 3 levels)")
+                    print(f"   ⚠️  highlights parse failed, raw: {str(val)[:120]}")
+                    results[name] = []  # empty list, still succeeds
+                    parser_used = "FAILED"
             else:
                 results[name] = val
         else:
             if name != "highlights":
                 print(f"   ⚠️  {name} failed")
                 return None
-    # Attach parser metadata
-    if parser_used and results:
+            else:
+                print(f"   ⚠️  highlights AI call failed")
+                results[name] = []
+                parser_used = "FAILED"
+    if parser_used:
         results["_parser"] = parser_used
-    return results if len(results) >= 4 else None
+    # Return if we have at least the 3 non-highlights fields
+    return results if all(k in results for k in ["editor_note","why_collect","audience"]) else None
 
 
 # ============================================================
@@ -380,6 +388,7 @@ def main():
     print()
 
     ok, skip, fail = 0, 0, 0
+    parser_stats = {"JSON": 0, "Auto-fixed JSON": 0, "Fallback line parser": 0, "FAILED": 0}
 
     def has_old(val):
         return bool(val and str(val).strip())
@@ -405,14 +414,16 @@ def main():
                     fail += 1
             else:
                 data = generate_editorial(title, seo_desc, samples, cnt)
-                if data and len(data) >= 4:
+                if data:
                     ok += 1
-                    parser = data.get("_parser", "?")
+                    parser = data.pop("_parser", "?")
+                    parser_stats[parser] = parser_stats.get(parser, 0) + 1
                     print(f"   ── Preview ──")
-                    print(f"   editor_note:  {data['editor_note']}")
-                    print(f"   why_collect:  {data['why_collect']}")
-                    print(f"   audience:     {data['audience']}")
-                    print(f"   highlights:   {json.dumps(data['highlights'], ensure_ascii=False)}")
+                    print(f"   editor_note:  {data.get('editor_note','(missing)')}")
+                    print(f"   why_collect:  {data.get('why_collect','(missing)')}")
+                    print(f"   audience:     {data.get('audience','(missing)')}")
+                    hl = data.get('highlights', [])
+                    print(f"   highlights:   {json.dumps(hl, ensure_ascii=False) if hl else '(empty)'}")
                     print(f"   parser:       {parser}")
                 else:
                     fail += 1
@@ -448,17 +459,19 @@ def main():
                 fail += 1
         else:  # editorial
             data = generate_editorial(title, seo_desc, samples, cnt)
-            if data and len(data) >= 4:
+            if data:
                 parser = data.pop("_parser", "?")
+                parser_stats[parser] = parser_stats.get(parser, 0) + 1
+                hl_list = data.get("highlights", [])
                 cursor.execute("""
                     UPDATE collection_content
                     SET editor_note=?, why_collect=?, audience=?, highlights=?
                     WHERE collection_id=?
                 """, (data["editor_note"], data["why_collect"], data["audience"],
-                      json.dumps(data["highlights"], ensure_ascii=False), cid))
+                      json.dumps(hl_list, ensure_ascii=False), cid))
                 conn.commit()
                 ok += 1
-                print(f"✅ {len(data['highlights'])} highlights  ({parser})")
+                print(f"✅ {len(hl_list)} highlights  ({parser})")
             else:
                 fail += 1
         time.sleep(0.3)
@@ -470,6 +483,11 @@ def main():
     print(f"\n✅ {ok} generated  ⏭️  {skip} skipped  ❌ {fail} failed")
     if dry_run:
         print("🧪 DRY RUN — no data written")
+    if mode == "editorial" and sum(parser_stats.values()) > 0:
+        print(f"\n── Parser Summary ──")
+        for label in ["JSON", "Auto-fixed JSON", "Fallback line parser", "FAILED"]:
+            if parser_stats.get(label, 0) > 0:
+                print(f"  {label}: {parser_stats[label]}")
 
 
 if __name__ == "__main__":
