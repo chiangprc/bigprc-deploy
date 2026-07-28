@@ -268,6 +268,11 @@ def main():
 
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
+
+    # Sanity check — if VPS is running old code, this line won't appear
+    if target_id:
+        print(f"🎯 Target: {target_id}")
+
     colls = get_collections(cursor, target_id)
 
     if not colls:
@@ -280,7 +285,10 @@ def main():
 
     label = "SEO Content" if mode == "content" else "Editorial"
     if dry_run: label += " (DRY RUN)"
-    print(f"✍️  Generating {label} for {len(colls)} collections...\n")
+    print(f"✍️  Generating {label} for {len(colls)} collections...")
+    if target_id and len(colls) != 1:
+        print(f"   ⚠️  Expected 1 collection for '{target_id}', got {len(colls)}")
+    print()
 
     ok, skip, fail = 0, 0, 0
 
