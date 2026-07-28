@@ -247,16 +247,18 @@ def main():
     limit = None
 
     args = sys.argv[1:]
-    i = 0
-    while i < len(args):
-        a = args[i]
-        if a == "--content": mode = "content"; i += 1
-        elif a == "--editorial": mode = "editorial"; i += 1
-        elif a == "--force": force = True; i += 1
-        elif a == "--dry-run": dry_run = True; i += 1
-        elif a == "--limit" and i+1 < len(args): limit = int(args[i+1]); i += 2
-        elif not a.startswith("--"): target_id = a; i += 1
-        else: i += 1
+    # Separate flags from positional arg (collection ID)
+    flags = [a for a in args if a.startswith("--")]
+    positional = [a for a in args if not a.startswith("--")]
+    if "--content" in flags: mode = "content"
+    if "--editorial" in flags: mode = "editorial"
+    if "--force" in flags: force = True
+    if "--dry-run" in flags: dry_run = True
+    for j, a in enumerate(flags):
+        if a == "--limit" and j+1 < len(flags):
+            try: limit = int(flags[j+1])
+            except ValueError: pass
+    if positional: target_id = positional[0]
 
     if not mode:
         print("Usage:")
@@ -310,7 +312,11 @@ def main():
                           json.dumps(data["faq_json"], ensure_ascii=False), cid))
                     conn.commit()
                 ok += 1
-                print(f"✅ intro={data['intro'][:30]}...  {len(data['faq_json'])} FAQ")
+                print(f"✅ intro={data['intro'][:40]}")
+                if dry_run:
+                    print(f"   seo_title: {data['seo_title']}")
+                    print(f"   seo_desc:  {data['seo_desc'][:80]}")
+                    print(f"   faq:       {len(data['faq_json'])} Q&A")
             else:
                 fail += 1
         else:  # editorial
@@ -325,7 +331,13 @@ def main():
                           json.dumps(data["highlights"], ensure_ascii=False), cid))
                     conn.commit()
                 ok += 1
-                print(f"✅ {len(data['highlights'])} highlights")
+                if dry_run:
+                    print(f"   editor_note:  {data['editor_note'][:80]}")
+                    print(f"   why_collect:  {data['why_collect']}")
+                    print(f"   audience:     {data['audience']}")
+                    print(f"   highlights:   {json.dumps(data['highlights'], ensure_ascii=False)[:100]}")
+                else:
+                    print(f"✅ {len(data['highlights'])} highlights")
             else:
                 fail += 1
         time.sleep(0.3)
