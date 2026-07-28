@@ -236,6 +236,107 @@ def cmd_apply(slug):
 # CLI
 # ============================================================
 
+# ============================================================
+# --simulate
+# ============================================================
+
+def cmd_simulate(collection_id, extra_args):
+    """Simulate rule changes without writing to DB."""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+
+    row = cursor.execute(
+        "SELECT id, title, rule_json FROM collections WHERE id=? AND status='published'",
+        (collection_id,)).fetchone()
+    if not row:
+        print(f"❌ Collection '{collection_id}' not found")
+        conn.close()
+        sys.exit(1)
+
+    cid, ctitle, rule_raw = row
+    try:
+        current_rule = json.loads(rule_raw) if rule_raw else {}
+    except (json.JSONDecodeError, TypeError):
+        print(f"❌ Invalid rule_json for {cid}")
+        conn.close()
+        sys.exit(1)
+
+    # Build simulated rule
+    simulated_rule = json.loads(json.dumps(current_rule))  # deep copy
+
+    # Parse modifications
+    add_tags = []
+    add_tags_or = []
+    custom_rule = None
+    i = 0
+    while i < len(extra_args):
+        if extra_args[i] == "--add-tags" and i+1 < len(extra_args):
+            add_tags.append(extra_args[i+1]); i += 2; continue
+        if extra_args[i] == "--add-tags-or" and i+1 < len(extra_args):
+            add_tags_or.append(extra_args[i+1]); i += 2; continue
+        if extra_args[i] == "--rule" and i+1 < len(extra_args):
+            try:
+                custom_rule = json.loads(extra_args[i+1])
+            except (json.JSONDecodeError, TypeError):
+                print(f"❌ Invalid JSON for --rule parameter")
+                conn.close()
+                sys.exit(1)
+            i += 2; continue
+        i += 1
+
+    if custom_rule:
+        simulated_rule = custom_rule
+    else:
+        if add_tags:
+            simulated_rule["tags"] = list(set(simulated_rule.get("tags", []) + add_tags))
+        if add_tags_or:
+            simulated_rule["tags_or"] = list(set(simulated_rule.get("tags_or", []) + add_tags_or))
+
+    # Match both
+    from rule_engine import match_collection
+    current_match = match_collection(cursor, current_rule, collection_id=cid)
+    simulated_match = match_collection(cursor, simulated_rule, collection_id=cid)
+
+    current_ids = set(current_match.resource_ids)
+    simulated_ids = set(simulated_match.resource_ids)
+    added_ids = simulated_ids - current_ids
+    removed_ids = current_ids - simulated_ids
+
+    # Samples
+    def sample_titles(ids, limit=20):
+        result = []
+        for rid in sorted(ids)[:limit]:
+            t = cursor.execute("SELECT title FROM resources WHERE res_id=?", (rid,)).fetchone()
+            result.append(f"{rid}  {t[0][:60]}" if t else rid)
+        return result
+
+    conn.close()
+
+    print()
+    print(f"── Rule Simulation: {cid} ──")
+    print()
+    print(f"  当前规则                模拟规则")
+    print(f"  {json.dumps(current_rule, ensure_ascii=False):40s}  {json.dumps(simulated_rule, ensure_ascii=False)}")
+    print()
+    print(f"  匹配数: {current_match.count:<20d} 匹配数: {simulated_match.count}  ({'+' if simulated_match.count >= current_match.count else ''}{simulated_match.count - current_match.count})")
+    print(f"  {'─'*50}")
+    if added_ids:
+        print(f"\n  新增资源 ({len(added_ids)}):")
+        for s in sample_titles(added_ids):
+            print(f"    {s}")
+    if removed_ids:
+        print(f"\n  移除资源 ({len(removed_ids)}):")
+        for s in sample_titles(removed_ids):
+            print(f"    {s}")
+    if not added_ids and not removed_ids:
+        print(f"\n  ✅ 规则变化不影响匹配结果")
+    print()
+    print(f"  💡 To apply: python3 collection_rule_assist.py --propose {cid}")
+    print(f"     edit collection_drafts/draft-{cid}.json")
+    print(f"     python3 collection_rule_assist.py --apply {cid}")
+    print()
+
+
 def main():
     args = sys.argv[1:]
     if not args:
@@ -243,10 +344,13 @@ def main():
         print("  python3 collection_rule_assist.py --preview <group_id>")
         print("  python3 collection_rule_assist.py --propose <group_id> [--name X] [--slug Y]")
         print("  python3 collection_rule_assist.py --apply <slug>")
+        print("  python3 collection_rule_assist.py --simulate <collection_id> [--add-tags X] [--add-tags-or Y] [--rule '...']")
         sys.exit(1)
 
     if args[0] == "--preview":
         cmd_preview(args[1])
+    elif args[0] == "--simulate":
+        cmd_simulate(args[1], args[2:])
     elif args[0] == "--propose":
         gid = args[1]
         name = slug = None
