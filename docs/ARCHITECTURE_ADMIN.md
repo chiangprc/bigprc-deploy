@@ -335,6 +335,8 @@ root/scripts/
 ├── collection_discovery.py          Phase 5.3B Tag co-occurrence discovery
 ├── collection_gap.py                Phase 5.3D Coverage gap analysis
 ├── collection_rule_assist.py        Phase 5.3F Rule creation CLI
+│                                      --preview / --propose / --apply
+│                                      Phase 8.2B --simulate (read-only)
 ├── rule_engine.py                   Phase 5.3A Python→SQL rule parser
 ├── collection_quality_report.py     Phase 5.4  Quality analysis
 ├── collection_health.py             Phase 5.4  Health checks
