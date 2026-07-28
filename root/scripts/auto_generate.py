@@ -249,6 +249,15 @@ def fetch_collections_from_db():
             WHERE rc.collection_id = ?
             ORDER BY rc.score DESC
         """, (coll["id"],)).fetchall()
+        # Phase 10.2: spotlight resources
+        spotlight_rows = cursor.execute("""
+            SELECT r.res_id, r.title, r.category FROM resources r
+            JOIN resource_collections rc ON r.res_id = rc.resource_id
+            WHERE rc.collection_id=? AND rc.spotlight=1
+            ORDER BY rc.score DESC LIMIT 5
+        """, (coll["id"],)).fetchall()
+        spotlight = [{"res_id": r[0], "title": r[1], "category": r[2]} for r in spotlight_rows]
+
         if res_rows:
             my_tags = tag_sets.get(coll["id"], set())
             related = []
@@ -259,7 +268,7 @@ def fetch_collections_from_db():
                 if overlap >= 3:
                     related.append({"id": oid, "title": other["title"], "count": resource_counts.get(oid, 0), "overlap": overlap})
             related.sort(key=lambda x: -x["overlap"])
-            result.append({"coll": dict(coll), "resources": [dict(r) for r in res_rows], "related": related[:4]})
+            result.append({"coll": dict(coll), "resources": [dict(r) for r in res_rows], "related": related[:4], "spotlight": spotlight})
     conn.close()
     return result
 
@@ -316,14 +325,8 @@ def build_collection_pages():
         related = item.get("related", [])[:4]
         cat_tags = list(set(r.get("category","") for r in coll_res if r.get("category")))[:4]
 
-        # Phase 10.2: Spotlight resources
-        spotlight_rows = cursor.execute("""
-            SELECT r.res_id, r.title, r.category FROM resources r
-            JOIN resource_collections rc ON r.res_id = rc.resource_id
-            WHERE rc.collection_id=? AND rc.spotlight=1
-            ORDER BY rc.score DESC LIMIT 5
-        """, (slug,)).fetchall()
-        spotlight = [{"res_id": r[0], "title": r[1], "category": r[2]} for r in spotlight_rows]
+        # Phase 10.2: pre-computed spotlight from fetch_collections_from_db
+        spotlight = item.get("spotlight", [])
 
         html = coll_template.render(
             resources=coll_res,
