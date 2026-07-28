@@ -123,6 +123,81 @@ JSON only:
 # --editorial mode: editor_note, why_collect, audience, highlights
 # ============================================================
 
+def parse_highlights(raw):
+    """Multi-level parser for AI-generated highlights output.
+
+    Returns: (list[str] | None, label: str)
+    Level 1: json.loads()
+    Level 2: auto-fix common errors then json.loads()
+    Level 3: fallback line parser (markdown, numbered, bullets)
+    """
+    import re
+
+    # Level 1: clean JSON
+    if isinstance(raw, list):
+        items = [str(x).strip() for x in raw if str(x).strip()]
+        if 3 <= len(items) <= 8:
+            return items, "JSON"
+    if isinstance(raw, str):
+        try:
+            parsed = json.loads(raw)
+            if isinstance(parsed, list):
+                items = [str(x).strip() for x in parsed if str(x).strip()]
+                if 3 <= len(items) <= 8:
+                    return items, "JSON"
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+    # Level 2: auto-fix common AI output errors
+    if isinstance(raw, str):
+        fixed = raw.strip()
+        # Remove markdown code fences
+        fixed = re.sub(r'^```(?:json)?\s*', '', fixed)
+        fixed = re.sub(r'\s*```$', '', fixed)
+        # Remove leading/trailing prose ("Here are the highlights:", etc.)
+        fixed = re.sub(r'^[^{[]*', '', fixed)
+        fixed = re.sub(r'[^}\]]*$', '', fixed)
+        # Fix trailing commas
+        fixed = re.sub(r',\s*([}\]])', r'\1', fixed)
+        # Fix missing commas between items
+        fixed = re.sub(r'"\s*\n\s*"', '",\n"', fixed)
+        # Fix Chinese quotes
+        fixed = fixed.replace('“', '"').replace('”', '"')
+        fixed = fixed.replace('‘', "'").replace('’', "'")
+        # Remove inline comments
+        fixed = re.sub(r'//[^\n]*', '', fixed)
+        # Remove empty lines inside arrays
+        fixed = re.sub(r'\n\s*\n', '\n', fixed)
+        try:
+            parsed = json.loads(fixed)
+            if isinstance(parsed, list):
+                items = [str(x).strip() for x in parsed if str(x).strip()]
+                if 3 <= len(items) <= 8:
+                    return items, "Auto-fixed JSON"
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+    # Level 3: Fallback line parser
+    if isinstance(raw, str):
+        lines = []
+        text = raw.strip()
+        # Remove markdown code fences
+        text = re.sub(r'^```.*', '', text, flags=re.MULTILINE)
+        # Try to extract list items: - item, * item, 1. item, • item
+        for line in text.split('\n'):
+            line = line.strip()
+            # Strip list markers
+            cleaned = re.sub(r'^[\-\*\d+\.\s•]+', '', line).strip()
+            # Remove surrounding quotes
+            cleaned = cleaned.strip('"\'""“”')
+            if cleaned and len(cleaned) >= 4:
+                lines.append(cleaned)
+        if 3 <= len(lines) <= 8:
+            return lines, "Fallback line parser"
+
+    return None, "FAILED"
+
+
 def generate_editorial(title, seo_desc, samples, count):
     """Generate editorial content. Draft only. High risk. Human approval required.
 
@@ -223,16 +298,30 @@ JSON only:
 {{"highlights":["...","..."]}}"""
 
     results = {}
+    parser_used = None
     for name, prompt in [("editor_note", prompt_en), ("why_collect", prompt_wc),
                            ("audience", prompt_au), ("highlights", prompt_hl)]:
         time.sleep(0.2)
         data = ai_call(prompt, temperature=0.7, max_tokens=400)
         if data and name in data:
-            results[name] = data[name]
+            val = data[name]
+            if name == "highlights":
+                parsed, parser_label = parse_highlights(val)
+                if parsed:
+                    results[name] = parsed
+                    parser_used = parser_label
+                else:
+                    print(f"   ⚠️  highlights parse failed (all 3 levels)")
+            else:
+                results[name] = val
         else:
-            print(f"   ⚠️  {name} failed")
-            return None
-    return results
+            if name != "highlights":
+                print(f"   ⚠️  {name} failed")
+                return None
+    # Attach parser metadata
+    if parser_used and results:
+        results["_parser"] = parser_used
+    return results if len(results) >= 4 else None
 
 
 # ============================================================
@@ -318,11 +407,13 @@ def main():
                 data = generate_editorial(title, seo_desc, samples, cnt)
                 if data and len(data) >= 4:
                     ok += 1
+                    parser = data.get("_parser", "?")
                     print(f"   ── Preview ──")
                     print(f"   editor_note:  {data['editor_note']}")
                     print(f"   why_collect:  {data['why_collect']}")
                     print(f"   audience:     {data['audience']}")
                     print(f"   highlights:   {json.dumps(data['highlights'], ensure_ascii=False)}")
+                    print(f"   parser:       {parser}")
                 else:
                     fail += 1
             print()
@@ -358,6 +449,7 @@ def main():
         else:  # editorial
             data = generate_editorial(title, seo_desc, samples, cnt)
             if data and len(data) >= 4:
+                parser = data.pop("_parser", "?")
                 cursor.execute("""
                     UPDATE collection_content
                     SET editor_note=?, why_collect=?, audience=?, highlights=?
@@ -366,7 +458,7 @@ def main():
                       json.dumps(data["highlights"], ensure_ascii=False), cid))
                 conn.commit()
                 ok += 1
-                print(f"✅ {len(data['highlights'])} highlights")
+                print(f"✅ {len(data['highlights'])} highlights  ({parser})")
             else:
                 fail += 1
         time.sleep(0.3)
