@@ -70,13 +70,30 @@ def get_collections(cursor, target_id=None):
 
 
 def ai_call(prompt, temperature=0.6, max_tokens=800):
-    """Call AI with retry."""
+    """Call AI. For JSON parse failures, return raw text for fallback parsing."""
     try:
         resp = client.chat.completions.create(
             model=MODEL, messages=[{"role":"user","content":prompt}],
             temperature=temperature, max_tokens=max_tokens,
             response_format={"type":"json_object"})
-        return json.loads(resp.choices[0].message.content)
+        raw = resp.choices[0].message.content.strip()
+        return json.loads(raw)
+    except (json.JSONDecodeError, TypeError):
+        # JSON mode failed — retry without response_format for raw text
+        try:
+            resp2 = client.chat.completions.create(
+                model=MODEL, messages=[{"role":"user","content":prompt}],
+                temperature=temperature, max_tokens=max_tokens)
+            raw2 = resp2.choices[0].message.content.strip()
+            # Try parsing the fallback response
+            try:
+                return json.loads(raw2)
+            except (json.JSONDecodeError, TypeError):
+                # Return raw text in a dict wrapper for parse_highlights fallback
+                return {"_raw": raw2}
+        except Exception:
+            pass
+        return None
     except Exception as e:
         print(f"   ❌ {e}")
         return None
@@ -304,9 +321,9 @@ JSON only:
                            ("audience", prompt_au), ("highlights", prompt_hl)]:
         time.sleep(0.2)
         data = ai_call(prompt, temperature=0.7, max_tokens=400)
-        if data and name in data:
-            val = data[name]
+        if data and (name in data or "_raw" in data):
             if name == "highlights":
+                val = data.get(name) or data.get("_raw","")
                 hl_raw = val
                 parsed, parser_label = parse_highlights(val)
                 if parsed:
