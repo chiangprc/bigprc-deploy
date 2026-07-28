@@ -1,11 +1,35 @@
-# BigPRC — 极客资源技术索引引擎
+# BigPRC — 数字资源策展库
 
 > 站点: <https://www.bigprc.com>  
 > 仓库: <https://github.com/chiangprc/bigprc-deploy>  
-> 架构: Python/Jinja2 静态站点生成 + Nginx + Cloudflare  
-> 设计: Swiss 国际主义扁平风格 · 纯文字界面 · 暗色模式
+> 架构: Python/Jinja2 静态站点生成 + Nginx + Cloudflare + SQLite  
+> 全站: 1,760 项资源 · 16 个策展专题 · 4,500+ 标签 · 15 个分类
 
-BigPRC 是一个**不存储任何文件的资源索引引擎**。它从 Excel 数据源读取第三方网盘分享链接，通过 Python 脚本自动生成全站静态 HTML，部署到 Ubuntu VPS + Nginx 对外服务。全站约 1,267 条资源，覆盖软件工具、学习资料、影音娱乐等领域。
+BigPRC 是一个**数字资源策展平台**，帮助用户更快做出正确选择。采用 CLI → JSON → Static HTML 架构，纯 Python + SQLite 后端，零运行时依赖。
+
+---
+
+## 项目阶段
+
+| Layer | Status | Description |
+|-------|--------|-------------|
+| **Rule Engine** | `v0.8-stable` (Frozen) | Resource-to-collection matching. Discovery → Gap → Create → Simulate → Monitor |
+| **Content** | Phase 6 Stable | AI-generated SEO (tagline, summary, keywords) + FAQ |
+| **Editorial** | Phase 9 Design | Curatorial content (editor_note, why_collect, audience, highlights) |
+| **Dashboard** | Phase 7 Stable | Read-only editorial workspace: 4 admin pages |
+
+### 文档索引
+
+| Document | Content |
+|----------|---------|
+| [ARCHITECTURE_ADMIN.md](docs/ARCHITECTURE_ADMIN.md) | Admin backend architecture, JSON Schemas, data flow |
+| [PHASE8_RULE_ENGINE.md](docs/PHASE8_RULE_ENGINE.md) | Rule Engine design, lifecycle, contract, file inventory |
+| [PHASE8_FINAL_REVIEW.md](docs/PHASE8_FINAL_REVIEW.md) | Phase 8 closeout review and sign-off |
+| [EDITORIAL_MODEL.md](docs/EDITORIAL_MODEL.md) | Editorial field definitions, AI policy, Phase 9 roadmap |
+| [V2_UPGRADE_COMPLETED.md](docs/V2_UPGRADE_COMPLETED.md) | v2.0 data layer upgrade report |
+| [DEVELOPER_MANUAL.md](DEVELOPER_MANUAL.md) | Full system architecture and configuration |
+| [WORKFLOW_DAILY.md](WORKFLOW_DAILY.md) | Daily operations and AI pipeline |
+| [RELEASE_NOTES_PHASE6.md](docs/RELEASE_NOTES_PHASE6.md) | Phase 6 release notes |
 
 ---
 
