@@ -492,7 +492,8 @@ def main():
                 hl_list = data.get("highlights", [])
                 cursor.execute("""
                     UPDATE collection_content
-                    SET editor_note=?, why_collect=?, audience=?, highlights=?
+                    SET editor_note=?, why_collect=?, audience=?, highlights=?,
+                        editorial_status='draft'
                     WHERE collection_id=?
                 """, (data["editor_note"], data["why_collect"], data["audience"],
                       json.dumps(hl_list, ensure_ascii=False), cid))

@@ -375,6 +375,8 @@ def build_editorial_status(cursor):
     rows = cursor.execute("""
         SELECT c.id, c.title,
                cc.editor_note, cc.why_collect, cc.audience, cc.highlights,
+               COALESCE(cc.editorial_status,'draft') AS editorial_status,
+               cc.reviewed_at, cc.approved_at,
                (SELECT COUNT(*) FROM resource_collections WHERE collection_id=c.id) AS rc
         FROM collections c
         LEFT JOIN collection_content cc ON c.id = cc.collection_id
@@ -384,7 +386,7 @@ def build_editorial_status(cursor):
 
     result = []
     complete = 0
-    for cid, ctitle, en, wc, au, hl, rc in rows:
+    for cid, ctitle, en, wc, au, hl, ed_status, rev_at, app_at, rc in rows:
         has_en = bool(en and str(en).strip())
         has_wc = bool(wc and str(wc).strip())
         has_au = bool(au and str(au).strip())
@@ -407,6 +409,9 @@ def build_editorial_status(cursor):
             "why_collect": (wc or "").strip(),
             "audience": (au or "").strip(),
             "highlights": json.loads(hl) if hl and hl.strip() else [],
+            "editorial_status": ed_status or 'draft',
+            "reviewed_at": rev_at,
+            "approved_at": app_at,
             "has_editor_note": has_en, "has_why_collect": has_wc,
             "has_audience": has_au, "has_highlights": has_hl,
             "pct_complete": filled * 25,

@@ -52,13 +52,14 @@ fetch('/admin/data/editorial.json')
       '<div class=card><div class=n>'+s.pct_overall+'%</div><div class=l>完成率</div></div>'+
       '</div>';
 
-    html+='<div class=section><h2>编辑状态</h2><table><thead><tr><th>专题</th><th>状态</th><th>编辑推荐</th><th>收藏理由</th><th>受众</th><th>亮点</th><th>完成度</th></tr></thead><tbody>';
+    html+='<div class=section><h2>编辑状态</h2><table><thead><tr><th>专题</th><th>完成</th><th>审核</th><th>编辑推荐</th><th>收藏理由</th><th>受众</th><th>亮点</th><th>完成度</th></tr></thead><tbody>';
     cols.forEach(function(c){
         var pct=c.pct_complete||0;
         var barColor=pct===100?'#1a6b4f':pct>0?'#f0a030':'#ccc';
         html+='<tr>'+
           '<td><a href="/admin/editorial-detail.html?id='+c.id+'" style="color:var(--text);font-weight:600">'+c.title+'</a></td>'+
           '<td>'+statusIcon(c.status)+'</td>'+
+          '<td>'+wfIcon(c.editorial_status||'draft')+'</td>'+
           '<td class=dot>'+dot(c.has_editor_note)+'</td>'+
           '<td class=dot>'+dot(c.has_why_collect)+'</td>'+
           '<td class=dot>'+dot(c.has_audience)+'</td>'+
@@ -80,6 +81,12 @@ fetch('/admin/data/editorial.json')
         if(st==='complete') return '<span title="已完成">🟢</span>';
         if(st==='partial') return '<span title="部分完成">🟡</span>';
         return '<span title="未生成">⚪</span>';
+    }
+    function wfIcon(st){
+        if(st==='approved') return '<span title="已审核">🔵</span>';
+        if(st==='reviewed') return '<span title="待审核">🟡</span>';
+        if(st==='rejected') return '<span title="退回">🔴</span>';
+        return '<span title="草稿">⚪</span>';
     }
   })
   .catch(function(e){document.getElementById('content').innerHTML='<div class=error>❌ 加载失败: '+e.message+'<br><small>python3 collection_dashboard_export.py</small></div>'});

@@ -47,6 +47,8 @@ fetch('/admin/data/editorial.json')
 
     var statusIcon={'complete':'🟢','partial':'🟡','empty':'⚪'};
     var st=statusIcon[c.status]||'⚪';
+    var wfIcon={'draft':'🟡','reviewed':'🔵','approved':'🟢','rejected':'🔴'};
+    var wf=c.editorial_status||'draft';
 
     var html='<div class=header>'+
       '<h1>'+c.title+'</h1>'+
@@ -54,6 +56,7 @@ fetch('/admin/data/editorial.json')
         '<span>'+c.id+'</span>'+
         '<span>'+c.resource_count+' 资源</span>'+
         '<span>'+st+' '+(c.status==='complete'?'已完成':c.status==='partial'?'部分完成':'未生成')+' ('+c.pct_complete+'%)</span>'+
+        '<span>'+wfIcon[wf]+' '+wf+'</span>'+
       '</div></div>';
 
     // Editor note
@@ -70,6 +73,12 @@ fetch('/admin/data/editorial.json')
     html+='<div class=meta-box>数据导出: '+d.generated_at+'</div>';
 
     // Links
+    // CLI hints
+    var hints=[];
+    if(wf==='draft') hints.push('💡 python3 editorial_review.py --review '+c.id);
+    if(wf==='reviewed') hints.push('💡 python3 editorial_review.py --approve '+c.id);
+    if(wf!=='rejected') hints.push('💡 python3 editorial_review.py --reject '+c.id);
+
     html+='<div class=links>'+
       '<a href="/collection/'+c.id+'.html">🌐 前台页面</a>'+
       '<a href="/admin/editorial.html">📊 编辑工作台</a>'+
