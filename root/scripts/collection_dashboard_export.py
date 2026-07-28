@@ -229,13 +229,13 @@ def build_collection_details(cursor):
                     "shared_pct": round(100 * row[2] / cnt, 1),
                 })
 
-        # Samples (first 50)
+        # Samples (first 10)
         samples = []
         if cnt > 0:
             for row in cursor.execute("""
                 SELECT r.res_id, r.title, r.category FROM resources r
                 JOIN resource_collections rc ON r.res_id = rc.resource_id
-                WHERE rc.collection_id = ? ORDER BY rc.score DESC LIMIT 50
+                WHERE rc.collection_id = ? ORDER BY rc.score DESC LIMIT 10
             """, (cid,)).fetchall():
                 samples.append({"id": row[0], "title": row[1], "category": row[2]})
 

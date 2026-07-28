@@ -175,10 +175,10 @@ fetch('/admin/data/collection-details.json')
     html += '<details><summary>查看规则 JSON</summary>';
     html += '<div class=rule-box style="margin-top:8px">'+ruleText+'</div></details>';
 
-    // Top Tags
+    // Top Tags (compact, merged into end of Rule area)
     if(c.top_tags && c.top_tags.length){
-        html += '<div class=section><h2>Top Tags</h2><div class=tag-cloud>';
-        c.top_tags.forEach(function(t){html += '<span class=tag-item>'+t.name+' ('+t.count+')</span>';});
+        html += '<div class=section><h2>高频标签</h2><div class=tag-cloud>';
+        c.top_tags.slice(0,10).forEach(function(t){html += '<span class=tag-item>'+t.name+' ('+t.count+')</span>';});
         html += '</div></div>';
     }
 
@@ -197,23 +197,9 @@ fetch('/admin/data/collection-details.json')
         c.samples.forEach(function(s){
             html += '<tr><td>'+s.id+'</td><td><a href="/go/'+s.id+'">'+s.title+'</a></td><td>'+s.category+'</td></tr>';
         });
-        if(c.resource_count > 50) html += '<tr><td colspan=3 style="color:var(--sec)">... 仅展示前 50 条，共 '+c.resource_count+' 条</td></tr>';
+        if(c.resource_count > 10) html += '<tr><td colspan=3 style="color:var(--sec)">... 展示前 10 条，共 '+c.resource_count+' 条 · <a href="/list.html">查看全部</a></td></tr>';
         html += '</table></div>';
     }
-
-    // Placeholder sections
-    var placeholders = [
-        {title:'Editor Notes', key:'editor_notes'},
-        {title:'Recent Changes', key:'recent_changes'},
-        {title:'AI Suggestion', key:'ai_suggestion'}
-    ];
-    placeholders.forEach(function(p){
-        var val = c[p.key];
-        html += '<details><summary>📝 '+p.title+'</summary>';
-        if(val){html += '<div style="font-size:13px;color:var(--sec);padding:8px">'+val+'</div>';}
-        else{html += '<div class=placeholder>暂无数据 (Phase 6.2 预留)</div>';}
-        html += '</details>';
-    });
 
     // Footer with prev/next nav
     var idx = data.indexOf(c);
