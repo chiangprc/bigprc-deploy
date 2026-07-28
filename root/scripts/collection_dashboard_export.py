@@ -259,6 +259,9 @@ def build_collection_details(cursor):
             "editor_notes": None,
             "recent_changes": None,
             "ai_suggestion": None,
+            "content_complete": bool(cursor.execute(
+                "SELECT 1 FROM collection_content WHERE collection_id=? AND intro IS NOT NULL AND seo_desc IS NOT NULL AND faq_json IS NOT NULL",
+                (cid,)).fetchone()),
         })
 
     return sorted(result, key=lambda x: -x["resource_count"])
@@ -297,8 +300,20 @@ def _compute_gap_evidence(cursor, cid, rule, db_ids, engine_ids):
                 AND r.res_id IN ({placeholders})
                 LIMIT 3
             """, [tag_name] + list(missing)).fetchall()
+            # Preview: what if this tag were added to tags_or?
+            preview_added = 0
+            try:
+                temp_rule = dict(rule)
+                temp_rule["tags_or"] = list(rule.get("tags_or", [])) + [tag_name]
+                from rule_engine import match_collection
+                temp_result = match_collection(cursor, temp_rule)
+                temp_ids = set(temp_result.resource_ids)
+                preview_added = len(temp_ids - engine_ids)
+            except Exception:
+                pass
             missing_tags.append({"name": tag_name, "count": tag_count,
-                                 "samples": [s[0] for s in samples]})
+                                 "samples": [s[0] for s in samples],
+                                 "preview": {"added": preview_added, "removed": 0}})
         evidence["type"] = "under"
         evidence["missing_count"] = len(missing)
         evidence["missing_tags"] = missing_tags

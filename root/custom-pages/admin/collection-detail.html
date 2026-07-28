@@ -147,9 +147,13 @@ fetch('/admin/data/collection-details.json')
         gap.missing_tags.forEach(function(t){
             html += '<div style="margin-bottom:6px">';
             html += '<span style="font-weight:500;font-size:13px">'+t.name+'</span> <span style="font-size:11px;color:var(--sec)">('+t.count+' 次)</span>';
+            if(t.preview && t.preview.added > 0){
+                html += ' <span style="font-size:11px;color:#1a6b4f;font-weight:500">预计 +'+t.preview.added+' 资源</span>';
+            }
             html += '<div style="font-size:11px;color:var(--sec);margin-top:2px">例: '+t.samples.slice(0,3).join(' &middot; ')+'</div>';
             html += '</div>';
         });
+        html += '<div style="font-size:10px;color:var(--sec);margin-top:8px;font-style:italic">※ 预计效果为单独加入该标签后的模拟结果，多个标签同时调整时结果可能不同。</div>';
         html += '</div>';
     } else if(gap.type==='over'){
         html += '<div style="background:#fde8e8;border:1px solid #ea4335;border-radius:6px;padding:14px 16px;margin-bottom:12px">';
@@ -221,13 +225,40 @@ fetch('/admin/data/collection-details.json')
     html += '<span>'+(next?'<a href="?id='+next.id+'" style="font-size:13px">'+next.title+' →</a>':'')+'</span>';
     html += '</div>';
 
-    // Command hints
-    html += '<div style="margin-top:12px;padding:12px 16px;background:var(--card-bg);border-radius:6px;border:1px solid var(--border)">';
-    html += '<span style="font-size:12px;color:var(--sec);font-weight:500">💡 操作命令</span>';
-    html += '<div style="font-size:11px;color:var(--sec);font-family:monospace;margin-top:6px;line-height:1.8">';
-    html += 'python3 collection_faq.py<br>';
-    html += 'python3 collection_editor_ai.py<br>';
-    html += 'python3 auto_generate.py</div></div>';
+    // ── Action Panel (context-aware) ──
+    var actions = [];
+    var gap = c.gap_evidence||{};
+    if(gap.type==='under'){
+        actions.push({icon:'⚠️',label:'规则漏匹配 '+gap.missing_count+' 个资源',
+            detail:'查看上方「规则差距分析」，评估是否调整 rule_json',
+            cmd:'python3 collection_rule_assist.py --preview '+c.id});
+    }
+    if(c.health==='unstable'){
+        actions.push({icon:'🔴',label:'规则状态异常 (unstable, Δ'+c.engine_delta_pct+'%)',
+            detail:'规则匹配数与数据库记录偏差较大，建议重新导出确认',
+            cmd:'python3 collection_dashboard_export.py'});
+    }
+    if(!c.content_complete){
+        actions.push({icon:'📝',label:'专题内容待完善',
+            detail:'缺少 intro、SEO 描述或 FAQ。运行内容生成脚本补全',
+            cmd:'python3 collection_editor_ai.py && python3 collection_faq.py'});
+    }
+    if(actions.length===0){
+        actions.push({icon:'✅',label:'当前专题状态健康',
+            detail:'规则精确匹配，内容完整。无需操作',
+            cmd:null});
+    }
+
+    html += '<div class=section><h2>下一步操作</h2>';
+    html += '<div style="border:1px solid var(--border);border-radius:6px;padding:16px;background:var(--card-bg)">';
+    actions.forEach(function(a){
+        html += '<div style="margin-bottom:'+(a.cmd?'14px':'0')+'">';
+        html += '<div style="font-size:13px;font-weight:600;margin-bottom:2px">'+a.icon+' '+a.label+'</div>';
+        html += '<div style="font-size:12px;color:var(--sec)">'+a.detail+'</div>';
+        if(a.cmd) html += '<div style="font-size:11px;color:var(--sec);font-family:monospace;margin-top:4px">💡 '+a.cmd+'</div>';
+        html += '</div>';
+    });
+    html += '</div></div>';
 
     document.getElementById('content').innerHTML=html;
   })
