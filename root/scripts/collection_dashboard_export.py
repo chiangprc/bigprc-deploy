@@ -370,6 +370,53 @@ def _engine_summary(cursor, rule, matched_ids):
     return summary
 
 
+def build_editorial_status(cursor):
+    """编辑完整度: 四级状态 + 每字段存在性。纯读取 collection_content 已有字段."""
+    rows = cursor.execute("""
+        SELECT c.id, c.title,
+               cc.editor_note, cc.why_collect, cc.audience, cc.highlights
+        FROM collections c
+        LEFT JOIN collection_content cc ON c.id = cc.collection_id
+        WHERE c.status = 'published'
+        ORDER BY c.title
+    """).fetchall()
+
+    result = []
+    complete = 0
+    for cid, ctitle, en, wc, au, hl in rows:
+        has_en = bool(en and str(en).strip())
+        has_wc = bool(wc and str(wc).strip())
+        has_au = bool(au and str(au).strip())
+        has_hl = bool(hl and str(hl).strip())
+        filled = sum([has_en, has_wc, has_au, has_hl])
+
+        if filled == 0:
+            status = "empty"
+        elif filled == 4:
+            status = "complete"
+            complete += 1
+        else:
+            status = "partial"
+
+        result.append({
+            "id": cid, "title": ctitle,
+            "status": status,
+            "has_editor_note": has_en, "has_why_collect": has_wc,
+            "has_audience": has_au, "has_highlights": has_hl,
+            "pct_complete": filled * 25,
+        })
+
+    total = len(result)
+    return {
+        "generated_at": __import__("datetime").datetime.now().isoformat(),
+        "summary": {
+            "total": total, "complete": complete, "incomplete": total - complete,
+            "pct_overall": round(100 * complete / total) if total > 0 else 0,
+        },
+        "collections": result,
+    }
+
+
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)
     conn = sqlite3.connect(DB_FILE)
@@ -378,10 +425,11 @@ def main():
     dashboard = build_dashboard(cursor)
     collections = build_collections(cursor)
     details = build_collection_details(cursor)
+    editorial = build_editorial_status(cursor)
     conn.close()
 
     for name, data in [("dashboard.json", dashboard), ("collections.json", collections),
-                        ("collection-details.json", details)]:
+                        ("collection-details.json", details), ("editorial.json", editorial)]:
         path = os.path.join(OUT_DIR, name)
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False)

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>编辑工作台 — BigPRC 编辑部</title>
+<style>
+:root{--bg:#fff;--text:#1a1a1a;--sec:#666;--border:#e5e5e5;--primary:#1a6b4f;--card-bg:#fafafa;--green:#e8f5e9;--amber:#fef9f0}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;margin:0}
+.wrap{max-width:900px;margin:0 auto;padding:24px 20px}
+h1{font-size:20px;font-weight:700;margin:0 0 4px}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
+.card{text-align:center;padding:20px 12px;border-radius:8px;border:1px solid var(--border)}
+.card .n{font-size:28px;font-weight:700;color:var(--primary)}
+.card .l{font-size:12px;color:var(--sec);margin-top:4px}
+.section{margin:24px 0}
+.section h2{font-size:16px;font-weight:600;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:6px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:10px 8px;border-bottom:2px solid var(--border);color:var(--sec);font-size:11px;font-weight:600}
+td{padding:9px 8px;border-bottom:1px solid var(--border)}
+tr:hover td{background:var(--card-bg)}
+.dot{font-size:14px;text-align:center}
+.dot span{margin:0 2px}
+.bar{height:8px;border-radius:4px;background:var(--border);min-width:80px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width 0.3s}
+.links{display:flex;gap:16px;flex-wrap:wrap;margin-top:24px}
+.links a{padding:10px 20px;border:1px solid var(--primary);border-radius:6px;color:var(--primary);text-decoration:none;font-size:13px;font-weight:500}
+.links a:hover{background:var(--primary);color:#fff}
+.error{text-align:center;padding:40px;color:#c0392b}
+@media(max-width:600px){.cards{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>编辑工作台</h1>
+<p style="color:var(--sec);font-size:13px">编辑部 · 只读总览</p>
+<div id="content"><div style="text-align:center;padding:40px;color:var(--sec)">加载中...</div></div>
+</div>
+<script>
+function dot(c){return c?'🟢':'🔴'}
+fetch('/admin/data/editorial.json')
+  .then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
+  .then(function(d){
+    var s=d.summary, cols=d.collections;
+    var html='<div class=cards>'+
+      '<div class=card><div class=n>'+s.total+'</div><div class=l>专题总数</div></div>'+
+      '<div class=card><div class=n>'+s.complete+'</div><div class=l>已完成</div></div>'+
+      '<div class=card><div class=n>'+s.incomplete+'</div><div class=l>待完善</div></div>'+
+      '<div class=card><div class=n>'+s.pct_overall+'%</div><div class=l>完成率</div></div>'+
+      '</div>';
+
+    html+='<div class=section><h2>编辑状态</h2><table><thead><tr><th>专题</th><th>状态</th><th>编辑推荐</th><th>收藏理由</th><th>受众</th><th>亮点</th><th>完成度</th></tr></thead><tbody>';
+    cols.forEach(function(c){
+        var pct=c.pct_complete||0;
+        var barColor=pct===100?'#1a6b4f':pct>0?'#f0a030':'#ccc';
+        html+='<tr>'+
+          '<td><b>'+c.title+'</b></td>'+
+          '<td>'+statusIcon(c.status)+'</td>'+
+          '<td class=dot>'+dot(c.has_editor_note)+'</td>'+
+          '<td class=dot>'+dot(c.has_why_collect)+'</td>'+
+          '<td class=dot>'+dot(c.has_audience)+'</td>'+
+          '<td class=dot>'+dot(c.has_highlights)+'</td>'+
+          '<td style="min-width:120px"><div class=bar><div class=bar-fill style="width:'+pct+'%;background:'+barColor+'"></div></div><span style="font-size:11px;color:var(--sec)">'+pct+'%</span></td>'+
+          '</tr>';
+    });
+    html+='</tbody></table></div>';
+
+    html+='<div class=links>'+
+      '<a href="/admin/collections.html">📚 专题管理</a>'+
+      '<a href="/admin/collection-review.html">📋 Discovery Review</a>'+
+      '<a href="/admin/dashboard.html">📊 工作台</a>'+
+      '</div>';
+
+    document.getElementById('content').innerHTML=html;
+
+    function statusIcon(st){
+        if(st==='complete') return '<span title="已完成">🟢</span>';
+        if(st==='partial') return '<span title="部分完成">🟡</span>';
+        return '<span title="未生成">⚪</span>';
+    }
+  })
+  .catch(function(e){document.getElementById('content').innerHTML='<div class=error>❌ 加载失败: '+e.message+'<br><small>python3 collection_dashboard_export.py</small></div>'});
+</script>
+</body>
+</html>

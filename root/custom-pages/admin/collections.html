@@ -44,9 +44,16 @@ tr:hover td{background:var(--card-bg)}
 <div class="back"><a href="/admin/dashboard.html">← 返回工作台</a></div>
 </div>
 <script>
+function editorialDot(id){
+    var e=editorialMap[id];
+    if(!e) return '<span title="no data">⚪</span>';
+    if(e.status=="complete") return '<span title="done">🟢</span>';
+    if(e.status=="partial") return '<span title="partial">🟡</span>';
+    return '<span title="empty">⚪</span>';
+}
 function qColor(k){var m={'CORE':'#1a6b4f','SOLID':'#4285f4','NICHE':'#f0a030','THIN':'#ea4335','EMPTY':'#999'};return m[k]||'#999'}
 function hColor(k){var m={'stable':'#1a6b4f','warning':'#f0a030','unstable':'#ea4335','empty':'#999','broken':'#c5221f'};return m[k]||'#999'}
-var allData=[], sortCol='resource_count', sortDir=-1;
+var allData=[], editorialMap={}, sortCol='resource_count', sortDir=-1;
 function S(col){
     if(sortCol===col) sortDir*=-1; else{sortCol=col;sortDir=-1}
     document.querySelectorAll('th').forEach(function(t){t.className=(t.dataset.col===col?'sorted':'')});
@@ -80,7 +87,7 @@ function render(){
           '<td>'+c.resource_count+'</td>'+
           '<td><span class=badge style="background:'+qColor(c.quality)+'20;color:'+qColor(c.quality)+'">'+c.quality+'</span></td>'+
           '<td><span class=badge style="background:'+hColor(c.health)+'20;color:'+hColor(c.health)+'">'+c.health+'</span></td>'+
-          '<td><a href="/admin/collection-detail.html?id='+c.id+'">详情 →</a></td>'+
+          '<td>'+editorialDot(c.id)+'</td><td><a href="/admin/collection-detail.html?id='+c.id+'">详情 →</a></td>'+
           '</tr>';
     });
     html+='</tbody></table>';
@@ -88,7 +95,7 @@ function render(){
 }
 fetch('/admin/data/collections.json')
   .then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
-  .then(function(d){allData=d;render()})
+  .then(function(d){allData=d;return fetch('/admin/data/editorial.json').then(function(r){return r.json()}).then(function(e){if(e&&e.collections)e.collections.forEach(function(x){editorialMap[x.id]=x})})}).then(function(){render()})
   .catch(function(e){document.getElementById('content').innerHTML='<div class=error>❌ 加载失败: '+e.message+'<br><small>python3 collection_dashboard_export.py</small></div>'});
 </script>
 </body>
