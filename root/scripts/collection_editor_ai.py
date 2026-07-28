@@ -198,6 +198,9 @@ def parse_highlights(raw):
     if isinstance(raw, str):
         lines = []
         text = raw.strip()
+        # Strip JSON remnants
+        text = re.sub(r'"?highlights"?\s*:\s*\[', '', text)
+        text = re.sub(r'[\[\]{}]', ' ', text)
         # Remove markdown code fences
         text = re.sub(r'^```.*', '', text, flags=re.MULTILINE)
         # Try to extract list items: - item, * item, 1. item, • item
@@ -223,26 +226,28 @@ def generate_editorial(title, seo_desc, samples, count):
     sample_str = (samples or "")[:500]
 
     # --- editor_note ---
-    prompt_en = f"""You are an editorial curator for BigPRC, a curated digital resource library.
-Your writing style: knowledgeable friend making a recommendation.
-Not marketing. Not encyclopedia. Not SEO.
+    prompt_en = f"""You are an editorial curator for BigPRC. Write like a knowledgeable friend.
+Your writing must sound like it comes from the same editorial team as other BigPRC collections.
+Not marketing. Not encyclopedia. Not AI summary. Not product description.
 
 Collection: {title}
 Description: {seo_desc or '(none)'}
 Contains {count} resources. Examples: {sample_str}
 
-Write an editor_note (100-200 Chinese characters, 2-3 sentences):
+First, infer the collection's domain from its title, description, and examples.
+All editorial content MUST stay within this inferred domain. Never reference
+content from unrelated domains (e.g. no BBC documentaries in AI tools, no
+software in nature documentaries).
 
-Sentence 1: What makes this collection special? Express curatorial judgment.
-Sentence 2: What specific value does it provide? Be concrete.
-Sentence 3 (optional): Who is it for or how to use it.
+Write an editor_note with this structure:
+1. Opening judgement — what makes this collection worth curating?
+2. Reference 2-3 specific resources from the examples — show, don't just tell.
+3. Editorial recommendation — who is this for and what value does it provide?
 
-Rules:
-- Reference actual resource names from the samples if they support your point
-- Use "从...到..." structure if the collection spans a range
-- Never say "这是一个", "值得收藏", "非常优秀" -- these are filler
-- Never use "神器", "必备", "最强", "全网第一"
-- Write like you're telling a friend why they should care
+Character count is a soft guideline; editorial structure is the priority.
+- Never say "这是一个", "值得收藏", "非常优秀", "不可错过"
+- Never use "神器", "必备", "最强", "全网第一", "禁片", "绝密"
+- Use neutral, measured language. Let the content speak for itself.
 
 JSON only:
 {{"editor_note":"..."}}"""
@@ -253,16 +258,17 @@ JSON only:
 Collection: {title}
 Description: {seo_desc or '(none)'}
 
-Write one sentence (<=50 Chinese characters) explaining why BigPRC created this collection.
-This is the curatorial rationale -- not what's in it, but why it exists.
+Write one sentence explaining WHY BigPRC built this collection.
+This is curatorial motivation, not a content summary or SEO description.
 
 Good: "为自然爱好者提供BBC纪录片的系统收藏与高品质影像资料库"
-Bad:  "收录了大量BBC纪录片" (just restating the intro)
+Bad:  "收录了大量BBC纪录片，涵盖动物生态地理科学探索" (too long, too descriptive)
 
 Rules:
-- One sentence only
-- Express motivation, not content
-- No marketing words
+- One sentence. Short. Direct.
+- Express motivation ("to provide...", "to preserve...", "to help...")
+- Do NOT list what's inside. Do NOT use keywords.
+- No marketing words.
 
 JSON only:
 {{"why_collect":"..."}}"""
@@ -299,17 +305,21 @@ Contains {count} resources. Examples: {sample_str}
 Write 3-5 collection highlights. Each highlight is 15-30 Chinese characters.
 Output as a JSON array of strings.
 
+Each highlight MUST contain a real resource title from the examples.
+Prefer titles from the sampled list. Never invent resource names.
+
 Good:
 ["《蓝色星球》海洋纪录片标杆之作","《地球脉动》系列：全球生态奇观","中文字幕 + 高清画质，适合全年龄"]
 
 Bad:
 ["收录了315部纪录片" (just restating data),"非常值得收藏" (empty praise)]
+["ChatGPT教学课程" (if not in the sample list)]
 
 Rules:
-- Reference actual resource names from the samples
-- Mix specific titles with thematic observations
-- Do NOT repeat the intro or description
+- Every highlight references a real resource title from the collection
+- Each is a short value statement, not a feature list
 - No marketing language
+- No invented resource names
 
 JSON only:
 {{"highlights":["...","..."]}}"""
