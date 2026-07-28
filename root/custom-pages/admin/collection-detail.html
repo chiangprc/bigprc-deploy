@@ -184,10 +184,15 @@ fetch('/admin/data/collection-details.json')
         html += '</details>';
     });
 
-    // Footer
-    html += '<div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">'+
-      '<a href="/collection/'+c.id+'.html" style="color:var(--primary);font-size:13px">🌐 查看前台页面</a>'+
-      '</div>';
+    // Footer with prev/next nav
+    var idx = data.indexOf(c);
+    var prev = idx > 0 ? data[idx-1] : null;
+    var next = idx < data.length-1 ? data[idx+1] : null;
+    html += '<div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">';
+    html += '<span>'+(prev?'<a href="?id='+prev.id+'" style="font-size:13px">← '+prev.title+'</a>':'')+'</span>';
+    html += '<a href="/collection/'+c.id+'.html" style="color:var(--primary);font-size:13px">🌐 前台页面</a>';
+    html += '<span>'+(next?'<a href="?id='+next.id+'" style="font-size:13px">'+next.title+' →</a>':'')+'</span>';
+    html += '</div>';
 
     document.getElementById('content').innerHTML=html;
   })

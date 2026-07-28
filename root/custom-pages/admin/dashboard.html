@@ -39,17 +39,17 @@ fetch('/admin/data/dashboard.json')
     var s=d.summary,h=d.health,rp=d.review_pending;
     var h_issues=h.high+h.medium;
     var html='<div class=cards>'+
-      '<div class=card><div class=n>'+s.total_collections+'</div><div class=l>专题</div></div>'+
+      '<a href="/admin/collections.html" class=card style="text-decoration:none"><div class=n>'+s.total_collections+'</div><div class=l>专题</div></a>'+
       '<div class=card><div class=n>'+s.core+'</div><div class=l>CORE</div></div>'+
-      '<div class=card><div class=n>'+rp.new_collection+'</div><div class=l>待审核</div></div>'+
+      '<a href="/admin/collection-review.html" class=card style="text-decoration:none"><div class=n>'+rp.new_collection+'</div><div class=l>待审核</div></a>'+
       '<div class=card><div class=n>'+rp.expand_rule+'</div><div class=l>待优化</div></div>'+
       '</div>';
 
     html+='<div class=section><h2>专题健康</h2><div class=status>'+
-      '<span style="background:#e8f5e9;color:#1a6b4f">🟢 stable: '+h.stable+'</span>'+
-      (h.high?'<span style="background:#fde8e8;color:#c5221f">🔴 high: '+h.high+'</span>':'')+
-      (h.medium?'<span style="background:#fef9f0;color:#b06000">🟡 medium: '+h.medium+'</span>':'')+
-      (h_issues===0?'<span style="background:#e8f5e9;color:#1a6b4f">✅ all clear</span>':'')+
+      '<a href="/admin/collections.html" style="background:#e8f5e9;color:#1a6b4f;text-decoration:none;padding:4px 14px;border-radius:12px;font-size:12px;font-weight:500">🟢 stable: '+h.stable+'</a>'+
+      (h.high?'<a href="/admin/collections.html" style="background:#fde8e8;color:#c5221f;text-decoration:none;padding:4px 14px;border-radius:12px;font-size:12px;font-weight:500">🔴 high: '+h.high+'</a>':'')+
+      (h.medium?'<a href="/admin/collections.html" style="background:#fef9f0;color:#b06000;text-decoration:none;padding:4px 14px;border-radius:12px;font-size:12px;font-weight:500">🟡 medium: '+h.medium+'</a>':'')+
+      (h_issues===0?'<span style="background:#e8f5e9;color:#1a6b4f;padding:4px 14px;border-radius:12px;font-size:12px;font-weight:500">✅ all clear</span>':'')+
       '</div></div>';
 
     if(d.recent_findings.length){

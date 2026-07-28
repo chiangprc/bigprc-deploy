@@ -9,64 +9,87 @@
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;margin:0}
 .wrap{max-width:1000px;margin:0 auto;padding:24px 20px}
 h1{font-size:20px;font-weight:700;margin:0 0 4px}
-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:16px}
-th{text-align:left;padding:10px 8px;border-bottom:2px solid var(--border);color:var(--sec);font-size:11px;font-weight:600;text-transform:uppercase}
+.toolbar{display:flex;gap:10px;margin:12px 0;flex-wrap:wrap;align-items:center}
+.toolbar input,.toolbar select{padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:var(--bg);color:var(--text);font-family:inherit}
+.toolbar input{flex:1;min-width:200px;max-width:300px}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+th{text-align:left;padding:10px 8px;border-bottom:2px solid var(--border);color:var(--sec);font-size:11px;font-weight:600;cursor:pointer;user-select:none}
+th:hover{color:var(--primary)}
+th.sorted{color:var(--primary)}
 td{padding:9px 8px;border-bottom:1px solid var(--border)}
 tr:hover td{background:var(--card-bg)}
 .badge{padding:2px 10px;border-radius:10px;font-size:11px;font-weight:500;white-space:nowrap}
-.rule-preview{font-size:11px;color:var(--sec);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
-.rule-full{display:none;font-size:11px;color:var(--sec);font-family:monospace;background:var(--card-bg);padding:8px;border-radius:4px;margin-top:4px;word-break:break-all}
-.summary{display:flex;gap:16px;margin:12px 0;flex-wrap:wrap;font-size:13px;color:var(--sec)}
 .back{margin-top:20px;font-size:13px}
 .back a{color:var(--primary)}
 .error{text-align:center;padding:40px;color:#c0392b}
+.none{text-align:center;padding:20px;color:var(--sec);font-size:13px}
 </style>
 </head>
 <body>
 <div class="wrap">
 <h1>专题管理</h1>
-<p style="color:var(--sec);font-size:13px;margin:0">只读浏览</p>
+<p style="color:var(--sec);font-size:13px;margin:0">只读 · 点击表头排序 · 搜索/筛选过滤</p>
+<div class="toolbar">
+    <input type="text" id="search" placeholder="搜索标题或 ID..." oninput="render()">
+    <select id="qFilter" onchange="render()">
+        <option value="">全部质量</option>
+        <option>CORE</option><option>SOLID</option><option>NICHE</option><option>THIN</option><option>EMPTY</option>
+    </select>
+    <select id="hFilter" onchange="render()">
+        <option value="">全部健康</option>
+        <option>stable</option><option>warning</option><option>unstable</option><option>empty</option><option>broken</option>
+    </select>
+</div>
 <div id="content"><div style="text-align:center;padding:40px;color:var(--sec)">加载中...</div></div>
 <div class="back"><a href="/admin/dashboard.html">← 返回工作台</a></div>
 </div>
 <script>
-function qualityColor(q){
-    var m={'CORE':'#1a6b4f','SOLID':'#4285f4','NICHE':'#f0a030','THIN':'#ea4335','EMPTY':'#999'};
-    return m[q]||'#999';
+function qColor(k){var m={'CORE':'#1a6b4f','SOLID':'#4285f4','NICHE':'#f0a030','THIN':'#ea4335','EMPTY':'#999'};return m[k]||'#999'}
+function hColor(k){var m={'stable':'#1a6b4f','warning':'#f0a030','unstable':'#ea4335','empty':'#999','broken':'#c5221f'};return m[k]||'#999'}
+var allData=[], sortCol='resource_count', sortDir=-1;
+function S(col){
+    if(sortCol===col) sortDir*=-1; else{sortCol=col;sortDir=-1}
+    document.querySelectorAll('th').forEach(function(t){t.className=(t.dataset.col===col?'sorted':'')});
+    render();
 }
-function healthColor(h){
-    var m={'stable':'#1a6b4f','warning':'#f0a030','unstable':'#ea4335','empty':'#999','broken':'#c5221f'};
-    return m[h]||'#999';
-}
-fetch('/admin/data/collections.json')
-  .then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
-  .then(function(data){
-    var html='<div class=summary><span>共 '+data.length+' 个专题</span></div>';
-    html+='<table><thead><tr><th>标题</th><th>ID</th><th>资源</th><th>质量</th><th>健康</th><th>规则</th><th></th></tr></thead><tbody>';
-    data.forEach(function(c){
-        var ruleText='';
-        try{var r=JSON.parse(c.rule_json||'{}');ruleText=JSON.stringify(r)}catch(e){ruleText=c.rule_json||'—'}
+function render(){
+    var q=document.getElementById('search').value.toLowerCase();
+    var qf=document.getElementById('qFilter').value;
+    var hf=document.getElementById('hFilter').value;
+    var list=allData.filter(function(c){
+        if(qf&&c.quality!==qf)return false;
+        if(hf&&c.health!==hf)return false;
+        if(q){return c.title.toLowerCase().indexOf(q)>=0||c.id.toLowerCase().indexOf(q)>=0}
+        return true;
+    });
+    list.sort(function(a,b){
+        var va=a[sortCol],vb=b[sortCol];
+        if(typeof va==='string') return sortDir*va.localeCompare(vb);
+        return sortDir*(va-vb);
+    });
+    var html='<table><thead><tr>'+
+        '<th data-col=title onclick=S("title")>标题</th>'+
+        '<th data-col=resource_count onclick=S("resource_count") class=sorted>资源 ▾</th>'+
+        '<th data-col=quality onclick=S("quality")>质量</th>'+
+        '<th data-col=health onclick=S("health")>健康</th>'+
+        '<th></th></tr></thead><tbody>';
+    if(!list.length){html+='<tr><td colspan=5 class=none>无匹配结果</td></tr>'}
+    list.forEach(function(c){
         html+='<tr>'+
-          '<td><b>'+c.title+'</b></td>'+
-          '<td style="font-family:monospace;font-size:12px">'+c.id+'</td>'+
+          '<td><b>'+c.title+'</b> <span style="font-size:11px;color:var(--sec)">'+c.id+'</span></td>'+
           '<td>'+c.resource_count+'</td>'+
-          '<td><span class=badge style="background:'+qualityColor(c.quality)+'20;color:'+qualityColor(c.quality)+'">'+c.quality+'</span></td>'+
-          '<td><span class=badge style="background:'+healthColor(c.health)+'20;color:'+healthColor(c.health)+'">'+c.health+'</span></td>'+
-          '<td><span class=rule-preview>'+ruleText.substring(0,60)+(ruleText.length>60?'...':'')+'</span><div class=rule-full>'+ruleText+'</div></td>'+
-          '<td><a href="/admin/collection-detail.html?id='+c.id+'">详情</a></td>'+
+          '<td><span class=badge style="background:'+qColor(c.quality)+'20;color:'+qColor(c.quality)+'">'+c.quality+'</span></td>'+
+          '<td><span class=badge style="background:'+hColor(c.health)+'20;color:'+hColor(c.health)+'">'+c.health+'</span></td>'+
+          '<td><a href="/admin/collection-detail.html?id='+c.id+'">详情 →</a></td>'+
           '</tr>';
     });
     html+='</tbody></table>';
     document.getElementById('content').innerHTML=html;
-    // Bind rule toggle via event delegation (no inline onclick)
-    document.getElementById('content').addEventListener('click', function(e){
-        if(e.target.classList.contains('rule-preview')){
-            var full = e.target.nextElementSibling;
-            full.style.display = full.style.display === 'block' ? 'none' : 'block';
-        }
-    });
-  })
-  .catch(function(e){document.getElementById('content').innerHTML='<div class=error>❌ 加载失败: '+e.message+'<br><small>请先运行: python3 collection_dashboard_export.py</small></div>'});
+}
+fetch('/admin/data/collections.json')
+  .then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
+  .then(function(d){allData=d;render()})
+  .catch(function(e){document.getElementById('content').innerHTML='<div class=error>❌ 加载失败: '+e.message+'<br><small>python3 collection_dashboard_export.py</small></div>'});
 </script>
 </body>
 </html>
