@@ -47,7 +47,7 @@ fetch('/admin/data/editorial.json')
 
     var statusIcon={'complete':'🟢','partial':'🟡','empty':'⚪'};
     var st=statusIcon[c.status]||'⚪';
-    var wfIcon={'draft':'🟡','reviewed':'🔵','approved':'🟢','rejected':'🔴'};
+    var wfIcon={'draft':'🟡','reviewed':'🔵','approved':'🟢','published':'✅','rejected':'🔴'};
     var wf=c.editorial_status||'draft';
 
     var html='<div class=header>'+
@@ -77,6 +77,8 @@ fetch('/admin/data/editorial.json')
     var hints=[];
     if(wf==='draft') hints.push('💡 python3 editorial_review.py --review '+c.id);
     if(wf==='reviewed') hints.push('💡 python3 editorial_review.py --approve '+c.id);
+    if(wf==='approved') hints.push('💡 python3 editorial_review.py --publish '+c.id);
+    if(wf==='published') hints.push('💡 python3 editorial_review.py --unpublish '+c.id);
     if(wf!=='rejected') hints.push('💡 python3 editorial_review.py --reject '+c.id);
 
     html+='<div class=links>'+

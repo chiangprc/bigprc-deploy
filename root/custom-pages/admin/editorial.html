@@ -83,10 +83,11 @@ fetch('/admin/data/editorial.json')
         return '<span title="未生成">⚪</span>';
     }
     function wfIcon(st){
-        if(st==='approved') return '<span title="已审核">🔵</span>';
-        if(st==='reviewed') return '<span title="待审核">🟡</span>';
+        if(st==='published') return '<span title="已发布">✅</span>';
+        if(st==='approved') return '<span title="已审核">🟢</span>';
+        if(st==='reviewed') return '<span title="待审核">🔵</span>';
         if(st==='rejected') return '<span title="退回">🔴</span>';
-        return '<span title="草稿">⚪</span>';
+        return '<span title="草稿">🟡</span>';
     }
   })
   .catch(function(e){document.getElementById('content').innerHTML='<div class=error>❌ 加载失败: '+e.message+'<br><small>python3 collection_dashboard_export.py</small></div>'});

@@ -23,13 +23,14 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(SCRIPT_DIR, ".env"))
 DB_FILE = os.getenv("DB_FILE") or "/root/scripts/database.db"
 
-VALID_STATUSES = {'draft', 'reviewed', 'approved', 'rejected'}
+VALID_STATUSES = {'draft', 'reviewed', 'approved', 'published', 'rejected'}
 
 # State transition rules: {current: {action: next_status}}
 TRANSITIONS = {
-    'draft':    {'review': 'reviewed',  'reject': 'rejected'},
-    'reviewed': {'approve': 'approved', 'reject': 'rejected'},
-    'approved': {'reject': 'rejected'},
+    'draft':    {'review': 'reviewed',   'reject': 'rejected'},
+    'reviewed': {'approve': 'approved',   'reject': 'rejected'},
+    'approved': {'publish': 'published',  'unpublish': 'approved', 'reject': 'rejected'},
+    'published':{'unpublish': 'approved'},
     'rejected': {'review': 'reviewed'},
 }
 
@@ -73,7 +74,7 @@ def cmd_status(cursor, target=None):
         print("No collections found.")
         return
     for cid, title, st, has_en in rows:
-        icon = {'draft':'🟡','reviewed':'🔵','approved':'🟢','rejected':'🔴'}.get(st,'?')
+        icon = {'draft':'🟡','reviewed':'🔵','approved':'🟢','published':'✅','rejected':'🔴'}.get(st,'?')
         print(f"  {icon} {st:10s}  {cid:25s}  {title}")
 
 
@@ -160,6 +161,8 @@ def main():
         print("Usage: python3 editorial_review.py --status [id]")
         print("       python3 editorial_review.py --review <id>")
         print("       python3 editorial_review.py --approve <id>")
+        print("       python3 editorial_review.py --publish <id>")
+        print("       python3 editorial_review.py --unpublish <id>")
         print("       python3 editorial_review.py --reject <id>")
         print("       python3 editorial_review.py --rollback <id>")
         print("       python3 editorial_review.py --history <id>")
@@ -176,7 +179,7 @@ def main():
         cmd_status(cursor, action_args[1] if len(action_args) > 1 else None)
     elif action_args[0] == '--history':
         cmd_history(cursor, action_args[1])
-    elif action_args[0] in ('--review', '--approve', '--reject', '--rollback'):
+    elif action_args[0] in ('--review', '--approve', '--publish', '--unpublish', '--reject', '--rollback'):
         action = action_args[0].lstrip('--')
         cmd_transition(cursor, action_args[1], action, dry_run)
     else:

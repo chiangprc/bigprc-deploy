@@ -100,7 +100,7 @@
     </section>
 
     <!-- ── Editorial curation ── -->
-    {% if editor_note or why_collect or audience %}
+    {% if editorial_status == 'published' and (editor_note or why_collect or audience) %}
     <section class="ed">
         {% if editor_note %}<div class="ed-card"><div class="hd">📝 编辑推荐</div><div class="bd"><p>{{ editor_note }}</p></div></div>{% endif %}
         {% if why_collect %}<div class="ed-card"><div class="hd">⭐ 为什么值得收藏</div><div class="bd"><p>{{ why_collect }}</p></div></div>{% endif %}

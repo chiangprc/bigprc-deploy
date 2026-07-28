@@ -224,7 +224,8 @@ def fetch_collections_from_db():
     colls = cursor.execute("""
         SELECT c.id, c.title, c.is_featured,
                cc.intro, cc.seo_title, cc.seo_desc, cc.faq_json,
-               cc.editor_note, cc.why_collect, cc.audience, cc.highlights
+               cc.editor_note, cc.why_collect, cc.audience, cc.highlights,
+               COALESCE(cc.editorial_status,'draft') AS editorial_status
         FROM collections c
         LEFT JOIN collection_content cc ON c.id = cc.collection_id
         ORDER BY c.sort_order
@@ -325,6 +326,7 @@ def build_collection_pages():
             editor_note=coll.get("editor_note", ""),
             why_collect=coll.get("why_collect", ""),
             audience=coll.get("audience", ""),
+            editorial_status=coll.get("editorial_status", "draft"),
             highlights=json.loads(coll.get("highlights", "[]")) if coll.get("highlights") else [],
             related_collections=related,
             cat_tags=cat_tags,
