@@ -89,7 +89,7 @@
 <div class="wrap">
     <!-- ── Hero ── -->
     <section class="hero">
-        <div class="badge">精选专题</div>
+        <div class="badge">BigPRC 策展</div>
         <h1>{{ coll_title }}</h1>
         {% if coll_intro %}<p class="desc">{{ coll_intro }}</p>{% endif %}
         {% if cat_tags %}<div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px;">{% for c in cat_tags %}<span style="padding:3px 12px;border-radius:12px;font-size:12px;background:var(--card-bg);border:1px solid var(--border);color:var(--secondary);">{{ c }}</span>{% endfor %}</div>{% endif %}
@@ -99,37 +99,32 @@
         </div>
     </section>
 
-    <!-- ── Phase 10.2 Spotlight placeholder ── -->
-    {% if spotlight_resources %}
-    <section class="spotlight" style="padding-bottom:24px">
-        <h3 style="font-size:16px;font-weight:700;margin-bottom:10px">🌟 精选</h3>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">
-        {% for r in spotlight_resources %}
-            <a href="/go/{{ r.res_id }}" class="spotlight-card" style="display:block;padding:12px 16px;border:1px solid var(--border);border-radius:6px;background:var(--card-bg)">{{ r.title }}</a>
-        {% endfor %}
-        </div>
-    </section>
-    {% endif %}
-
-    <!-- ── Editorial Compact ── -->
+    <!-- ── Curation Block: Editorial + Spotlight merged ── -->
     {% if editorial_status == 'published' and editor_note %}
-    <section style="padding:12px 18px;border:1px solid var(--border);border-radius:8px;background:var(--card-bg);margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-        <span style="font-weight:700;font-size:13px;color:var(--text);white-space:nowrap">📝 编辑推荐</span>
-        <span style="font-size:13px;color:var(--secondary);flex:1;min-width:200px;line-height:1.6">{{ editor_note[:120] }}{% if editor_note|length > 120 %}...{% endif %}</span>
-        {% if why_collect %}<span style="font-size:11px;color:var(--secondary);background:var(--bg);padding:2px 10px;border-radius:10px;border:1px solid var(--border);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ why_collect }}</span>{% endif %}
-        {% if audience %}<span style="font-size:11px;color:var(--secondary);background:var(--bg);padding:2px 10px;border-radius:10px;border:1px solid var(--border);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">👥 {{ audience }}</span>{% endif %}
-    </section>
-    {% endif %}
-
-    <!-- ── Related Collections ── -->
-    {% if related_collections %}
-    <section style="padding:0 0 20px;">
-        <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;">🔗 相关专题</h3>
-        <div style="display:flex;flex-wrap:wrap;gap:8px">
-        {% for rc in related_collections %}
-            <a href="/collection/{{ rc.id }}.html" style="padding:6px 14px;border:1px solid var(--border);border-radius:14px;font-size:12px;color:var(--text);text-decoration:none">{{ rc.title }} ({{ rc.count }})</a>
-        {% endfor %}
+    <section style="margin-bottom:24px;border:1px solid var(--border);border-radius:10px;overflow:hidden">
+        <div style="background:var(--card-bg);padding:16px 20px;border-bottom:1px solid var(--border)">
+            <h2 style="font-size:15px;font-weight:700;margin:0 0 8px;color:var(--text)">📝 编辑视角</h2>
+            <p style="font-size:14px;color:var(--secondary);line-height:1.7;margin:0">{{ editor_note[:150] }}{% if editor_note|length > 150 %}...{% endif %}</p>
+            {% if why_collect or audience %}
+            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+                {% if why_collect %}<span style="font-size:11px;color:var(--sec);background:var(--bg);padding:2px 10px;border-radius:10px;border:1px solid var(--border)">{{ why_collect }}</span>{% endif %}
+                {% if audience %}<span style="font-size:11px;color:var(--sec);background:var(--bg);padding:2px 10px;border-radius:10px;border:1px solid var(--border)">👥 {{ audience }}</span>{% endif %}
+            </div>
+            {% endif %}
         </div>
+        {% if spotlight_resources %}
+        <div style="padding:16px 20px">
+            <h3 style="font-size:14px;font-weight:700;margin:0 0 10px;color:var(--text)">🌟 编辑精选</h3>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
+            {% for r in spotlight_resources %}
+                <a href="/go/{{ r.res_id }}" style="display:block;padding:14px 16px;border:1px solid var(--border);border-radius:6px;text-decoration:none;transition:border-color 0.15s">
+                    <div style="font-size:13px;font-weight:600;color:var(--text)">{{ r.title }}</div>
+                    {% if r.category %}<div style="font-size:11px;color:var(--sec);margin-top:4px">{{ r.category }}</div>{% endif %}
+                </a>
+            {% endfor %}
+            </div>
+        </div>
+        {% endif %}
     </section>
     {% endif %}
 
@@ -155,6 +150,18 @@
         <tbody>{% for r in resources %}<tr data-q="{{ r.title }}" data-cat="{{ r.category or '' }}"><td><a href="/go/{{ r.res_id }}">{{ r.title }}</a></td><td>{{ r.size or '-' }}</td><td>{{ r.category or '-' }}</td></tr>{% endfor %}</tbody></table>
         <div class="pg" id="pg"></div>
     </div>
+
+    <!-- ── Related Collections (moved to navigation layer) ── -->
+    {% if related_collections %}
+    <section style="padding:20px 0;border-top:1px solid var(--border);margin-top:12px">
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:10px">🔗 探索更多专题</h3>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+        {% for rc in related_collections %}
+            <a href="/collection/{{ rc.id }}.html" style="padding:6px 14px;border:1px solid var(--border);border-radius:14px;font-size:12px;color:var(--text);text-decoration:none">{{ rc.title }} ({{ rc.count }})</a>
+        {% endfor %}
+        </div>
+    </section>
+    {% endif %}
 
     <!-- ── FAQ ── -->
     {% if schema_json %}<script type="application/ld+json">{{ schema_json }}</script>{% endif %}
