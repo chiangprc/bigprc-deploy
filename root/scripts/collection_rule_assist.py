@@ -56,21 +56,29 @@ def auto_rule(tags, primary_cats):
 
 
 # ============================================================
+def find_group(group_id):
+    """By group_id find the group in review-data.json, return (index, group_dict)."""
+    data = load_review_data()
+    groups = data.get("groups", [])
+    for i, g in enumerate(groups):
+        if g.get("group_id") == group_id:
+            return i, g
+    print(f"❌ Group '{group_id}' not found in review-data.json")
+    print("   Run: python3 collection_review_export.py")
+    sys.exit(1)
+
+
+# ============================================================
 # --preview
 # ============================================================
 
-def cmd_preview(index):
-    data = load_review_data()
-    groups = data.get("groups", [])
-    if index < 0 or index >= len(groups):
-        print(f"❌ Group index {index} out of range (0-{len(groups)-1})")
-        sys.exit(1)
-    g = groups[index]
+def cmd_preview(group_id):
+    idx, g = find_group(group_id)
     cats = g.get("primary_categories", {})
     rule = auto_rule(g["candidate_tags"], cats)
 
     print()
-    print(f"  Group #{index}")
+    print(f"  Group: {group_id}")
     print(f"  Tags:        {' '.join(g['candidate_tags'])}")
     print(f"  Match:       {g['match_count']} resources")
     if g.get("representative_tags"):
@@ -86,20 +94,15 @@ def cmd_preview(index):
     print(f"    tags_or:   {json.dumps(rule['tags_or'], ensure_ascii=False)}")
     print(f"    cats:      {json.dumps(rule['cats'], ensure_ascii=False)}")
     print()
-    print(f"  To propose:  python3 collection_rule_assist.py --propose {index}")
+    print(f"  To propose:  python3 collection_rule_assist.py --propose {group_id}")
 
 
 # ============================================================
 # --propose
 # ============================================================
 
-def cmd_propose(index, name=None, slug=None):
-    data = load_review_data()
-    groups = data.get("groups", [])
-    if index < 0 or index >= len(groups):
-        print(f"❌ Group index {index} out of range (0-{len(groups)-1})")
-        sys.exit(1)
-    g = groups[index]
+def cmd_propose(group_id, name=None, slug=None):
+    idx, g = find_group(group_id)
     tags = g["candidate_tags"]
     cats = g.get("primary_categories", {})
 
@@ -111,7 +114,7 @@ def cmd_propose(index, name=None, slug=None):
         "proposed_at": datetime.now().isoformat(),
         "status": "draft",
         "source": {
-            "discovery_group_index": index,
+            "group_id": group_id,
             "candidate_tags": tags,
             "generated_from": "collection_discovery",
         },
@@ -237,20 +240,20 @@ def main():
     args = sys.argv[1:]
     if not args:
         print("Usage:")
-        print("  python3 collection_rule_assist.py --preview <index>")
-        print("  python3 collection_rule_assist.py --propose <index> [--name X] [--slug Y]")
+        print("  python3 collection_rule_assist.py --preview <group_id>")
+        print("  python3 collection_rule_assist.py --propose <group_id> [--name X] [--slug Y]")
         print("  python3 collection_rule_assist.py --apply <slug>")
         sys.exit(1)
 
     if args[0] == "--preview":
-        cmd_preview(int(args[1]))
+        cmd_preview(args[1])
     elif args[0] == "--propose":
-        idx = int(args[1])
+        gid = args[1]
         name = slug = None
         for i, a in enumerate(args):
             if a == "--name" and i+1 < len(args): name = args[i+1]
             if a == "--slug" and i+1 < len(args): slug = args[i+1]
-        cmd_propose(idx, name, slug)
+        cmd_propose(gid, name, slug)
     elif args[0] == "--apply":
         cmd_apply(args[1])
     else:
