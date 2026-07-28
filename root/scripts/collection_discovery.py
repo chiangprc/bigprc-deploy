@@ -273,6 +273,7 @@ def enrich_groups(cursor, groups):
         total = cursor.execute("SELECT COUNT(*) FROM resources").fetchone()[0]
 
         result.append({
+            "group_id": "-".join(sorted(tag_tuple)).lower()[:80],
             "candidate_tags": sorted(tag_tuple),
             "match_count": count,
             "coverage_pct": round(100 * count / total, 2),

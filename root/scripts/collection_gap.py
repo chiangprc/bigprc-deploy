@@ -178,6 +178,7 @@ def analyze_group(cursor, group):
         reason = "无专题显著覆盖此标签组合，建议人工评估是否创建新专题"
 
     return {
+        "group_id": group.get("group_id", "-".join(group["candidate_tags"]).lower()[:80]),
         "candidate_tags": group["candidate_tags"],
         "representative_tags": group.get("representative_tags", []),
         "title_keywords": group.get("title_keywords", []),
