@@ -43,13 +43,30 @@ details{margin-bottom:8px}
 </div>
 <script>
 var id = new URLSearchParams(location.search).get('id');
-if(!id){document.getElementById('content').innerHTML='<div class=error>❌ 缺少 ?id= 参数</div>';}
+if(!id){
+    document.getElementById('content').innerHTML='<div style="text-align:center;padding:60px 20px">'+
+      '<div style="font-size:48px;margin-bottom:16px">📚</div>'+
+      '<div style="font-size:18px;font-weight:600;margin-bottom:8px;color:var(--text)">未选择专题</div>'+
+      '<div style="font-size:14px;color:var(--sec);margin-bottom:24px">请先从「专题列表」选择一个专题进入</div>'+
+      '<a href="/admin/collections.html" style="display:inline-block;padding:10px 24px;border:1px solid var(--primary);border-radius:6px;color:var(--primary);text-decoration:none;font-size:14px;font-weight:500">← 返回专题列表</a>'+
+      '</div>';
+}
 else{
 fetch('/admin/data/collection-details.json')
   .then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
   .then(function(data){
     var c = data.find(function(x){return x.id===id});
-    if(!c){document.getElementById('content').innerHTML='<div class=error>❌ 未找到专题: '+id+'</div>';return}
+    if(!c){
+        document.getElementById('content').innerHTML='<div style="text-align:center;padding:60px 20px">'+
+          '<div style="font-size:48px;margin-bottom:16px">📄</div>'+
+          '<div style="font-size:18px;font-weight:600;margin-bottom:8px;color:var(--text)">未找到专题</div>'+
+          '<div style="font-size:14px;color:var(--sec);margin-bottom:4px">专题 ID：<span style="font-family:monospace;background:var(--card-bg);padding:2px 8px;border-radius:4px">'+id+'</span></div>'+
+          '<div style="font-size:12px;color:var(--sec);margin-bottom:24px;line-height:1.8">'+
+          '可能原因：<br>· 专题已删除<br>· 数据尚未重新导出<br>· URL 输入错误</div>'+
+          '<a href="/admin/collections.html" style="display:inline-block;padding:10px 24px;border:1px solid var(--primary);border-radius:6px;color:var(--primary);text-decoration:none;font-size:14px;font-weight:500">← 返回专题列表</a>'+
+          '</div>';
+        return;
+    }
 
     var qColor = function(k){ var m={'CORE':'#1a6b4f','SOLID':'#4285f4','NICHE':'#f0a030','THIN':'#ea4335','EMPTY':'#999'}; return m[k]||'#999'; };
     var hColor = function(k){ var m={'stable':'#1a6b4f','warning':'#f0a030','unstable':'#ea4335','empty':'#999','broken':'#c5221f'}; return m[k]||'#999'; };
