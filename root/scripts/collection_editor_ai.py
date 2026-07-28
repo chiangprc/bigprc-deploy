@@ -292,17 +292,50 @@ def main():
 
     ok, skip, fail = 0, 0, 0
 
+    def has_old(val):
+        return bool(val and str(val).strip())
+
     for c in colls:
         cid, title, intro, seo_desc, cnt, samples, en, wc, au, hl = c
 
-        # Skip check
+        # Dry-run: always generate and print preview, never skip
+        if dry_run:
+            print(f"[{title}] 🧪 DRY RUN")
+            if has_old(en if mode == "editorial" else intro):
+                print(f"   📄 已有内容 (数据库未修改)")
+            if mode == "content":
+                data = generate_content(title, intro, seo_desc, samples, cnt)
+                if data:
+                    ok += 1
+                    print(f"   ── Preview ──")
+                    print(f"   intro:       {data['intro']}")
+                    print(f"   seo_title:   {data['seo_title']}")
+                    print(f"   seo_desc:    {data['seo_desc'][:80]}")
+                    print(f"   faq:         {len(data['faq_json'])} Q&A")
+                else:
+                    fail += 1
+            else:
+                data = generate_editorial(title, seo_desc, samples, cnt)
+                if data and len(data) >= 4:
+                    ok += 1
+                    print(f"   ── Preview ──")
+                    print(f"   editor_note:  {data['editor_note']}")
+                    print(f"   why_collect:  {data['why_collect']}")
+                    print(f"   audience:     {data['audience']}")
+                    print(f"   highlights:   {json.dumps(data['highlights'], ensure_ascii=False)}")
+                else:
+                    fail += 1
+            print()
+            continue
+
+        # Normal mode: skip if exists, unless --force
         if mode == "content":
             has_all = intro and seo_desc
         else:
             has_all = en and wc and au and hl
 
         if has_all and not force:
-            print(f"[{title}] ⏭️  already exists")
+            print(f"[{title}] ⏭️  already exists (use --force to overwrite)")
             skip += 1
             continue
 
@@ -311,41 +344,29 @@ def main():
         if mode == "content":
             data = generate_content(title, intro, seo_desc, samples, cnt)
             if data:
-                if not dry_run:
-                    cursor.execute("""
-                        UPDATE collection_content
-                        SET intro=?, seo_title=?, seo_desc=?, faq_json=?
-                        WHERE collection_id=?
-                    """, (data["intro"], data["seo_title"], data["seo_desc"],
-                          json.dumps(data["faq_json"], ensure_ascii=False), cid))
-                    conn.commit()
+                cursor.execute("""
+                    UPDATE collection_content
+                    SET intro=?, seo_title=?, seo_desc=?, faq_json=?
+                    WHERE collection_id=?
+                """, (data["intro"], data["seo_title"], data["seo_desc"],
+                      json.dumps(data["faq_json"], ensure_ascii=False), cid))
+                conn.commit()
                 ok += 1
-                print(f"✅ intro={data['intro'][:40]}")
-                if dry_run:
-                    print(f"   seo_title: {data['seo_title']}")
-                    print(f"   seo_desc:  {data['seo_desc'][:80]}")
-                    print(f"   faq:       {len(data['faq_json'])} Q&A")
+                print(f"✅ intro={data['intro'][:40]}...  {len(data['faq_json'])} FAQ")
             else:
                 fail += 1
         else:  # editorial
             data = generate_editorial(title, seo_desc, samples, cnt)
             if data and len(data) >= 4:
-                if not dry_run:
-                    cursor.execute("""
-                        UPDATE collection_content
-                        SET editor_note=?, why_collect=?, audience=?, highlights=?
-                        WHERE collection_id=?
-                    """, (data["editor_note"], data["why_collect"], data["audience"],
-                          json.dumps(data["highlights"], ensure_ascii=False), cid))
-                    conn.commit()
+                cursor.execute("""
+                    UPDATE collection_content
+                    SET editor_note=?, why_collect=?, audience=?, highlights=?
+                    WHERE collection_id=?
+                """, (data["editor_note"], data["why_collect"], data["audience"],
+                      json.dumps(data["highlights"], ensure_ascii=False), cid))
+                conn.commit()
                 ok += 1
-                if dry_run:
-                    print(f"   editor_note:  {data['editor_note'][:80]}")
-                    print(f"   why_collect:  {data['why_collect']}")
-                    print(f"   audience:     {data['audience']}")
-                    print(f"   highlights:   {json.dumps(data['highlights'], ensure_ascii=False)[:100]}")
-                else:
-                    print(f"✅ {len(data['highlights'])} highlights")
+                print(f"✅ {len(data['highlights'])} highlights")
             else:
                 fail += 1
         time.sleep(0.3)
