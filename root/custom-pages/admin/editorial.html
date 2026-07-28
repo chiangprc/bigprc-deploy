@@ -33,7 +33,7 @@ tr:hover td{background:var(--card-bg)}
 <body>
 <div class="wrap">
 <h1>编辑工作台</h1>
-<p style="color:var(--sec);font-size:13px">编辑部 · 只读总览</p>
+<p style="color:var(--sec);font-size:13px">编辑部 · 只读总览 · <span id="freshness">—</span></p>
 <div id="content"><div style="text-align:center;padding:40px;color:var(--sec)">加载中...</div></div>
 </div>
 <script>
@@ -41,6 +41,9 @@ function dot(c){return c?'🟢':'🔴'}
 fetch('/admin/data/editorial.json')
   .then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
   .then(function(d){
+    var ago=Math.floor((Date.now()-new Date(d.generated_at))/60000);
+    document.getElementById('freshness').textContent=ago<1?'刚刚':ago<60?ago+' 分钟前':Math.floor(ago/60)+' 小时前';
+
     var s=d.summary, cols=d.collections;
     var html='<div class=cards>'+
       '<div class=card><div class=n>'+s.total+'</div><div class=l>专题总数</div></div>'+
@@ -54,7 +57,7 @@ fetch('/admin/data/editorial.json')
         var pct=c.pct_complete||0;
         var barColor=pct===100?'#1a6b4f':pct>0?'#f0a030':'#ccc';
         html+='<tr>'+
-          '<td><b>'+c.title+'</b></td>'+
+          '<td><a href="/admin/collection-detail.html?id='+c.id+'" style="color:var(--text);font-weight:600">'+c.title+'</a></td>'+
           '<td>'+statusIcon(c.status)+'</td>'+
           '<td class=dot>'+dot(c.has_editor_note)+'</td>'+
           '<td class=dot>'+dot(c.has_why_collect)+'</td>'+
