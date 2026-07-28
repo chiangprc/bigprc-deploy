@@ -157,20 +157,23 @@ def cmd_history(cursor, cid):
 
 def main():
     args = sys.argv[1:]
-    if not args:
-        print("Usage: python3 editorial_review.py --status [id]")
-        print("       python3 editorial_review.py --review <id>")
-        print("       python3 editorial_review.py --approve <id>")
-        print("       python3 editorial_review.py --publish <id>")
-        print("       python3 editorial_review.py --unpublish <id>")
-        print("       python3 editorial_review.py --reject <id>")
-        print("       python3 editorial_review.py --rollback <id>")
-        print("       python3 editorial_review.py --history <id>")
-        print("       python3 editorial_review.py --dry-run --review <id>")
-        sys.exit(1)
+    if not args or '--help' in args:
+        print("Usage: python3 editorial_review.py <command> [id]")
+        print()
+        print("  --status [id]        Show status for all/single collection")
+        print("  --review <id>        draft → reviewed")
+        print("  --approve <id>       reviewed → approved")
+        print("  --publish <id>       approved → published")
+        print("  --unpublish <id>     published → approved")
+        print("  --reject <id>        any → rejected")
+        print("  --rollback <id>      Restore previous status")
+        print("  --history <id>       Show audit log")
+        print()
+        print("  --dry-run --review <id>   Preview only, no writes")
+        sys.exit(0)
 
     dry_run = '--dry-run' in args
-    action_args = [a for a in args if a != '--dry-run']
+    action_args = [a for a in args if a not in ('--dry-run', '--help')]
 
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
