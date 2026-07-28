@@ -374,7 +374,8 @@ def build_editorial_status(cursor):
     """编辑完整度: 四级状态 + 每字段存在性。纯读取 collection_content 已有字段."""
     rows = cursor.execute("""
         SELECT c.id, c.title,
-               cc.editor_note, cc.why_collect, cc.audience, cc.highlights
+               cc.editor_note, cc.why_collect, cc.audience, cc.highlights,
+               (SELECT COUNT(*) FROM resource_collections WHERE collection_id=c.id) AS rc
         FROM collections c
         LEFT JOIN collection_content cc ON c.id = cc.collection_id
         WHERE c.status = 'published'
@@ -383,7 +384,7 @@ def build_editorial_status(cursor):
 
     result = []
     complete = 0
-    for cid, ctitle, en, wc, au, hl in rows:
+    for cid, ctitle, en, wc, au, hl, rc in rows:
         has_en = bool(en and str(en).strip())
         has_wc = bool(wc and str(wc).strip())
         has_au = bool(au and str(au).strip())
@@ -400,7 +401,12 @@ def build_editorial_status(cursor):
 
         result.append({
             "id": cid, "title": ctitle,
+            "resource_count": rc or 0,
             "status": status,
+            "editor_note": (en or "").strip(),
+            "why_collect": (wc or "").strip(),
+            "audience": (au or "").strip(),
+            "highlights": json.loads(hl) if hl and hl.strip() else [],
             "has_editor_note": has_en, "has_why_collect": has_wc,
             "has_audience": has_au, "has_highlights": has_hl,
             "pct_complete": filled * 25,

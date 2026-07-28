@@ -57,7 +57,7 @@ fetch('/admin/data/editorial.json')
         var pct=c.pct_complete||0;
         var barColor=pct===100?'#1a6b4f':pct>0?'#f0a030':'#ccc';
         html+='<tr>'+
-          '<td><a href="/admin/collection-detail.html?id='+c.id+'" style="color:var(--text);font-weight:600">'+c.title+'</a></td>'+
+          '<td><a href="/admin/editorial-detail.html?id='+c.id+'" style="color:var(--text);font-weight:600">'+c.title+'</a></td>'+
           '<td>'+statusIcon(c.status)+'</td>'+
           '<td class=dot>'+dot(c.has_editor_note)+'</td>'+
           '<td class=dot>'+dot(c.has_why_collect)+'</td>'+

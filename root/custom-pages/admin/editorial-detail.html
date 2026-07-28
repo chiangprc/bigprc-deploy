@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>编辑审核 — BigPRC 编辑部</title>
+<style>
+:root{--bg:#fff;--text:#1a1a1a;--sec:#666;--border:#e5e5e5;--primary:#1a6b4f;--card-bg:#fafafa;--green:#e8f5e9;--red:#fde8e8}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;margin:0}
+.wrap{max-width:780px;margin:0 auto;padding:24px 20px}
+.back{font-size:13px;margin-bottom:20px}
+.back a{color:var(--primary)}
+.header{margin-bottom:24px}
+.header h1{font-size:22px;font-weight:700;margin:0}
+.header .meta{font-size:13px;color:var(--sec);margin-top:6px}
+.header .meta span{margin-right:16px}
+.ed-card{border:1px solid var(--border);border-radius:8px;margin-bottom:14px;overflow:hidden}
+.ed-card .hd{background:var(--card-bg);padding:12px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600}
+.ed-card .bd{padding:16px 18px;font-size:14px;color:var(--text);line-height:1.8}
+.ed-card .bd.empty{color:var(--sec);font-style:italic}
+.status-dot{font-size:14px}
+.meta-box{margin-top:24px;padding:12px 16px;background:var(--card-bg);border-radius:6px;font-size:12px;color:var(--sec)}
+.links{margin-top:20px;display:flex;gap:16px;flex-wrap:wrap}
+.links a{padding:8px 18px;border:1px solid var(--primary);border-radius:6px;color:var(--primary);text-decoration:none;font-size:13px;font-weight:500}
+.links a:hover{background:var(--primary);color:#fff}
+.error{text-align:center;padding:60px 20px;color:#c0392b}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="back"><a href="/admin/editorial.html">← 返回编辑工作台</a> &nbsp;·&nbsp; <a href="/admin/collections.html">专题管理</a></div>
+<div id="content"><div style="text-align:center;padding:60px;color:var(--sec)">加载中...</div></div>
+</div>
+<script>
+var id=new URLSearchParams(location.search).get('id');
+if(!id){
+  document.getElementById('content').innerHTML='<div class=error>📚 未选择专题<br><br><a href="/admin/editorial.html" style="color:var(--primary)">← 返回编辑工作台</a></div>';
+} else {
+fetch('/admin/data/editorial.json')
+  .then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
+  .then(function(d){
+    var c=(d.collections||[]).find(function(x){return x.id===id});
+    if(!c){
+      document.getElementById('content').innerHTML='<div class=error>📄 未找到专题: '+id+'<br><br><a href="/admin/editorial.html">← 返回编辑工作台</a></div>';
+      return;
+    }
+
+    var statusIcon={'complete':'🟢','partial':'🟡','empty':'⚪'};
+    var st=statusIcon[c.status]||'⚪';
+
+    var html='<div class=header>'+
+      '<h1>'+c.title+'</h1>'+
+      '<div class=meta>'+
+        '<span>'+c.id+'</span>'+
+        '<span>'+c.resource_count+' 资源</span>'+
+        '<span>'+st+' '+(c.status==='complete'?'已完成':c.status==='partial'?'部分完成':'未生成')+' ('+c.pct_complete+'%)</span>'+
+      '</div></div>';
+
+    // Editor note
+    html+=card('编辑推荐', c.editor_note, c.has_editor_note);
+    // Why collect
+    html+=card('收藏理由', c.why_collect, c.has_why_collect);
+    // Audience
+    html+=card('适合人群', c.audience, c.has_audience);
+    // Highlights
+    var hlText = (c.highlights||[]).map(function(h){return '· '+h}).join('<br>');
+    html+=card('精选亮点', hlText||'', c.has_highlights);
+
+    // Metadata
+    html+='<div class=meta-box>数据导出: '+d.generated_at+'</div>';
+
+    // Links
+    html+='<div class=links>'+
+      '<a href="/collection/'+c.id+'.html">🌐 前台页面</a>'+
+      '<a href="/admin/editorial.html">📊 编辑工作台</a>'+
+      '</div>';
+
+    document.getElementById('content').innerHTML=html;
+
+    function card(label, text, has){
+        var dot=has?'🟢':'🔴';
+        var bodyClass=has?'':'empty';
+        var body=has?(text||'(空)'):'尚未生成';
+        return '<div class=ed-card>'+
+          '<div class=hd><span>'+label+'</span><span class=status-dot>'+dot+'</span></div>'+
+          '<div class="bd '+bodyClass+'">'+body+'</div></div>';
+    }
+  })
+  .catch(function(e){document.getElementById('content').innerHTML='<div class=error>❌ 加载失败: '+e.message+'<br><small>python3 collection_dashboard_export.py</small></div>'});
+}
+</script>
+</body>
+</html>
