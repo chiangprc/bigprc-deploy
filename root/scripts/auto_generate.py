@@ -316,6 +316,15 @@ def build_collection_pages():
         related = item.get("related", [])[:4]
         cat_tags = list(set(r.get("category","") for r in coll_res if r.get("category")))[:4]
 
+        # Phase 10.2: Spotlight resources
+        spotlight_rows = cursor.execute("""
+            SELECT r.res_id, r.title, r.category FROM resources r
+            JOIN resource_collections rc ON r.res_id = rc.resource_id
+            WHERE rc.collection_id=? AND rc.spotlight=1
+            ORDER BY rc.score DESC LIMIT 5
+        """, (slug,)).fetchall()
+        spotlight = [{"res_id": r[0], "title": r[1], "category": r[2]} for r in spotlight_rows]
+
         html = coll_template.render(
             resources=coll_res,
             coll_title=coll["title"],
@@ -326,7 +335,7 @@ def build_collection_pages():
             editor_note=coll.get("editor_note", ""),
             why_collect=coll.get("why_collect", ""),
             audience=coll.get("audience", ""),
-            editorial_status=coll.get("editorial_status", "draft"), spotlight_resources=[],
+            editorial_status=coll.get("editorial_status", "draft"), spotlight_resources=spotlight,
             highlights=json.loads(coll.get("highlights", "[]")) if coll.get("highlights") else [],
             related_collections=related,
             cat_tags=cat_tags,
