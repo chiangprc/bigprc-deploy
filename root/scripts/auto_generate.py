@@ -385,7 +385,7 @@ def build_collection_pages():
     with open(idx_path, 'w', encoding='utf-8') as f:
         f.write(idx_html)
     coll_urls.append("/collection/index.html")
-    print(f"  📚 专题索引页: {len(idx_data)} 个专题 → {idx_path}")
+    print(f"  📚 专题索引页: {total_count} 个专题 → {idx_path}")
 
     # 生成 collections.json 供首页 JS 渲染
     json_path = os.path.join(web_root, "collections.json")
