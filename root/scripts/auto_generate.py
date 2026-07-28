@@ -326,7 +326,7 @@ def build_collection_pages():
             editor_note=coll.get("editor_note", ""),
             why_collect=coll.get("why_collect", ""),
             audience=coll.get("audience", ""),
-            editorial_status=coll.get("editorial_status", "draft"),
+            editorial_status=coll.get("editorial_status", "draft"), spotlight_resources=[],
             highlights=json.loads(coll.get("highlights", "[]")) if coll.get("highlights") else [],
             related_collections=related,
             cat_tags=cat_tags,

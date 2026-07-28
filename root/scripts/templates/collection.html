@@ -99,33 +99,50 @@
         </div>
     </section>
 
-    <!-- ── Editorial curation ── -->
-    {% if editorial_status == 'published' and (editor_note or why_collect or audience) %}
-    <section class="ed">
-        {% if editor_note %}<div class="ed-card"><div class="hd">📝 编辑推荐</div><div class="bd"><p>{{ editor_note }}</p></div></div>{% endif %}
-        {% if why_collect %}<div class="ed-card"><div class="hd">⭐ 为什么值得收藏</div><div class="bd"><p>{{ why_collect }}</p></div></div>{% endif %}
-        {% if audience %}<div class="ed-card"><div class="hd">👥 适合人群</div><div class="bd"><p>{{ audience }}</p></div></div>{% endif %}
-    </section>
-    {% endif %}
-
-    <!-- ── Highlights ── -->
-    {% if highlights %}
-    <section class="hl-grid">
-        {% for item in highlights %}<div class="hl-card"><div class="t">{{ item }}</div></div>{% endfor %}
-    </section>
-    {% endif %}
-
-    {% if related_collections %}
-    <section style="padding:0 0 32px;">
-        <h3 style="font-size:16px;font-weight:700;margin-bottom:12px;">🔗 相关专题</h3>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;">
-        {% for rc in related_collections %}
-            <a href="/collection/{{ rc.id }}.html" style="display:block;padding:14px 16px;border:1px solid var(--border);border-radius:8px;background:var(--card-bg);text-decoration:none;transition:border-color 0.15s;">
-                <div style="font-size:13px;font-weight:600;color:var(--text);">{{ rc.title }}</div>
-                <div style="font-size:11px;color:var(--secondary);margin-top:4px;">{{ rc.count }} 部资源</div>
-            </a>
+    <!-- ── Phase 10.2 Spotlight placeholder ── -->
+    {% if spotlight_resources %}
+    <section class="spotlight" style="padding-bottom:24px">
+        <h3 style="font-size:16px;font-weight:700;margin-bottom:10px">🌟 精选</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">
+        {% for r in spotlight_resources %}
+            <a href="/go/{{ r.res_id }}" class="spotlight-card" style="display:block;padding:12px 16px;border:1px solid var(--border);border-radius:6px;background:var(--card-bg)">{{ r.title }}</a>
         {% endfor %}
         </div>
+    </section>
+    {% endif %}
+
+    <!-- ── Editorial Compact ── -->
+    {% if editorial_status == 'published' and editor_note %}
+    <section style="padding:12px 18px;border:1px solid var(--border);border-radius:8px;background:var(--card-bg);margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <span style="font-weight:700;font-size:13px;color:var(--text);white-space:nowrap">📝 编辑推荐</span>
+        <span style="font-size:13px;color:var(--secondary);flex:1;min-width:200px;line-height:1.6">{{ editor_note[:120] }}{% if editor_note|length > 120 %}...{% endif %}</span>
+        {% if why_collect %}<span style="font-size:11px;color:var(--secondary);background:var(--bg);padding:2px 10px;border-radius:10px;border:1px solid var(--border);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ why_collect }}</span>{% endif %}
+        {% if audience %}<span style="font-size:11px;color:var(--secondary);background:var(--bg);padding:2px 10px;border-radius:10px;border:1px solid var(--border);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">👥 {{ audience }}</span>{% endif %}
+    </section>
+    {% endif %}
+
+    <!-- ── Related Collections ── -->
+    {% if related_collections %}
+    <section style="padding:0 0 20px;">
+        <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;">🔗 相关专题</h3>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+        {% for rc in related_collections %}
+            <a href="/collection/{{ rc.id }}.html" style="padding:6px 14px;border:1px solid var(--border);border-radius:14px;font-size:12px;color:var(--text);text-decoration:none">{{ rc.title }} ({{ rc.count }})</a>
+        {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- ── Quick Filter ── -->
+    {% set cats = resources | map(attribute='category') | reject('none') | unique | list %}
+    {% if cats|length > 1 %}
+    <section style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-bottom:16px">
+        <span style="font-size:12px;color:var(--sec);font-weight:500">筛选:</span>
+        <span class="qf-pill active" onclick="FLT('')" style="padding:4px 12px;border-radius:12px;font-size:12px;cursor:pointer;border:1px solid var(--border);background:var(--primary);color:#fff">全部</span>
+        {% for cat in cats[:8] %}
+        <span class="qf-pill" onclick="FLT('{{ cat }}')" style="padding:4px 12px;border-radius:12px;font-size:12px;cursor:pointer;border:1px solid var(--border);color:var(--sec)">{{ cat }}</span>
+        {% endfor %}
+        <span style="font-size:11px;color:var(--sec);margin-left:4px">{{ resources|length }} 个资源</span>
     </section>
     {% endif %}
 
@@ -135,7 +152,7 @@
     <div class="rt">
         <h3>📋 资源列表 <span class="n">（共 {{ resources|length }} 条）</span></h3>
         <table><thead><tr><th onclick="S(0)">名称</th><th onclick="S(1)">大小</th><th>分类</th></tr></thead>
-        <tbody>{% for r in resources %}<tr data-q="{{ r.title }}"><td><a href="/go/{{ r.res_id }}">{{ r.title }}</a></td><td>{{ r.size or '-' }}</td><td>{{ r.category or '-' }}</td></tr>{% endfor %}</tbody></table>
+        <tbody>{% for r in resources %}<tr data-q="{{ r.title }}" data-cat="{{ r.category or '' }}"><td><a href="/go/{{ r.res_id }}">{{ r.title }}</a></td><td>{{ r.size or '-' }}</td><td>{{ r.category or '-' }}</td></tr>{% endfor %}</tbody></table>
         <div class="pg" id="pg"></div>
     </div>
 
@@ -158,6 +175,7 @@
 <script>
 var R,PS=50,CP=1;
 (function(){R=Array.from(document.querySelectorAll('#resourceTable tbody tr'));P()})();
+function FLT(cat){var ps=document.querySelectorAll('.qf-pill');ps.forEach(function(p){var isActive=(p.textContent===cat||(cat===''&&p.textContent==='全部'));p.style.background=isActive?'var(--primary)':'';p.style.color=isActive?'#fff':'var(--sec)'});R.forEach(function(r){r.style.display=cat?(r.dataset.cat===cat?'':'none'):''});CP=1;P()}
 function F(){var q=(document.getElementById('s').value||'').toLowerCase();R.forEach(function(r){r.style.display=q?(r.dataset.q.toLowerCase().indexOf(q)>=0?'':'none'):''});CP=1;P()}
 function S(c){var tb=document.querySelector('#resourceTable tbody'),rs=Array.from(tb.querySelectorAll('tr'));rs.sort(function(a,b){var va=(a.cells[c].textContent||'').trim(),vb=(b.cells[c].textContent||'').trim();if(c===1)return(parseFloat(va)||0)-(parseFloat(vb)||0);return va.localeCompare(vb,'zh')});rs.forEach(function(r){tb.appendChild(r)});R=rs;CP=1;P()}
 function P(){var t=R.length,p=Math.ceil(t/PS),s=(CP-1)*PS;R.forEach(function(r,i){r.style.display=(i>=s&&i<s+PS)?'':'none'});var h='';for(var i=1;i<=p;i++)h+='<button onclick=G('+i+')'+(i===CP?' disabled':'')+'>'+i+'</button>';document.getElementById('pg').innerHTML=h+'<span class=info>'+CP+'/'+p+'</span>'}
