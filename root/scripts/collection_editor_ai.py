@@ -331,10 +331,10 @@ JSON only:
                     parser_used = parser_label
                 else:
                     print(f"   ⚠️  highlights parse failed, raw: {str(val)[:120]}")
-                    results[name] = []  # empty list, still succeeds
+                    results[name] = []
                     parser_used = "FAILED"
             else:
-                results[name] = val
+                results[name] = data[name]
         else:
             if name != "highlights":
                 print(f"   ⚠️  {name} failed")
