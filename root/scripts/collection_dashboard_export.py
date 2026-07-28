@@ -180,6 +180,9 @@ def build_collection_details(cursor):
                 rule = json.loads(rule_raw)
                 m = match_collection(cursor, rule, collection_id=cid)
                 engine_match = m.count
+                engine_ids = set(m.resource_ids)
+                db_ids_set = set(r[0] for r in cursor.execute(
+                    "SELECT resource_id FROM resource_collections WHERE collection_id=?", (cid,)).fetchall())
                 engine_delta_pct = round(100 * abs(m.count - cnt) / max(cnt, 1), 1)
                 if engine_delta_pct >= 20: health = "unstable"
                 elif engine_delta_pct >= 5: health = "warning"
@@ -246,8 +249,10 @@ def build_collection_details(cursor):
             "exclusive_count": exclusive, "shared_count": shared,
             "exclusive_pct": exclusive_pct, "coverage_pct": coverage_pct,
             "rule": json.loads(rule_raw) if isinstance(rule_raw, str) else (rule_raw or {}),
+            # Gap evidence: frequent tags on missing/extra resources
             "engine_match": engine_match, "engine_delta_pct": engine_delta_pct,
             "engine_summary": engine_summary,
+            "gap_evidence": _compute_gap_evidence(cursor, cid, rule, db_ids_set, engine_ids),
             "top_tags": top_tags,
             "shared_collections": shared_colls,
             "samples": samples,
@@ -258,6 +263,72 @@ def build_collection_details(cursor):
 
     return sorted(result, key=lambda x: -x["resource_count"])
 
+
+
+def _compute_gap_evidence(cursor, cid, rule, db_ids, engine_ids):
+    """Evidence-only analysis: frequent tags on missing/extra resources.
+    Does NOT suggest rule changes. Presents data for editor to evaluate."""
+    missing = db_ids - engine_ids
+    extra = engine_ids - db_ids
+
+    evidence = {"type": "ok", "missing_count": 0, "extra_count": 0,
+                "missing_tags": [], "extra_tags": []}
+    if len(missing) == 0 and len(extra) == 0:
+        return evidence
+
+    rule_tags = set(rule.get("tags", []) + rule.get("tags_or", []) + rule.get("exclude_tags", []))
+
+    if missing:
+        # Frequent tags on missing resources
+        placeholders = ",".join("?" * len(missing))
+        tag_rows = cursor.execute(f"""
+            SELECT t.name, COUNT(*) as n FROM resource_tags rt
+            JOIN tags t ON rt.tag_id = t.id
+            WHERE rt.resource_id IN ({placeholders})
+            AND t.name NOT IN ({','.join('?'*len(rule_tags))})
+            GROUP BY t.name ORDER BY n DESC LIMIT 8
+        """, list(missing) + list(rule_tags)).fetchall()
+        missing_tags = []
+        for tag_name, tag_count in tag_rows:
+            samples = cursor.execute(f"""
+                SELECT r.title FROM resources r
+                WHERE r.res_id IN (SELECT rt.resource_id FROM resource_tags rt
+                    JOIN tags t ON rt.tag_id=t.id WHERE t.name=?)
+                AND r.res_id IN ({placeholders})
+                LIMIT 3
+            """, [tag_name] + list(missing)).fetchall()
+            missing_tags.append({"name": tag_name, "count": tag_count,
+                                 "samples": [s[0] for s in samples]})
+        evidence["type"] = "under"
+        evidence["missing_count"] = len(missing)
+        evidence["missing_tags"] = missing_tags
+
+    if extra:
+        placeholders = ",".join("?" * len(extra))
+        tag_rows = cursor.execute(f"""
+            SELECT t.name, COUNT(*) as n FROM resource_tags rt
+            JOIN tags t ON rt.tag_id = t.id
+            WHERE rt.resource_id IN ({placeholders})
+            AND t.name NOT IN ({','.join('?'*len(rule_tags))})
+            GROUP BY t.name ORDER BY n DESC LIMIT 8
+        """, list(extra) + list(rule_tags)).fetchall()
+        extra_tags = []
+        for tag_name, tag_count in tag_rows:
+            samples = cursor.execute(f"""
+                SELECT r.title FROM resources r
+                WHERE r.res_id IN (SELECT rt.resource_id FROM resource_tags rt
+                    JOIN tags t ON rt.tag_id=t.id WHERE t.name=?)
+                AND r.res_id IN ({placeholders})
+                LIMIT 3
+            """, [tag_name] + list(extra)).fetchall()
+            extra_tags.append({"name": tag_name, "count": tag_count,
+                               "samples": [s[0] for s in samples]})
+        if evidence["type"] == "ok":
+            evidence["type"] = "over"
+        evidence["extra_count"] = len(extra)
+        evidence["extra_tags"] = extra_tags
+
+    return evidence
 
 def _engine_summary(cursor, rule, matched_ids):
     """Per-condition hit count breakdown for Rule Engine debugging."""
