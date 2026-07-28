@@ -379,7 +379,8 @@ def build_collection_pages():
         themes.append({"name": "🔍 其他探索", "collections": other_cards})
 
     idx_template = Environment(loader=FileSystemLoader(_template_dir)).get_template('collection_index.html')
-    idx_html = idx_template.render(themes=themes, admin_email=ADMIN_EMAIL, clarity_id=CLARITY_ID)
+    total_count = sum(len(t["collections"]) for t in themes)
+    idx_html = idx_template.render(themes=themes, total_count=total_count, admin_email=ADMIN_EMAIL, clarity_id=CLARITY_ID)
     idx_path = os.path.join(coll_dir, "index.html")
     with open(idx_path, 'w', encoding='utf-8') as f:
         f.write(idx_html)

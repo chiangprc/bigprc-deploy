@@ -4,8 +4,6 @@
 {% block description %}BigPRC 精选数字资源专题合集，包含 BBC 自然纪录片、AI 效率工具、道家经典文献等专题。{% endblock %}
 {% block og_title %}BigPRC 精选专题 — 发现值得收藏的数字资源{% endblock %}
 
-{% set total = themes|sum(attribute='collections')|list|length %}
-
 {% block extra_css %}
     h1 { font-size: 24px; font-weight: 700; text-align: center; margin-bottom: 8px; }
     .subtitle { font-size: 14px; color: var(--secondary); text-align: center; margin-bottom: 32px; }
@@ -26,7 +24,7 @@
 
 {% block content %}
 <h1>精选专题</h1>
-<p class="subtitle">{{ total }} 个精选数字资源合集，发现值得收藏的好内容</p>
+<p class="subtitle">{{ total_count }} 个精选数字资源合集，发现值得收藏的好内容</p>
 
 {% for theme in themes %}
 <section class="theme-section">
