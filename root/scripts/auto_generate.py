@@ -365,14 +365,16 @@ def build_collection_pages():
     for theme_name, theme_ids in COLLECTION_THEMES:
         cards = [{"id": c["id"], "title": c["title"], "intro": c.get("intro",""),
                   "count": len(r["resources"]), "featured": c.get("is_featured",0)}
-                 for c, r in [(item["coll"], item) for item in collections if c["id"] in theme_ids]]
+                 for c, r in [(item["coll"], item) for item in collections]
+                 if c["id"] in theme_ids]
         if cards:
             themes.append({"name": theme_name, "collections": cards})
             themed_ids.update(theme_ids)
     # 其他探索: collections not in any theme
     other_cards = [{"id": c["id"], "title": c["title"], "intro": c.get("intro",""),
                     "count": len(r["resources"]), "featured": c.get("is_featured",0)}
-                   for c, r in [(item["coll"], item) for item in collections if c["id"] not in themed_ids]]
+                   for c, r in [(item["coll"], item) for item in collections]
+                   if c["id"] not in themed_ids]
     if other_cards:
         themes.append({"name": "🔍 其他探索", "collections": other_cards})
 
