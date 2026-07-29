@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>专题管理 — BigPRC 编辑工作台</title>
 <link rel="stylesheet" href="/css/design-tokens.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="/js/icon-system.js"></script>
 <style>
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;margin:0}
 .wrap{max-width:1000px;margin:0 auto;padding:24px 20px}
@@ -46,10 +48,10 @@ tr:hover td{background:var(--card-bg)}
 <script>
 function editorialDot(id){
     var e=editorialMap[id];
-    if(!e) return '<span title="no data">⚪</span>';
-    if(e.status=="complete") return '<span title="done">🟢</span>';
-    if(e.status=="partial") return '<span title="partial">🟡</span>';
-    return '<span title="empty">⚪</span>';
+    if(!e) return '<span title="no data">'+BPRC.icon('empty',{color:'neutral'})+'</span>';
+    if(e.status=="complete") return '<span title="done">'+BPRC.icon('success',{color:'success'})+'</span>';
+    if(e.status=="partial") return '<span title="partial">'+BPRC.icon('warning',{color:'warning'})+'</span>';
+    return '<span title="empty">'+BPRC.icon('empty',{color:'neutral'})+'</span>';
 }
 function qColor(k){var m={'CORE':'success','SOLID':'info','NICHE':'warning','THIN':'danger','EMPTY':'neutral'};return m[k]||'neutral'}
 function hColor(k){var m={'stable':'success','warning':'warning','unstable':'danger','empty':'neutral','broken':'danger'};return m[k]||'neutral'}
@@ -95,8 +97,8 @@ function render(){
 }
 fetch('/admin/data/collections.json')
   .then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
-  .then(function(d){allData=d;return fetch('/admin/data/editorial.json').then(function(r){return r.json()}).then(function(e){if(e&&e.collections)e.collections.forEach(function(x){editorialMap[x.id]=x})})}).then(function(){render()})
-  .catch(function(e){document.getElementById('content').innerHTML='<div class=error>❌ 加载失败: '+e.message+'<br><small>python3 collection_dashboard_export.py</small></div>'});
+  .then(function(d){allData=d;return fetch('/admin/data/editorial.json').then(function(r){return r.json()}).then(function(e){if(e&&e.collections)e.collections.forEach(function(x){editorialMap[x.id]=x})})}).then(function(){render();lucide.createIcons()})
+  .catch(function(e){document.getElementById('content').innerHTML='<div class=error><i data-lucide="x-circle" class="icon-sm icon-danger"></i> 加载失败: '+e.message+'<br><small>python3 collection_dashboard_export.py</small></div>';lucide.createIcons()});
 </script>
 </body>
 </html>

@@ -123,18 +123,18 @@
     {% if editorial_status == 'published' and editor_note %}
     <section class="ed-panel">
         <div class="ed-panel-hd">
-            <h2 class="ed-panel-title">📝 编辑视角</h2>
+            <h2 class="ed-panel-title"><i data-lucide="pencil-line" class="icon-sm icon-muted"></i> 编辑视角</h2>
             <p class="ed-note">{{ editor_note[:150] }}{% if editor_note|length > 150 %}...{% endif %}</p>
             {% if why_collect or audience %}
             <div class="ed-meta">
                 {% if why_collect %}<span class="badge badge--neutral ed-meta-tag">{{ why_collect }}</span>{% endif %}
-                {% if audience %}<span class="badge badge--neutral ed-meta-tag">👥 {{ audience }}</span>{% endif %}
+                {% if audience %}<span class="badge badge--neutral ed-meta-tag"><i data-lucide="users" class="icon-sm icon-muted"></i> {{ audience }}</span>{% endif %}
             </div>
             {% endif %}
         </div>
         {% if spotlight_resources %}
         <div class="ed-panel-bd">
-            <h3 class="ed-spotlight-title">🌟 编辑精选</h3>
+            <h3 class="ed-spotlight-title"><i data-lucide="sparkles" class="icon-sm icon-muted"></i> 编辑精选</h3>
             <div class="spotlight-grid">
             {% for r in spotlight_resources %}
                 <a href="/go/{{ r.res_id }}" class="hl-card">
@@ -165,7 +165,7 @@
     <div class="sbar"><input type="text" id="s" placeholder="在「{{ coll_title }}」中筛选..." oninput="F()" autocomplete="off"></div>
 
     <div class="rt">
-        <h3>📋 资源列表 <span class="n">（共 {{ resources|length }} 条）</span></h3>
+        <h3><i data-lucide="list" class="icon-sm icon-muted"></i> 资源列表 <span class="n">（共 {{ resources|length }} 条）</span></h3>
         <table><thead><tr><th onclick="S(0)">名称</th><th onclick="S(1)">大小</th><th>分类</th></tr></thead>
         <tbody>{% for r in resources %}<tr data-q="{{ r.title }}" data-cat="{{ r.category or '' }}"><td><a href="/go/{{ r.res_id }}">{{ r.title }}</a></td><td>{{ r.size or '-' }}</td><td>{{ r.category or '-' }}</td></tr>{% endfor %}</tbody></table>
         <div class="pg" id="pg"></div>
@@ -174,7 +174,7 @@
     <!-- ── Related Collections (moved to navigation layer) ── -->
     {% if related_collections %}
     <section class="related-section">
-        <h3 class="related-title">🔗 探索更多专题</h3>
+        <h3 class="related-title"><i data-lucide="link" class="icon-sm icon-muted"></i> 探索更多专题</h3>
         <div class="related-links">
         {% for rc in related_collections %}
             <a href="/collection/{{ rc.id }}.html" class="pill-link">{{ rc.title }} ({{ rc.count }})</a>
@@ -186,7 +186,7 @@
     <!-- ── FAQ ── -->
     {% if schema_json %}<script type="application/ld+json">{{ schema_json }}</script>{% endif %}
     {% if faq_html %}
-    <section class="faq"><h2>💬 常见问题</h2>
+    <section class="faq"><h2><i data-lucide="message-circle" class="icon-sm icon-muted"></i> 常见问题</h2>
         {% for item in faq_html %}<details><summary>{{ item.q }}</summary><p class="a">{{ item.a }}</p></details>{% endfor %}
     </section>
     {% endif %}

@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>编辑工作台 — BigPRC 编辑部</title>
 <link rel="stylesheet" href="/css/design-tokens.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="/js/icon-system.js"></script>
 <style>
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;margin:0}
 .wrap{max-width:900px;margin:0 auto;padding:24px 20px}
@@ -37,7 +39,7 @@ tr:hover td{background:var(--card-bg)}
 <div id="content"><div style="text-align:center;padding:40px;color:var(--sec)">加载中...</div></div>
 </div>
 <script>
-function dot(c){return c?'🟢':'🔴'}
+function dot(c){return BPRC.icon(c?'success':'danger',{color:c?'success':'danger'})}
 fetch('/admin/data/editorial.json')
   .then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
   .then(function(d){
@@ -70,27 +72,28 @@ fetch('/admin/data/editorial.json')
     html+='</tbody></table></div>';
 
     html+='<div class=links>'+
-      '<a href="/admin/collections.html" class="btn btn--secondary">📚 专题管理</a>'+
-      '<a href="/admin/collection-review.html" class="btn btn--secondary">📋 Discovery Review</a>'+
-      '<a href="/admin/dashboard.html" class="btn btn--secondary">📊 工作台</a>'+
+      '<a href="/admin/collections.html" class="btn btn--secondary">'+BPRC.icon('collection',{color:'muted'})+' 专题管理</a>'+
+      '<a href="/admin/collection-review.html" class="btn btn--secondary">'+BPRC.icon('resource',{color:'muted'})+' Discovery Review</a>'+
+      '<a href="/admin/dashboard.html" class="btn btn--secondary">'+BPRC.icon('dashboard',{color:'muted'})+' 工作台</a>'+
       '</div>';
 
     document.getElementById('content').innerHTML=html;
+    lucide.createIcons();
 
     function statusIcon(st){
-        if(st==='complete') return '<span title="已完成">🟢</span>';
-        if(st==='partial') return '<span title="部分完成">🟡</span>';
-        return '<span title="未生成">⚪</span>';
+        if(st==='complete') return '<span title="已完成">'+BPRC.icon('success',{color:'success'})+'</span>';
+        if(st==='partial') return '<span title="部分完成">'+BPRC.icon('warning',{color:'warning'})+'</span>';
+        return '<span title="未生成">'+BPRC.icon('empty',{color:'neutral'})+'</span>';
     }
     function wfIcon(st){
-        if(st==='published') return '<span title="已发布">✅</span>';
-        if(st==='approved') return '<span title="已审核">🟢</span>';
-        if(st==='reviewed') return '<span title="待审核">🔵</span>';
-        if(st==='rejected') return '<span title="退回">🔴</span>';
-        return '<span title="草稿">🟡</span>';
+        if(st==='published') return '<span title="已发布">'+BPRC.icon('complete',{color:'success'})+'</span>';
+        if(st==='approved') return '<span title="已审核">'+BPRC.icon('success',{color:'success'})+'</span>';
+        if(st==='reviewed') return '<span title="待审核">'+BPRC.icon('info',{color:'info'})+'</span>';
+        if(st==='rejected') return '<span title="退回">'+BPRC.icon('danger',{color:'danger'})+'</span>';
+        return '<span title="草稿">'+BPRC.icon('warning',{color:'warning'})+'</span>';
     }
   })
-  .catch(function(e){document.getElementById('content').innerHTML='<div class=error>❌ 加载失败: '+e.message+'<br><small>python3 collection_dashboard_export.py</small></div>'});
+  .catch(function(e){document.getElementById('content').innerHTML='<div class=error><i data-lucide="x-circle" class="icon-sm icon-danger"></i> 加载失败: '+e.message+'<br><small>python3 collection_dashboard_export.py</small></div>';lucide.createIcons()});
 </script>
 </body>
 </html>

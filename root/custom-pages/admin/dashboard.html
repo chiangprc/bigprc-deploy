@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BigPRC 编辑工作台</title>
 <link rel="stylesheet" href="/css/design-tokens.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="/js/icon-system.js"></script>
 <style>
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;margin:0}
 h1{font-size:20px;font-weight:700;margin:0 0 4px}
@@ -49,10 +51,10 @@ fetch('/admin/data/dashboard.json')
       '</div>';
 
     html+='<div class=section><h2>专题健康</h2><div class=status>'+
-      '<a href="/admin/collections.html" class="badge badge--success" style="text-decoration:none">🟢 stable: '+h.stable+'</a>'+
-      (h.high?'<a href="/admin/collections.html" class="badge badge--danger" style="text-decoration:none">🔴 high: '+h.high+'</a>':'')+
-      (h.medium?'<a href="/admin/collections.html" class="badge badge--warning" style="text-decoration:none">🟡 medium: '+h.medium+'</a>':'')+
-      (h_issues===0?'<span class="badge badge--success">✅ all clear</span>':'')+
+      '<a href="/admin/collections.html" class="badge badge--success" style="text-decoration:none">'+BPRC.icon('success',{color:'success'})+' stable: '+h.stable+'</a>'+
+      (h.high?'<a href="/admin/collections.html" class="badge badge--danger" style="text-decoration:none">'+BPRC.icon('danger',{color:'danger'})+' high: '+h.high+'</a>':'')+
+      (h.medium?'<a href="/admin/collections.html" class="badge badge--warning" style="text-decoration:none">'+BPRC.icon('warning',{color:'warning'})+' medium: '+h.medium+'</a>':'')+
+      (h_issues===0?'<span class="badge badge--success">'+BPRC.icon('complete',{color:'success'})+' all clear</span>':'')+
       '</div></div>';
 
     if(d.recent_findings.length){
@@ -65,15 +67,16 @@ fetch('/admin/data/dashboard.json')
     }
 
     html+='<div class=links>'+
-      '<a href="/admin/collection-review.html" class="btn btn--secondary">📋 Discovery Review</a>'+
-      '<a href="/admin/collections.html" class="btn btn--secondary">📚 专题管理</a>'+
-      '<a href="/admin/editorial.html" class="btn btn--secondary">✍️ 编辑工作台</a>'+
-      '<a href="/collection/index.html" class="btn btn--secondary">🌐 专题索引 (前台)</a>'+
+      '<a href="/admin/collection-review.html" class="btn btn--secondary">'+BPRC.icon('resource',{color:'muted'})+' Discovery Review</a>'+
+      '<a href="/admin/collections.html" class="btn btn--secondary">'+BPRC.icon('collection',{color:'muted'})+' 专题管理</a>'+
+      '<a href="/admin/editorial.html" class="btn btn--secondary">'+BPRC.icon('editorial',{color:'muted'})+' 编辑工作台</a>'+
+      '<a href="/collection/index.html" class="btn btn--secondary">'+BPRC.icon('site',{color:'muted'})+' 专题索引 (前台)</a>'+
       '</div>';
 
     document.getElementById('content').innerHTML=html;
+    lucide.createIcons();
   })
-  .catch(function(e){document.getElementById('content').innerHTML='<div class=error>❌ 加载失败: '+e.message+'<br><small>请先运行: python3 collection_dashboard_export.py</small></div>'});
+  .catch(function(e){document.getElementById('content').innerHTML='<div class=error><i data-lucide="x-circle" class="icon-sm icon-danger"></i> 加载失败: '+e.message+'<br><small>请先运行: python3 collection_dashboard_export.py</small></div>';lucide.createIcons()});
 </script>
 </body>
 </html>

@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>编辑审核 — BigPRC 编辑部</title>
 <link rel="stylesheet" href="/css/design-tokens.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="/js/icon-system.js"></script>
 <style>
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;margin:0}
 .wrap{max-width:780px;margin:0 auto;padding:24px 20px}
@@ -34,7 +36,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 <script>
 var id=new URLSearchParams(location.search).get('id');
 if(!id){
-  document.getElementById('content').innerHTML='<div class=error>📚 未选择专题<br><br><a href="/admin/editorial.html" style="color:var(--primary)">← 返回编辑工作台</a></div>';
+  document.getElementById('content').innerHTML='<div class=error><i data-lucide="library" class="icon-sm icon-muted"></i> 未选择专题<br><br><a href="/admin/editorial.html" style="color:var(--primary)">← 返回编辑工作台</a></div>';
 } else {
 fetch('/admin/data/editorial.json')
   .then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
@@ -45,9 +47,9 @@ fetch('/admin/data/editorial.json')
       return;
     }
 
-    var statusIcon={'complete':'🟢','partial':'🟡','empty':'⚪'};
-    var st=statusIcon[c.status]||'⚪';
-    var wfIcon={'draft':'🟡','reviewed':'🔵','approved':'🟢','published':'✅','rejected':'🔴'};
+    var statusIcon={'complete':BPRC.icon('success',{color:'success'}),'partial':BPRC.icon('warning',{color:'warning'}),'empty':BPRC.icon('empty',{color:'neutral'})};
+    var st=statusIcon[c.status]||BPRC.icon('empty',{color:'neutral'});
+    var wfIcon={'draft':BPRC.icon('warning',{color:'warning'}),'reviewed':BPRC.icon('info',{color:'info'}),'approved':BPRC.icon('success',{color:'success'}),'published':BPRC.icon('complete',{color:'success'}),'rejected':BPRC.icon('danger',{color:'danger'})};
     var wf=c.editorial_status||'draft';
 
     var html='<div class=header>'+
@@ -75,21 +77,22 @@ fetch('/admin/data/editorial.json')
     // Links
     // CLI hints
     var hints=[];
-    if(wf==='draft') hints.push('💡 python3 editorial_review.py --review '+c.id);
-    if(wf==='reviewed') hints.push('💡 python3 editorial_review.py --approve '+c.id);
-    if(wf==='approved') hints.push('💡 python3 editorial_review.py --publish '+c.id);
-    if(wf==='published') hints.push('💡 python3 editorial_review.py --unpublish '+c.id);
-    if(wf!=='rejected') hints.push('💡 python3 editorial_review.py --reject '+c.id);
+    if(wf==='draft') hints.push(BPRC.icon('cli',{color:'muted'})+' python3 editorial_review.py --review '+c.id);
+    if(wf==='reviewed') hints.push(BPRC.icon('cli',{color:'muted'})+' python3 editorial_review.py --approve '+c.id);
+    if(wf==='approved') hints.push(BPRC.icon('cli',{color:'muted'})+' python3 editorial_review.py --publish '+c.id);
+    if(wf==='published') hints.push(BPRC.icon('cli',{color:'muted'})+' python3 editorial_review.py --unpublish '+c.id);
+    if(wf!=='rejected') hints.push(BPRC.icon('cli',{color:'muted'})+' python3 editorial_review.py --reject '+c.id);
 
     html+='<div class=links>'+
-      '<a href="/collection/'+c.id+'.html" class="btn btn--secondary">🌐 前台页面</a>'+
-      '<a href="/admin/editorial.html" class="btn btn--secondary">📊 编辑工作台</a>'+
+      '<a href="/collection/'+c.id+'.html" class="btn btn--secondary">'+BPRC.icon('site',{color:'muted'})+' 前台页面</a>'+
+      '<a href="/admin/editorial.html" class="btn btn--secondary">'+BPRC.icon('dashboard',{color:'muted'})+' 编辑工作台</a>'+
       '</div>';
 
     document.getElementById('content').innerHTML=html;
+    lucide.createIcons();
 
     function card(label, text, has){
-        var dot=has?'🟢':'🔴';
+        var dot=has?BPRC.icon('success',{color:'success'}):BPRC.icon('danger',{color:'danger'});
         var bodyClass=has?'':'empty';
         var body=has?(text||'(空)'):'尚未生成';
         return '<div class=ed-card>'+
@@ -97,7 +100,7 @@ fetch('/admin/data/editorial.json')
           '<div class="bd '+bodyClass+'">'+body+'</div></div>';
     }
   })
-  .catch(function(e){document.getElementById('content').innerHTML='<div class=error>❌ 加载失败: '+e.message+'<br><small>python3 collection_dashboard_export.py</small></div>'});
+  .catch(function(e){document.getElementById('content').innerHTML='<div class=error><i data-lucide="x-circle" class="icon-sm icon-danger"></i> 加载失败: '+e.message+'<br><small>python3 collection_dashboard_export.py</small></div>';lucide.createIcons()});
 }
 </script>
 </body>

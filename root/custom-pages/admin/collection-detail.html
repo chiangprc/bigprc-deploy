@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>专题详情 — BigPRC 编辑工作台</title>
 <link rel="stylesheet" href="/css/design-tokens.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="/js/icon-system.js"></script>
 <style>
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;margin:0}
 .wrap{max-width:900px;margin:0 auto;padding:24px 20px}
@@ -45,7 +47,7 @@ details{margin-bottom:8px}
 var id = new URLSearchParams(location.search).get('id');
 if(!id){
     document.getElementById('content').innerHTML='<div style="text-align:center;padding:60px 20px">'+
-      '<div style="font-size:48px;margin-bottom:16px">📚</div>'+
+      '<div style="font-size:48px;margin-bottom:16px"><i data-lucide="library" style="width:48px;height:48px" class="icon-muted"></i></div>'+
       '<div style="font-size:18px;font-weight:600;margin-bottom:8px;color:var(--text)">未选择专题</div>'+
       '<div style="font-size:14px;color:var(--sec);margin-bottom:24px">请先从「专题列表」选择一个专题进入</div>'+
       '<a href="/admin/collections.html" style="display:inline-block;padding:10px 24px;border:var(--border-width) solid var(--primary);border-radius:var(--radius-md);color:var(--primary);text-decoration:none;font-size:14px;font-weight:500">← 返回专题列表</a>'+
@@ -58,7 +60,7 @@ fetch('/admin/data/collection-details.json')
     var c = data.find(function(x){return x.id===id});
     if(!c){
         document.getElementById('content').innerHTML='<div style="text-align:center;padding:60px 20px">'+
-          '<div style="font-size:48px;margin-bottom:16px">📄</div>'+
+          '<div style="font-size:48px;margin-bottom:16px"><i data-lucide="file-text" style="width:48px;height:48px" class="icon-muted"></i></div>'+
           '<div style="font-size:18px;font-weight:600;margin-bottom:8px;color:var(--text)">未找到专题</div>'+
           '<div style="font-size:14px;color:var(--sec);margin-bottom:4px">专题 ID：<span style="font-family:var(--font-mono);background:var(--color-surface);padding:2px 8px;border-radius:var(--radius-sm)">'+id+'</span></div>'+
           '<div style="font-size:12px;color:var(--sec);margin-bottom:24px;line-height:1.8">'+
@@ -75,7 +77,7 @@ fetch('/admin/data/collection-details.json')
 
     var html = '<div class=header>'+
       '<h1>'+c.title+'</h1>'+
-      '<div class=meta>'+c.id+(c.featured?' · ⭐ featured':'')+(c.auto_generated?' · auto':'')+'</div>'+
+      '<div class=meta>'+c.id+(c.featured?' · '+BPRC.icon('featured_star',{color:'muted'})+' featured':'')+(c.auto_generated?' · auto':'')+'</div>'+
       '<div class=badges>'+
         '<span class="badge badge--'+qColor(c.quality)+'">'+c.quality+'</span>'+
         '<span class="badge badge--'+hColor(c.health)+'">'+c.health+'</span>'+
@@ -128,7 +130,7 @@ fetch('/admin/data/collection-details.json')
 
     // ── Rule Gap Evidence ──
     var gap = c.gap_evidence||{};
-    var deltaIcon = c.health==='stable'?'🟢':c.health==='warning'?'🟡':'🔴';
+    var deltaIcon = c.health==='stable'?BPRC.icon('success',{color:'success'}):c.health==='warning'?BPRC.icon('warning',{color:'warning'}):BPRC.icon('danger',{color:'danger'});
     html += '<div class=section><h2>规则差距分析</h2>';
     html += '<div style="border:var(--border-width) solid var(--border);border-radius:var(--radius-md);padding:var(--space-lg);background:var(--color-surface)">';
 
@@ -142,7 +144,7 @@ fetch('/admin/data/collection-details.json')
 
     if(gap.type==='under'){
         html += '<div style="background:var(--color-warning-soft);border:var(--border-width) solid var(--color-warning);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:12px">';
-        html += '<div style="font-size:13px;font-weight:600;color:var(--color-warning);margin-bottom:4px">⚠ 规则漏匹配 '+gap.missing_count+' 个资源</div>';
+        html += '<div style="font-size:13px;font-weight:600;color:var(--color-warning);margin-bottom:4px">'+BPRC.icon('alert',{color:'warning'})+' 规则漏匹配 '+gap.missing_count+' 个资源</div>';
         html += '<div style="font-size:12px;color:var(--sec);margin-bottom:8px">以下标签在漏匹配资源中高频出现。建议评估是否加入 rule_json。</div>';
         gap.missing_tags.forEach(function(t){
             html += '<div style="margin-bottom:6px">';
@@ -157,7 +159,7 @@ fetch('/admin/data/collection-details.json')
         html += '</div>';
     } else if(gap.type==='over'){
         html += '<div style="background:var(--color-danger-soft);border:var(--border-width) solid var(--color-danger);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:12px">';
-        html += '<div style="font-size:13px;font-weight:600;color:var(--color-danger);margin-bottom:4px">⚠ 规则多匹配 '+gap.extra_count+' 个资源</div>';
+        html += '<div style="font-size:13px;font-weight:600;color:var(--color-danger);margin-bottom:4px">'+BPRC.icon('alert',{color:'danger'})+' 规则多匹配 '+gap.extra_count+' 个资源</div>';
         html += '<div style="font-size:12px;color:var(--sec);margin-bottom:8px">以下标签在多匹配资源中高频出现。建议评估是否通过 exclude_tags 排除。</div>';
         gap.extra_tags.forEach(function(t){
             html += '<div style="margin-bottom:6px">';
@@ -167,7 +169,7 @@ fetch('/admin/data/collection-details.json')
         });
         html += '</div>';
     } else {
-        html += '<div style="background:var(--color-success-soft);border-radius:var(--radius-md);padding:12px var(--space-lg)"><span style="font-size:13px;font-weight:500;color:var(--color-success)">✅ 规则精确匹配，无差距</span></div>';
+        html += '<div style="background:var(--color-success-soft);border-radius:var(--radius-md);padding:12px var(--space-lg)"><span style="font-size:13px;font-weight:500;color:var(--color-success)">'+BPRC.icon('complete',{color:'success'})+' 规则精确匹配，无差距</span></div>';
     }
     html += '</div></div>';
 
@@ -207,7 +209,7 @@ fetch('/admin/data/collection-details.json')
     var next = idx < data.length-1 ? data[idx+1] : null;
     html += '<div style="margin-top:var(--space-2xl);padding-top:var(--space-lg);border-top:var(--border-width) solid var(--border);display:flex;justify-content:space-between;align-items:center">';
     html += '<span>'+(prev?'<a href="?id='+prev.id+'" style="font-size:13px">← '+prev.title+'</a>':'')+'</span>';
-    html += '<a href="/collection/'+c.id+'.html" style="color:var(--primary);font-size:13px">🌐 前台页面</a>';
+    html += '<a href="/collection/'+c.id+'.html" style="color:var(--primary);font-size:13px">'+BPRC.icon('site',{color:'muted'})+' 前台页面</a>';
     html += '<span>'+(next?'<a href="?id='+next.id+'" style="font-size:13px">'+next.title+' →</a>':'')+'</span>';
     html += '</div>';
 
@@ -215,22 +217,22 @@ fetch('/admin/data/collection-details.json')
     var actions = [];
     var gap = c.gap_evidence||{};
     if(gap.type==='under'){
-        actions.push({icon:'⚠️',label:'规则漏匹配 '+gap.missing_count+' 个资源',
+        actions.push({icon:BPRC.icon('alert',{color:'warning'}),label:'规则漏匹配 '+gap.missing_count+' 个资源',
             detail:'查看上方「规则差距分析」，评估是否调整 rule_json',
             cmd:'python3 collection_rule_assist.py --preview '+c.id});
     }
     if(c.health==='unstable'){
-        actions.push({icon:'🔴',label:'规则状态异常 (unstable, Δ'+c.engine_delta_pct+'%)',
+        actions.push({icon:BPRC.icon('danger',{color:'danger'}),label:'规则状态异常 (unstable, Δ'+c.engine_delta_pct+'%)',
             detail:'规则匹配数与数据库记录偏差较大，建议重新导出确认',
             cmd:'python3 collection_dashboard_export.py'});
     }
     if(!c.content_complete){
-        actions.push({icon:'📝',label:'专题内容待完善',
+        actions.push({icon:BPRC.icon('edit',{color:'muted'}),label:'专题内容待完善',
             detail:'缺少 intro、SEO 描述或 FAQ。运行内容生成脚本补全',
             cmd:'python3 collection_editor_ai.py && python3 collection_faq.py'});
     }
     if(actions.length===0){
-        actions.push({icon:'✅',label:'当前专题状态健康',
+        actions.push({icon:BPRC.icon('complete',{color:'success'}),label:'当前专题状态健康',
             detail:'规则精确匹配，内容完整。无需操作',
             cmd:null});
     }
@@ -241,14 +243,15 @@ fetch('/admin/data/collection-details.json')
         html += '<div style="margin-bottom:'+(a.cmd?'14px':'0')+'">';
         html += '<div style="font-size:13px;font-weight:600;margin-bottom:2px">'+a.icon+' '+a.label+'</div>';
         html += '<div style="font-size:12px;color:var(--sec)">'+a.detail+'</div>';
-        if(a.cmd) html += '<div style="font-size:11px;color:var(--sec);font-family:monospace;margin-top:4px">💡 '+a.cmd+'</div>';
+        if(a.cmd) html += '<div style="font-size:11px;color:var(--sec);font-family:monospace;margin-top:4px">'+BPRC.icon('cli',{color:'muted'})+' '+a.cmd+'</div>';
         html += '</div>';
     });
     html += '</div></div>';
 
     document.getElementById('content').innerHTML=html;
+    lucide.createIcons();
   })
-  .catch(function(e){document.getElementById('content').innerHTML='<div class=error>❌ 加载失败: '+e.message+'<br><small>请先运行: python3 collection_dashboard_export.py</small></div>'});
+  .catch(function(e){document.getElementById('content').innerHTML='<div class=error><i data-lucide="x-circle" class="icon-sm icon-danger"></i> 加载失败: '+e.message+'<br><small>请先运行: python3 collection_dashboard_export.py</small></div>';lucide.createIcons()});
 }
 </script>
 </body>
