@@ -117,9 +117,9 @@
             <h3 style="font-size:14px;font-weight:700;margin:0 0 10px;color:var(--text)">🌟 编辑精选</h3>
             <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
             {% for r in spotlight_resources %}
-                <a href="/go/{{ r.res_id }}" style="display:block;padding:14px 16px;border:1px solid var(--border);border-radius:6px;text-decoration:none;transition:border-color 0.15s">
-                    <div style="font-size:13px;font-weight:600;color:var(--text)">{{ r.title }}</div>
-                    {% if r.category %}<div style="font-size:11px;color:var(--sec);margin-top:4px">{{ r.category }}</div>{% endif %}
+                <a href="/go/{{ r.res_id }}" class="hl-card" style="text-decoration:none">
+                    <div class="t">{{ r.title }}</div>
+                    {% if r.category %}<div class="n" style="margin-top:4px">{{ r.category }}</div>{% endif %}
                 </a>
             {% endfor %}
             </div>
