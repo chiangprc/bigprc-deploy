@@ -56,7 +56,7 @@ fetch('/admin/data/editorial.json')
       '<div class=card><div class=n>'+s.pct_overall+'%</div><div class=l>完成率</div></div>'+
       '</div>';
 
-    html+='<div class=section><h2>编辑状态</h2><table><thead><tr><th>专题</th><th>完成</th><th>审核</th><th>编辑推荐</th><th>收藏理由</th><th>受众</th><th>亮点</th><th>完成度</th></tr></thead><tbody>';
+    html+='<div class=section><h2>编辑状态</h2><div class="table-wrap"><table><thead><tr><th>专题</th><th>完成</th><th>审核</th><th>编辑推荐</th><th>收藏理由</th><th>受众</th><th>亮点</th><th>完成度</th></tr></thead><tbody>';
     cols.forEach(function(c){
         var pct=c.pct_complete||0;
         var barColor=pct===100?'var(--color-success)':pct>0?'var(--color-warning)':'var(--color-neutral)';
@@ -71,7 +71,7 @@ fetch('/admin/data/editorial.json')
           '<td style="min-width:120px"><div class=bar><div class=bar-fill style="width:'+pct+'%;background:'+barColor+'"></div></div><span style="font-size:11px;color:var(--sec)">'+pct+'%</span></td>'+
           '</tr>';
     });
-    html+='</tbody></table></div>';
+    html+='</tbody></table></div></div>';
 
     html+='<div class=links>'+
       '<a href="/admin/collections.html" class="btn btn--secondary">'+BPRC.icon('collection',{color:'muted'})+' 专题管理</a>'+

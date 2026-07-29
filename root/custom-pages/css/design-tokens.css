@@ -290,3 +290,42 @@
     color: var(--color-text-secondary);
     background: transparent;
 }
+
+/* ── Admin Responsive Foundation ──────────────────────────── */
+/* Shared mobile rules for all admin pages. Breakpoint: 768px */
+@media (max-width: 768px) {
+    /* Container */
+    .wrap { padding: var(--space-lg) var(--space-md); }
+
+    /* Card grids — collapse to 2 columns then 1 */
+    .cards { grid-template-columns: repeat(2, 1fr); }
+
+    /* Table — horizontal scroll wrapper */
+    .table-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .table-wrap table { min-width: 600px; }
+
+    /* Actions — stack vertically */
+    .links, .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .links .btn, .toolbar .btn, .toolbar input, .toolbar select {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Touch targets */
+    .btn, td a {
+        min-height: 44px;
+        align-items: center;
+        display: inline-flex;
+    }
+}
+
+/* Small phone breakpoint */
+@media (max-width: 480px) {
+    .cards { grid-template-columns: 1fr; }
+}

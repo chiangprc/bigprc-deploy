@@ -188,21 +188,21 @@ fetch('/admin/data/collection-details.json')
 
     // Shared Collections
     if(c.shared_collections && c.shared_collections.length){
-        html += '<div class=section><h2>共享专题</h2><table><tr><th>专题</th><th>共享</th><th>占比</th><th></th></tr>';
+        html += '<div class=section><h2>共享专题</h2><div class="table-wrap"><table><tr><th>专题</th><th>共享</th><th>占比</th><th></th></tr>';
         c.shared_collections.forEach(function(s){
             html += '<tr><td>'+s.title+'</td><td>'+s.shared+'</td><td>'+s.shared_pct+'%</td><td><a href="/admin/collection-detail.html?id='+s.id+'">查看</a></td></tr>';
         });
-        html += '</table></div>';
+        html += '</table></div></div>';
     }
 
     // Samples
     if(c.samples && c.samples.length){
-        html += '<div class=section><h2>资源列表 ('+c.samples.length+' / '+c.resource_count+')</h2><table><tr><th>ID</th><th>标题</th><th>分类</th></tr>';
+        html += '<div class=section><h2>资源列表 ('+c.samples.length+' / '+c.resource_count+')</h2><div class="table-wrap"><table><tr><th>ID</th><th>标题</th><th>分类</th></tr>';
         c.samples.forEach(function(s){
             html += '<tr><td>'+s.id+'</td><td><a href="/go/'+s.id+'">'+s.title+'</a></td><td>'+s.category+'</td></tr>';
         });
         if(c.resource_count > 10) html += '<tr><td colspan=3 style="color:var(--sec)">... 展示前 10 条，共 '+c.resource_count+' 条 · <a href="/list.html">查看全部</a></td></tr>';
-        html += '</table></div>';
+        html += '</table></div></div>';
     }
 
     // Footer with prev/next nav

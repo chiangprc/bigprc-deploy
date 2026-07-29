@@ -117,14 +117,14 @@ function renderCards() {
         }
         if (g.resource_samples && g.resource_samples.length > 0) {
             h += '<span class=toggle onclick="T(this)">'+BPRC.icon('expand',{color:'muted'})+' 查看资源 ('+g.match_count+' 条)</span>';
-            h += '<div class=details><table class=sample-table><tr><th></th><th>ID</th><th>标题</th><th>当前所属专题</th></tr>';
+            h += '<div class=details><div class="table-wrap"><table class=sample-table><tr><th></th><th>ID</th><th>标题</th><th>当前所属专题</th></tr>';
             g.resource_samples.forEach(function(s){
                 var dot = s.covered ? '<span style="color:var(--color-success);font-weight:700">●</span>' : '<span style="color:var(--color-danger);font-weight:700">●</span>';
                 var colls = s.collections && s.collections.length ? s.collections.map(function(c){return c.title}).join(', ') : (s.covered ? '—' : '<span style="color:var(--color-danger)">未归属</span>');
                 h += '<tr><td>'+dot+'</td><td>'+s.id+'</td><td><a href="/go/'+s.id+'">'+s.title+'</a></td><td>'+colls+'</td></tr>';
             });
             if (g.match_count > 20) h += '<tr><td colspan=4 style="color:var(--sec)">... 仅展示前 20 条，共 '+g.match_count+' 条</td></tr>';
-            h += '</table></div>';
+            h += '</table></div></div>';
         }
         h += '</div>';
     });
