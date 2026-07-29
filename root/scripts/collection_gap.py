@@ -190,10 +190,16 @@ def analyze_group(cursor, group):
         "best_match": best,
         "top_matches": matches[:5],
         "action": action,
+        "action_icon": {
+            "KEEP": "circle-check",
+            "EXPAND_RULE": "wrench",
+            "MERGE_REVIEW": "git-merge",
+            "NEW_COLLECTION": "sparkles",
+        }.get(action, "circle"),
         "action_label": {
             "KEEP": "已全覆盖",
             "EXPAND_RULE": "建议完善规则",
-            "MERGE_REVIEW": "多个专题重叠",
+            "MERGE_REVIEW": "专题重叠",
             "NEW_COLLECTION": "新专题候选",
         }.get(action, action),
         "reason": reason,
@@ -223,7 +229,7 @@ def print_terminal(results):
     for r in results:
         counts[r["action"]] += 1
     print(f"总计: {len(results)} 个发现组")
-    for action, label in [("KEEP","已全覆盖"),("EXPAND_RULE","建议完善规则"),("MERGE_REVIEW","专题重叠"),("NEW_COLLECTION","新专题候选")]:
+    for action, label in [("KEEP","已全覆盖 (circle-check)"),("EXPAND_RULE","建议完善规则 (wrench)"),("MERGE_REVIEW","专题重叠 (git-merge)"),("NEW_COLLECTION","新专题候选 (sparkles)")]:
         if counts.get(action):
             print(f"  {label}: {counts[action]}")
     print()

@@ -100,7 +100,7 @@ function renderCards() {
     groups.forEach(function(g){
         var tags = g.candidate_tags.join(' ');
         h += '<div class="card '+g.action+'">' +
-            '<div class=hdr><span class=tags>'+tags+'</span><span class="badge badge--'+actionClass(g.action)+'">'+g.action_label+'</span></div>' +
+            '<div class=hdr><span class=tags>'+tags+'</span><span class="badge badge--'+actionClass(g.action)+'">'+(g.action_icon?BPRC.icon(g.action_icon,{color:actionClass(g.action)}):'')+g.action_label+'</span></div>' +
             '<div class=meta>发现 <b>'+g.match_count+'</b> 条 · 覆盖 <b>'+g.covered_count+'</b> 条 · 未覆盖 <b>'+g.uncovered_count+'</b> 条 · 覆盖率 <b>'+g.coverage_pct+'%</b></div>' +
             '<div class=meta>最佳匹配: <b>'+(g.best_match?g.best_match.title:'—')+'</b>'+(g.best_match?' ('+g.best_match.covered_count+' 条)':'')+'</div>';
         if (g.representative_tags && g.representative_tags.length) {
