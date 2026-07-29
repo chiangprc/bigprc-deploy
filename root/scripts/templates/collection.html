@@ -24,7 +24,8 @@
 
     /* Hero tag row */
     .tag-row { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-top:14px; }
-    .tag { padding:3px 12px; border-radius:var(--radius-pill); font-size:12px; background:var(--color-surface); border:var(--border-width) solid var(--border); color:var(--secondary); }
+    /* .tag — defined in _tokens.css; hero override for bg contrast */
+.hero .tag, .ed-meta .tag { background:var(--color-surface); }
 
     /* Highlight grid — uses .card from layout */
     .hl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; padding: 0 0 32px; }
@@ -44,7 +45,7 @@
     .ed-panel-title { font-size:15px; font-weight:700; margin:0 0 8px; color:var(--text); }
     .ed-note { font-size:14px; color:var(--secondary); line-height:1.7; margin:0; }
     .ed-meta { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
-    .ed-meta-tag { border:var(--border-width) solid var(--border); } /* uses .badge base from tokens */
+    /* .ed-meta-tag → .tag (defined in _tokens.css) */
     .ed-spotlight-title { font-size:14px; font-weight:700; margin:0 0 10px; color:var(--text); }
     .spotlight-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px; }
     .related-title { font-size:14px; font-weight:600; margin-bottom:10px; }
@@ -127,8 +128,8 @@
             <p class="ed-note">{{ editor_note[:150] }}{% if editor_note|length > 150 %}...{% endif %}</p>
             {% if why_collect or audience %}
             <div class="ed-meta">
-                {% if why_collect %}<span class="badge badge--neutral ed-meta-tag">{{ why_collect }}</span>{% endif %}
-                {% if audience %}<span class="badge badge--neutral ed-meta-tag"><i data-lucide="users" class="icon-sm icon-muted"></i> {{ audience }}</span>{% endif %}
+                {% if why_collect %}<span class="tag">{{ why_collect }}</span>{% endif %}
+                {% if audience %}<span class="tag"><i data-lucide="users" class="icon-sm icon-muted"></i> {{ audience }}</span>{% endif %}
             </div>
             {% endif %}
         </div>

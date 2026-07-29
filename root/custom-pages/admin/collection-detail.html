@@ -26,7 +26,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 .engine-summary{font-size:12px;color:var(--sec);margin-top:8px;display:flex;flex-wrap:wrap;gap:8px}
 .engine-summary span{background:var(--color-surface);padding:3px 10px;border-radius:var(--radius-pill);border:var(--border-width) solid var(--border)}
 .tag-cloud{display:flex;flex-wrap:wrap;gap:6px}
-.tag-item{padding:3px 10px;border-radius:var(--radius-pill);font-size:12px;border:var(--border-width) solid var(--border);color:var(--sec)}
+/* .tag-item → .tag (defined in design-tokens.css) */
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{text-align:left;padding:8px;border-bottom:2px solid var(--border);color:var(--sec);font-size:11px;font-weight:600}
 td{padding:7px 8px;border-bottom:var(--border-width) solid var(--border)}
@@ -102,25 +102,25 @@ fetch('/admin/data/collection-details.json')
     if(hasTags){
         html += '<div style="margin-bottom:12px"><span style="font-weight:600;font-size:13px">包含全部标签</span>';
         html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">';
-        ruleObj.tags.forEach(function(t){html += '<span style="background:var(--color-bg);padding:3px 10px;border-radius:var(--radius-pill);font-size:12px;border:var(--border-width) solid var(--border)">'+t+'</span>';});
+        ruleObj.tags.forEach(function(t){html += '<span class="tag" style="background:var(--color-bg)">'+t+'</span>';});
         html += '</div></div>';
     }
     if(hasTagsOr){
         html += '<div style="margin-bottom:12px"><span style="font-weight:600;font-size:13px">包含任一标签</span>';
         html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">';
-        ruleObj.tags_or.forEach(function(t){html += '<span style="background:var(--color-bg);padding:3px 10px;border-radius:var(--radius-pill);font-size:12px;border:var(--border-width) solid var(--border)">'+t+'</span>';});
+        ruleObj.tags_or.forEach(function(t){html += '<span class="tag" style="background:var(--color-bg)">'+t+'</span>';});
         html += '</div></div>';
     }
     if(hasCats){
         html += '<div style="margin-bottom:12px"><span style="font-weight:600;font-size:13px">分类限制</span>';
         html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">';
-        ruleObj.cats.forEach(function(t){html += '<span style="background:var(--color-bg);padding:3px 10px;border-radius:var(--radius-pill);font-size:12px;border:var(--border-width) solid var(--border)">'+t+'</span>';});
+        ruleObj.cats.forEach(function(t){html += '<span class="tag" style="background:var(--color-bg)">'+t+'</span>';});
         html += '</div></div>';
     }
     if(hasExclude){
         html += '<div style="margin-bottom:12px"><span style="font-weight:600;font-size:13px">排除标签</span>';
         html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">';
-        ruleObj.exclude_tags.forEach(function(t){html += '<span style="background:var(--color-bg);padding:3px 10px;border-radius:var(--radius-pill);font-size:12px;border:var(--border-width) solid var(--border)">'+t+'</span>';});
+        ruleObj.exclude_tags.forEach(function(t){html += '<span class="tag" style="background:var(--color-bg)">'+t+'</span>';});
         html += '</div></div>';
     }
     if(!hasTags && !hasTagsOr && !hasCats && !hasExclude){
@@ -180,7 +180,7 @@ fetch('/admin/data/collection-details.json')
     // Top Tags (compact, merged into end of Rule area)
     if(c.top_tags && c.top_tags.length){
         html += '<div class=section><h2>高频标签</h2><div class=tag-cloud>';
-        c.top_tags.slice(0,10).forEach(function(t){html += '<span class=tag-item>'+t.name+' ('+t.count+')</span>';});
+        c.top_tags.slice(0,10).forEach(function(t){html += '<span class=tag>'+t.name+' ('+t.count+')</span>';});
         html += '</div></div>';
     }
 

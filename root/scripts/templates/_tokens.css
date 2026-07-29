@@ -266,3 +266,17 @@
 }
 .btn--ghost:hover { border-color: var(--color-accent); color: var(--color-accent); }
 .btn--ghost:disabled { opacity: var(--opacity-disabled); cursor: not-allowed; }
+
+/* ── Component Token: Tag ──────────────────────────────────── */
+.tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-pill);
+    color: var(--color-text-secondary);
+    background: transparent;
+}
