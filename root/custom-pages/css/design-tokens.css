@@ -29,6 +29,13 @@
     /* transition */
     --transition-fast: 0.15s;
 
+    /* icon */
+    --icon-sm: 16px;
+    --icon-md: 20px;
+
+    /* state */
+    --opacity-disabled: 0.4;
+
     /* typography */
     --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
     --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
@@ -63,9 +70,13 @@
     --color-danger:         #c5221f;
     --color-danger-soft:    #fde8e8;
 
-    /* semantic: info / neutral */
+    /* semantic: info */
     --color-info:           #1a56db;
     --color-info-soft:      #e8f0fe;
+
+    /* semantic: neutral / empty / disabled */
+    --color-neutral:        #999999;
+    --color-neutral-soft:   #f0f0f0;
 }
 
 /* ── Semantic Tokens — Dark Theme ────────────────────────── */
@@ -92,6 +103,9 @@
 
     --color-info:           #6b9fff;
     --color-info-soft:      #1a2240;
+
+    --color-neutral:        #666666;
+    --color-neutral-soft:   #2a2a2a;
 }
 
 /* ── Legacy Aliases (backward compatible, migrate gradually) */
@@ -117,21 +131,24 @@
     --red:       var(--color-danger);
 }
 
-/* ── Component Token: Card (Phase 10.4A-2 will expand) ───── */
+/* ── Component Token: Card ───────────────────────────────── */
 .card {
     border: var(--border-width) solid var(--color-border);
     border-radius: var(--radius-md);
     background: var(--color-surface);
-    transition: border-color var(--transition-fast);
-}
-.card:hover {
-    border-color: var(--color-accent);
+    transition: border-color var(--transition-fast), background-color var(--transition-fast);
 }
 
+/* interactive card — subtle bg shift on hover */
 .card--interactive {
     cursor: pointer;
 }
+.card--interactive:hover {
+    border-color: var(--color-accent);
+    background-color: var(--color-bg);
+}
 
+/* static card — no interaction */
 .card--static {
     cursor: default;
 }
@@ -139,10 +156,15 @@
     border-color: var(--color-border);
 }
 
+/* featured card — accent border by default */
 .card--featured {
     border-color: var(--color-accent);
 }
+.card--featured.card--interactive:hover {
+    background-color: var(--color-bg);
+}
 
+/* compact — reduced padding */
 .card--compact {
     padding: var(--space-lg);
 }
