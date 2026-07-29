@@ -168,3 +168,30 @@
 .card--compact {
     padding: var(--space-lg);
 }
+
+/* ── Component Token: Icon ────────────────────────────────── */
+/* Icon base — Lucide <i> elements */
+.icon {
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+
+/* Icon sizes */
+.icon-sm  { width: var(--icon-sm); height: var(--icon-sm); }
+.icon-md  { width: var(--icon-md); height: var(--icon-md); }
+
+/* Icon semantic colors */
+.icon-success { color: var(--color-success); }
+.icon-warning { color: var(--color-warning); }
+.icon-danger  { color: var(--color-danger); }
+.icon-info    { color: var(--color-info); }
+.icon-neutral { color: var(--color-neutral); }
+.icon-accent  { color: var(--color-accent); }
+.icon-muted   { color: var(--color-text-secondary); }
+
+/* Icon + text label container */
+.icon-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
