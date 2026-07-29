@@ -148,7 +148,7 @@
         .coll-card .t { font-size: 14px; font-weight: 600; color: var(--text); }
         .coll-card .n { font-size: 12px; color: var(--secondary); margin-top: 2px; }
         .coll-card .go { font-size: 12px; color: var(--primary); white-space: nowrap; }
-        .coll-link { font-size: var(--text-body); color: var(--primary); text-align: center; display: block; margin-bottom: 36px; }
+        /* .coll-link → .btn.btn--ghost (defined in design-tokens.css) */
 
         /* product card */
         .product-card {
@@ -213,14 +213,14 @@
         <div class="results" id="results"></div>
     </div>
 
-    <h2 style="font-size:16px;font-weight:600;margin:0 0 14px;color:var(--text);text-align:center;">热门专题</h2>
+    <h2 style="font-size:var(--text-subtitle);font-weight:600;margin:0 0 14px;color:var(--text);text-align:center;">热门专题</h2>
     <div class="coll-grid" id="collGrid"></div>
     <noscript>
         <a href="/collection/index.html" style="display:block;text-align:center;font-size:14px;color:var(--primary);margin-bottom:12px;">浏览全部 16 个专题 →</a>
     </noscript>
-    <a href="/list.html" class="coll-link">浏览全部 1760 项资源 →</a>
+    <a href="/list.html" class="btn btn--ghost" style="display:block;text-align:center;margin:0 auto 36px;max-width:200px">浏览全部 1760 项资源 →</a>
 
-    <h2 style="font-size:16px;font-weight:600;margin:0 0 12px;color:var(--text);text-align:center;">探索分类</h2>
+    <h2 style="font-size:var(--text-subtitle);font-weight:600;margin:0 0 12px;color:var(--text);text-align:center;">探索分类</h2>
     <div class="tags" id="tags"></div>
 
     <a class="product-card" href="/tools/claudeek.html">
