@@ -12,10 +12,10 @@
 <style>
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;margin:0}
 .wrap{max-width:900px;margin:0 auto;padding:24px 20px}
-.back{font-size:13px;margin-bottom:16px}
+.back{font-size:var(--text-body);margin-bottom:16px}
 .back a{color:var(--primary)}
 .header h1{font-size:22px;font-weight:700;margin:0}
-.header .meta{font-size:13px;color:var(--sec);margin-top:4px}
+.header .meta{font-size:var(--text-body);color:var(--sec);margin-top:4px}
 .header .badges{display:flex;gap:8px;margin-top:8px}
 /* .badge — defined in design-tokens.css */
 .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0}
@@ -23,19 +23,19 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 .card .n{font-size:24px;font-weight:700;color:var(--primary)}
 .card .l{font-size:12px;color:var(--sec);margin-top:2px}
 .section{margin:24px 0}
-.section h2{font-size:15px;font-weight:600;margin-bottom:10px;border-bottom:var(--border-width) solid var(--border);padding-bottom:4px}
-.rule-box{background:var(--color-surface);border:var(--border-width) solid var(--border);border-radius:var(--radius-md);padding:var(--space-md) var(--space-lg);font-size:13px;font-family:var(--font-mono);white-space:pre-wrap;word-break:break-all}
+.section h2{font-size:var(--text-subtitle);font-weight:600;margin-bottom:10px;border-bottom:var(--border-width) solid var(--border);padding-bottom:4px}
+.rule-box{background:var(--color-surface);border:var(--border-width) solid var(--border);border-radius:var(--radius-md);padding:var(--space-md) var(--space-lg);font-size:var(--text-body);font-family:var(--font-mono);white-space:pre-wrap;word-break:break-all}
 .engine-summary{font-size:12px;color:var(--sec);margin-top:8px;display:flex;flex-wrap:wrap;gap:8px}
 .engine-summary span{background:var(--color-surface);padding:3px 10px;border-radius:var(--radius-pill);border:var(--border-width) solid var(--border)}
 .tag-cloud{display:flex;flex-wrap:wrap;gap:6px}
 /* .tag-item → .tag (defined in design-tokens.css) */
-table{width:100%;border-collapse:collapse;font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:var(--text-body)}
 th{text-align:left;padding:8px;border-bottom:2px solid var(--border);color:var(--sec);font-size:11px;font-weight:600}
 td{padding:7px 8px;border-bottom:var(--border-width) solid var(--border)}
 tr:hover td{background:var(--card-bg)}
 summary{cursor:pointer;font-size:14px;font-weight:500;color:var(--sec);padding:8px 0}
 details{margin-bottom:8px}
-.placeholder{color:var(--sec);font-style:italic;font-size:13px}
+.placeholder{color:var(--sec);font-style:italic;font-size:var(--text-body)}
 .error{text-align:center;padding:40px;color:var(--red)}
 @media(max-width:600px){.cards{grid-template-columns:repeat(2,1fr)}}
 </style>
@@ -102,31 +102,31 @@ fetch('/admin/data/collection-details.json')
     var hasExclude = ruleObj.exclude_tags && ruleObj.exclude_tags.length;
 
     if(hasTags){
-        html += '<div style="margin-bottom:12px"><span style="font-weight:600;font-size:13px">包含全部标签</span>';
+        html += '<div style="margin-bottom:12px"><span style="font-weight:600;font-size:var(--text-body)">包含全部标签</span>';
         html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">';
         ruleObj.tags.forEach(function(t){html += '<span class="tag" style="background:var(--color-bg)">'+t+'</span>';});
         html += '</div></div>';
     }
     if(hasTagsOr){
-        html += '<div style="margin-bottom:12px"><span style="font-weight:600;font-size:13px">包含任一标签</span>';
+        html += '<div style="margin-bottom:12px"><span style="font-weight:600;font-size:var(--text-body)">包含任一标签</span>';
         html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">';
         ruleObj.tags_or.forEach(function(t){html += '<span class="tag" style="background:var(--color-bg)">'+t+'</span>';});
         html += '</div></div>';
     }
     if(hasCats){
-        html += '<div style="margin-bottom:12px"><span style="font-weight:600;font-size:13px">分类限制</span>';
+        html += '<div style="margin-bottom:12px"><span style="font-weight:600;font-size:var(--text-body)">分类限制</span>';
         html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">';
         ruleObj.cats.forEach(function(t){html += '<span class="tag" style="background:var(--color-bg)">'+t+'</span>';});
         html += '</div></div>';
     }
     if(hasExclude){
-        html += '<div style="margin-bottom:12px"><span style="font-weight:600;font-size:13px">排除标签</span>';
+        html += '<div style="margin-bottom:12px"><span style="font-weight:600;font-size:var(--text-body)">排除标签</span>';
         html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">';
         ruleObj.exclude_tags.forEach(function(t){html += '<span class="tag" style="background:var(--color-bg)">'+t+'</span>';});
         html += '</div></div>';
     }
     if(!hasTags && !hasTagsOr && !hasCats && !hasExclude){
-        html += '<span style="color:var(--sec);font-size:13px">无规则约束 (匹配全部资源)</span>';
+        html += '<span style="color:var(--sec);font-size:var(--text-body)">无规则约束 (匹配全部资源)</span>';
     }
     html += '</div></div>';
 
@@ -138,19 +138,19 @@ fetch('/admin/data/collection-details.json')
 
     // Compact match stats row
     html += '<div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:16px">';
-    html += '<div><span style="font-size:12px;color:var(--sec)">规则匹配</span><div style="font-size:20px;font-weight:700">'+c.engine_match+'</div></div>';
-    html += '<div><span style="font-size:12px;color:var(--sec)">数据库</span><div style="font-size:20px;font-weight:700">'+c.resource_count+'</div></div>';
-    html += '<div><span style="font-size:12px;color:var(--sec)">偏差</span><div style="font-size:20px;font-weight:700">'+c.engine_delta_pct+'%</div></div>';
-    html += '<div><span style="font-size:12px;color:var(--sec)">状态</span><div style="font-size:20px">'+deltaIcon+'</div></div>';
+    html += '<div><span style="font-size:12px;color:var(--sec)">规则匹配</span><div style="font-size:var(--text-section);font-weight:700">'+c.engine_match+'</div></div>';
+    html += '<div><span style="font-size:12px;color:var(--sec)">数据库</span><div style="font-size:var(--text-section);font-weight:700">'+c.resource_count+'</div></div>';
+    html += '<div><span style="font-size:12px;color:var(--sec)">偏差</span><div style="font-size:var(--text-section);font-weight:700">'+c.engine_delta_pct+'%</div></div>';
+    html += '<div><span style="font-size:12px;color:var(--sec)">状态</span><div style="font-size:var(--text-section)">'+deltaIcon+'</div></div>';
     html += '</div>';
 
     if(gap.type==='under'){
         html += '<div style="background:var(--color-warning-soft);border:var(--border-width) solid var(--color-warning);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:12px">';
-        html += '<div style="font-size:13px;font-weight:600;color:var(--color-warning);margin-bottom:4px">'+BPRC.icon('alert',{color:'warning'})+' 规则漏匹配 '+gap.missing_count+' 个资源</div>';
+        html += '<div style="font-size:var(--text-body);font-weight:600;color:var(--color-warning);margin-bottom:4px">'+BPRC.icon('alert',{color:'warning'})+' 规则漏匹配 '+gap.missing_count+' 个资源</div>';
         html += '<div style="font-size:12px;color:var(--sec);margin-bottom:8px">以下标签在漏匹配资源中高频出现。建议评估是否加入 rule_json。</div>';
         gap.missing_tags.forEach(function(t){
             html += '<div style="margin-bottom:6px">';
-            html += '<span style="font-weight:500;font-size:13px">'+t.name+'</span> <span style="font-size:11px;color:var(--sec)">('+t.count+' 次)</span>';
+            html += '<span style="font-weight:500;font-size:var(--text-body)">'+t.name+'</span> <span style="font-size:11px;color:var(--sec)">('+t.count+' 次)</span>';
             if(t.preview && t.preview.added > 0){
                 html += ' <span style="font-size:11px;color:var(--color-success);font-weight:500">预计 +'+t.preview.added+' 资源</span>';
             }
@@ -161,17 +161,17 @@ fetch('/admin/data/collection-details.json')
         html += '</div>';
     } else if(gap.type==='over'){
         html += '<div style="background:var(--color-danger-soft);border:var(--border-width) solid var(--color-danger);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:12px">';
-        html += '<div style="font-size:13px;font-weight:600;color:var(--color-danger);margin-bottom:4px">'+BPRC.icon('alert',{color:'danger'})+' 规则多匹配 '+gap.extra_count+' 个资源</div>';
+        html += '<div style="font-size:var(--text-body);font-weight:600;color:var(--color-danger);margin-bottom:4px">'+BPRC.icon('alert',{color:'danger'})+' 规则多匹配 '+gap.extra_count+' 个资源</div>';
         html += '<div style="font-size:12px;color:var(--sec);margin-bottom:8px">以下标签在多匹配资源中高频出现。建议评估是否通过 exclude_tags 排除。</div>';
         gap.extra_tags.forEach(function(t){
             html += '<div style="margin-bottom:6px">';
-            html += '<span style="font-weight:500;font-size:13px">'+t.name+'</span> <span style="font-size:11px;color:var(--sec)">('+t.count+' 次)</span>';
+            html += '<span style="font-weight:500;font-size:var(--text-body)">'+t.name+'</span> <span style="font-size:11px;color:var(--sec)">('+t.count+' 次)</span>';
             html += '<div style="font-size:11px;color:var(--sec);margin-top:2px">例: '+t.samples.slice(0,3).join(' &middot; ')+'</div>';
             html += '</div>';
         });
         html += '</div>';
     } else {
-        html += '<div style="background:var(--color-success-soft);border-radius:var(--radius-md);padding:12px var(--space-lg)"><span style="font-size:13px;font-weight:500;color:var(--color-success)">'+BPRC.icon('complete',{color:'success'})+' 规则精确匹配，无差距</span></div>';
+        html += '<div style="background:var(--color-success-soft);border-radius:var(--radius-md);padding:12px var(--space-lg)"><span style="font-size:var(--text-body);font-weight:500;color:var(--color-success)">'+BPRC.icon('complete',{color:'success'})+' 规则精确匹配，无差距</span></div>';
     }
     html += '</div></div>';
 
@@ -210,9 +210,9 @@ fetch('/admin/data/collection-details.json')
     var prev = idx > 0 ? data[idx-1] : null;
     var next = idx < data.length-1 ? data[idx+1] : null;
     html += '<div style="margin-top:var(--space-2xl);padding-top:var(--space-lg);border-top:var(--border-width) solid var(--border);display:flex;justify-content:space-between;align-items:center">';
-    html += '<span>'+(prev?'<a href="?id='+prev.id+'" style="font-size:13px">← '+prev.title+'</a>':'')+'</span>';
-    html += '<a href="/collection/'+c.id+'.html" style="color:var(--primary);font-size:13px">'+BPRC.icon('site',{color:'muted'})+' 前台页面</a>';
-    html += '<span>'+(next?'<a href="?id='+next.id+'" style="font-size:13px">'+next.title+' →</a>':'')+'</span>';
+    html += '<span>'+(prev?'<a href="?id='+prev.id+'" style="font-size:var(--text-body)">← '+prev.title+'</a>':'')+'</span>';
+    html += '<a href="/collection/'+c.id+'.html" style="color:var(--primary);font-size:var(--text-body)">'+BPRC.icon('site',{color:'muted'})+' 前台页面</a>';
+    html += '<span>'+(next?'<a href="?id='+next.id+'" style="font-size:var(--text-body)">'+next.title+' →</a>':'')+'</span>';
     html += '</div>';
 
     // ── Action Panel (context-aware) ──
@@ -243,7 +243,7 @@ fetch('/admin/data/collection-details.json')
     html += '<div style="border:var(--border-width) solid var(--border);border-radius:var(--radius-md);padding:var(--space-lg);background:var(--color-surface)">';
     actions.forEach(function(a){
         html += '<div style="margin-bottom:'+(a.cmd?'14px':'0')+'">';
-        html += '<div style="font-size:13px;font-weight:600;margin-bottom:2px">'+a.icon+' '+a.label+'</div>';
+        html += '<div style="font-size:var(--text-body);font-weight:600;margin-bottom:2px">'+a.icon+' '+a.label+'</div>';
         html += '<div style="font-size:12px;color:var(--sec)">'+a.detail+'</div>';
         if(a.cmd) html += '<div style="font-size:11px;color:var(--sec);font-family:monospace;margin-top:4px">'+BPRC.icon('cli',{color:'muted'})+' '+a.cmd+'</div>';
         html += '</div>';

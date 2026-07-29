@@ -12,27 +12,27 @@
 <style>
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;margin:0}
 .wrap{max-width:1000px;margin:0 auto;padding:24px 20px}
-h1{font-size:20px;font-weight:700;margin:0 0 4px}
+h1{font-size:var(--text-section);font-weight:700;margin:0 0 4px}
 .toolbar{display:flex;gap:10px;margin:12px 0;flex-wrap:wrap;align-items:center}
-.toolbar input,.toolbar select{padding:6px var(--space-md);border:var(--border-width) solid var(--border);border-radius:var(--radius-md);font-size:13px;background:var(--bg);color:var(--text);font-family:inherit}
+.toolbar input,.toolbar select{padding:6px var(--space-md);border:var(--border-width) solid var(--border);border-radius:var(--radius-md);font-size:var(--text-body);background:var(--bg);color:var(--text);font-family:inherit}
 .toolbar input{flex:1;min-width:200px;max-width:300px}
-table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:var(--text-body);margin-top:8px}
 th{text-align:left;padding:10px 8px;border-bottom:2px solid var(--border);color:var(--sec);font-size:11px;font-weight:600;cursor:pointer;user-select:none}
 th:hover{color:var(--primary)}
 th.sorted{color:var(--primary)}
 td{padding:9px 8px;border-bottom:var(--border-width) solid var(--border)}
 tr:hover td{background:var(--card-bg)}
 /* .badge — defined in design-tokens.css */
-.back{margin-top:20px;font-size:13px}
+.back{margin-top:20px;font-size:var(--text-body)}
 .back a{color:var(--primary)}
 .error{text-align:center;padding:40px;color:var(--color-danger)}
-.none{text-align:center;padding:20px;color:var(--sec);font-size:13px}
+.none{text-align:center;padding:20px;color:var(--sec);font-size:var(--text-body)}
 </style>
 </head>
 <body>
 <div class="wrap">
 <h1>专题管理</h1>
-<p style="color:var(--sec);font-size:13px;margin:0">只读 · 点击表头排序 · 搜索/筛选过滤</p>
+<p style="color:var(--sec);font-size:var(--text-body);margin:0">只读 · 点击表头排序 · 搜索/筛选过滤</p>
 <div class="toolbar">
     <input type="text" id="search" placeholder="搜索标题或 ID..." oninput="render()">
     <select id="qFilter" onchange="render()">

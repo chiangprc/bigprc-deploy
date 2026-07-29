@@ -36,6 +36,16 @@
     /* state */
     --opacity-disabled: 0.4;
 
+    /* type scale */
+    --text-caption:  11px;
+    --text-meta:     12px;
+    --text-body:     14px;
+    --text-subtitle: 16px;
+    --text-section:  18px;
+    --text-title:    22px;
+    --text-hero:     32px;
+    --text-display:  48px;
+
     /* typography */
     --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
     --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;

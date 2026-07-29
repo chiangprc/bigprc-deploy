@@ -7,7 +7,7 @@
     <link rel="preload" href="/index.json" as="fetch" crossorigin="anonymous">
 
     h1 { font-size: 22px; font-weight: 600; margin-bottom: 4px; text-align: center; }
-    .subtitle { font-size: 13px; color: var(--secondary); text-align: center; margin-bottom: 24px; }
+    .subtitle { font-size: var(--text-body); color: var(--secondary); text-align: center; margin-bottom: 24px; }
 
     .tags { text-align: center; margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
     .tags span {
@@ -30,7 +30,7 @@
     table { width: 100%; max-width: 800px; margin: 0 auto; border-collapse: collapse; }
     th { background: var(--card-bg); border-bottom: 2px solid var(--border); padding: 10px 8px; font-size: 12px; color: var(--secondary); cursor: pointer; user-select: none; font-weight: 500; }
     th:hover { color: var(--primary); }
-    td { padding: 10px 8px; border-bottom: var(--border-width) solid var(--border); text-align: center; font-size: 13px; }
+    td { padding: 10px 8px; border-bottom: var(--border-width) solid var(--border); text-align: center; font-size: var(--text-body); }
     tr:hover td { background: var(--card-bg); }
     td a { color: var(--text); }
 
@@ -42,7 +42,7 @@
 
     /* .page-btn → .btn.btn--ghost (defined in _tokens.css) */
     .btn--ghost { margin: 0 2px; min-width: 44px; }
-    #pageInfo { font-size: 13px; color: var(--secondary); margin: 0 8px; }
+    #pageInfo { font-size: var(--text-body); color: var(--secondary); margin: 0 8px; }
     .jump-input { width: 48px; padding: 6px; text-align: center; border: var(--border-width) solid var(--border); border-radius: var(--radius-md); background: var(--bg); color: var(--text); outline: none; font-family: inherit; }
     .jump-input:focus { border-color: var(--primary); }
 
@@ -99,7 +99,7 @@
         <span id="pageInfo"></span>
         <button class="btn btn--ghost" id="nextBtn">下一页</button>
         <button class="btn btn--ghost" id="lastBtn">尾页</button>
-        <span style="margin-left:10px;color:var(--secondary);font-size:13px;">
+        <span style="margin-left:10px;color:var(--secondary);font-size:var(--text-body);">
             跳至<input type="number" id="jumpInput" class="jump-input" min="1">页
             <button class="btn btn--ghost" id="jumpBtn" style="padding:4px 10px;">GO</button>
         </span>
@@ -107,7 +107,7 @@
     </div>
 
     <noscript>
-        <p style="color:var(--secondary);font-size:13px;text-align:center;margin-top:16px;">
+        <p style="color:var(--secondary);font-size:var(--text-body);text-align:center;margin-top:16px;">
             列表渲染依赖 JavaScript。请启用 JS 后刷新页面。
         </p>
     </noscript>

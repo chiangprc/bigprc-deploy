@@ -14,7 +14,7 @@
     }
     .info-item { background: var(--bg); padding: 14px 12px; text-align: center; }
     .info-item .label { font-size: 11px; color: var(--secondary); display: block; margin-bottom: 2px; }
-    .info-item .value { font-size: 13px; font-weight: 600; color: var(--text); }
+    .info-item .value { font-size: var(--text-body); font-weight: 600; color: var(--text); }
 
     /* .cta-button → .btn.btn--primary   (defined in _tokens.css) */
     /* .btn-sub    → .btn.btn--secondary (defined in _tokens.css) */
@@ -34,12 +34,12 @@
     .related-box { margin-top: 40px; border-top: 1px solid var(--border); padding-top: 24px; }
     .related-box h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--text); }
     .related-list { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 20px; }
-    .related-list a { font-size: 13px; color: var(--secondary); }
+    .related-list a { font-size: var(--text-body); color: var(--secondary); }
     .related-list a:hover { color: var(--primary); }
-    .rel-pill { display:inline-flex; align-items:center; gap:6px; padding:4px 14px; border:var(--border-width) solid var(--border); border-radius:var(--radius-pill); font-size:13px; color:var(--text); text-decoration:none; transition:border-color var(--transition-fast); }
+    .rel-pill { display:inline-flex; align-items:center; gap:6px; padding:4px 14px; border:var(--border-width) solid var(--border); border-radius:var(--radius-pill); font-size:var(--text-body); color:var(--text); text-decoration:none; transition:border-color var(--transition-fast); }
     .rel-pill:hover { border-color:var(--color-accent); text-decoration:none; }
 
-    .back-link { display: inline-block; margin-top: 32px; font-size: 13px; color: var(--secondary); }
+    .back-link { display: inline-block; margin-top: 32px; font-size: var(--text-body); color: var(--secondary); }
 
     @media (max-width: 768px) {
         .info-grid { grid-template-columns: 1fr 1fr; }

@@ -30,7 +30,7 @@
     /* Highlight grid — uses .card from layout */
     .hl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; padding: 0 0 32px; }
     .hl-card { text-decoration:none; }
-    .hl-card .n { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .hl-card .n { font-size: var(--text-body); font-weight: 600; color: var(--text); margin-bottom: 4px; }
     .hl-card .t { font-size: 12px; color: var(--secondary); line-height: 1.5; }
 
     /* Search bar */
@@ -42,7 +42,7 @@
     .ed-panel { margin-bottom:var(--space-2xl); border:var(--border-width) solid var(--border); border-radius:var(--radius-md); overflow:hidden; }
     .ed-panel-hd { background:var(--color-surface); padding:var(--space-lg) var(--space-xl); border-bottom:var(--border-width) solid var(--border); }
     .ed-panel-bd { padding:var(--space-lg) var(--space-xl); }
-    .ed-panel-title { font-size:15px; font-weight:700; margin:0 0 8px; color:var(--text); }
+    .ed-panel-title { font-size:var(--text-subtitle); font-weight:700; margin:0 0 8px; color:var(--text); }
     .ed-note { font-size:14px; color:var(--secondary); line-height:1.7; margin:0; }
     .ed-meta { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
     /* .ed-meta-tag → .tag (defined in _tokens.css) */
@@ -61,9 +61,9 @@
 
     /* Table (compact) */
     .rt { padding-bottom: 24px; }
-    .rt h3 { font-size: 15px; font-weight: 700; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+    .rt h3 { font-size: var(--text-subtitle); font-weight: 700; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
     .rt h3 .n { font-size: 12px; color: var(--secondary); font-weight: 400; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    table { width: 100%; border-collapse: collapse; font-size: var(--text-body); }
     th { background: var(--color-surface); padding: 10px 8px; font-size: 11px; color: var(--secondary); cursor: pointer; user-select: none; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; border-bottom: 2px solid var(--border); }
     th:hover { color: var(--accent); }
     td { padding: 9px 8px; border-bottom: var(--border-width) solid var(--border); }
@@ -87,7 +87,7 @@
     .faq details[open] { border-color: var(--accent); }
     .faq summary { cursor: pointer; font-size: 14px; font-weight: 500; outline: none; }
     .faq summary:hover { color: var(--accent); }
-    .faq .a { margin-top: 10px; font-size: 13px; color: var(--secondary); line-height: 1.7; }
+    .faq .a { margin-top: 10px; font-size: var(--text-body); color: var(--secondary); line-height: 1.7; }
 
     /* Related collections */
     .related-section { padding:var(--space-xl) 0; border-top:var(--border-width) solid var(--border); margin-top:var(--space-md); }

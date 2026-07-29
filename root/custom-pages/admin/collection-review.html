@@ -19,14 +19,14 @@ h1{font-size:22px;font-weight:700;margin-bottom:4px}
 .sum-item .n{font-size:28px;font-weight:700;color:var(--primary)}
 .sum-item .l{font-size:12px;color:var(--sec);margin-top:2px}
 .filters{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
-.filters button{padding:6px var(--space-lg);border:var(--border-width) solid var(--border);border-radius:var(--radius-pill);font-size:13px;cursor:pointer;background:var(--bg);color:var(--text);font-family:inherit}
+.filters button{padding:6px var(--space-lg);border:var(--border-width) solid var(--border);border-radius:var(--radius-pill);font-size:var(--text-body);cursor:pointer;background:var(--bg);color:var(--text);font-family:inherit}
 .filters button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
 .card{border:var(--border-width) solid var(--border);border-radius:var(--radius-md);padding:18px var(--space-xl);margin-bottom:var(--space-md);background:var(--color-surface);transition:border-color var(--transition-fast)}
 .card:hover{border-color:var(--color-accent)}
 .card .hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
-.card .hdr .tags{font-size:15px;font-weight:600}
+.card .hdr .tags{font-size:var(--text-subtitle);font-weight:600}
 /* .card .hdr .action — now uses .badge from design-tokens.css */
-.card .meta{font-size:13px;color:var(--sec);margin-bottom:6px;line-height:1.6}
+.card .meta{font-size:var(--text-body);color:var(--sec);margin-bottom:6px;line-height:1.6}
 .card .reason{font-size:12px;color:var(--sec);font-style:italic}
 .card .details{display:none;margin-top:12px;padding-top:12px;border-top:var(--border-width) solid var(--border)}
 .card .details.open{display:block}
@@ -43,7 +43,7 @@ h1{font-size:22px;font-weight:700;margin-bottom:4px}
 <body>
 <div class="wrap">
 <h1>Collection Review</h1>
-<p style="color:var(--sec);font-size:13px">专题发现审核面板 · 只读</p>
+<p style="color:var(--sec);font-size:var(--text-body)">专题发现审核面板 · 只读</p>
 <div class="summary" id="summary"></div>
 <div class="filters" id="filters"></div>
 <div id="content"><div class="loading">加载中...</div></div>
