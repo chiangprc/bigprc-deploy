@@ -21,8 +21,8 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 .status-dot{font-size:14px}
 .meta-box{margin-top:var(--space-2xl);padding:var(--space-md) var(--space-lg);background:var(--color-surface);border-radius:var(--radius-md);font-size:12px;color:var(--sec)}
 .links{margin-top:20px;display:flex;gap:16px;flex-wrap:wrap}
-.links a{padding:8px 18px;border:var(--border-width) solid var(--primary);border-radius:var(--radius-md);color:var(--primary);text-decoration:none;font-size:13px;font-weight:500;transition:all var(--transition-fast)}
-.links a:hover{background:var(--primary);color:#fff}
+/* .links a → .btn.btn--secondary (defined in design-tokens.css) */
+.links a { margin-right: 8px; }
 .error{text-align:center;padding:60px 20px;color:var(--color-danger)}
 </style>
 </head>
@@ -82,8 +82,8 @@ fetch('/admin/data/editorial.json')
     if(wf!=='rejected') hints.push('💡 python3 editorial_review.py --reject '+c.id);
 
     html+='<div class=links>'+
-      '<a href="/collection/'+c.id+'.html">🌐 前台页面</a>'+
-      '<a href="/admin/editorial.html">📊 编辑工作台</a>'+
+      '<a href="/collection/'+c.id+'.html" class="btn btn--secondary">🌐 前台页面</a>'+
+      '<a href="/admin/editorial.html" class="btn btn--secondary">📊 编辑工作台</a>'+
       '</div>';
 
     document.getElementById('content').innerHTML=html;

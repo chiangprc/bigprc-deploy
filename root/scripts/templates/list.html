@@ -40,13 +40,8 @@
     table th:nth-child(3), table td:nth-child(3) { text-align: center !important; }
     td a:hover { color: var(--primary); text-decoration: none; }
 
-    .page-btn {
-        padding: 8px 14px; background: var(--bg); border: var(--border-width) solid var(--border);
-        color: var(--text); border-radius: var(--radius-md); cursor: pointer; font-size: 13px; margin: 0 2px;
-        min-width: 44px; transition: all var(--transition-fast); font-family: inherit;
-    }
-    .page-btn:hover:not(:disabled) { border-color: var(--primary); }
-    .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    /* .page-btn → .btn.btn--ghost (defined in _tokens.css) */
+    .btn--ghost { margin: 0 2px; min-width: 44px; }
     #pageInfo { font-size: 13px; color: var(--secondary); margin: 0 8px; }
     .jump-input { width: 48px; padding: 6px; text-align: center; border: var(--border-width) solid var(--border); border-radius: var(--radius-md); background: var(--bg); color: var(--text); outline: none; font-family: inherit; }
     .jump-input:focus { border-color: var(--primary); }
@@ -58,7 +53,7 @@
         table { font-size: 12px; }
         th, td { padding: 8px 3px; }
         td a { display: inline-block; padding: 6px 2px; min-height: 44px; line-height: 32px; }
-        .page-btn { padding: 10px 12px; font-size: 14px; min-height: 44px; margin: 0 1px; }
+        .btn--ghost { padding: 10px 12px; font-size: 14px; min-height: 44px; margin: 0 1px; }
         .search-box input { font-size: 16px; }
         .jump-input { height: 40px; font-size: 14px; }
     }
@@ -99,14 +94,14 @@
     </div>
 
     <div id="pagination" style="text-align:center;margin-top:20px;">
-        <button class="page-btn" id="firstBtn">首页</button>
-        <button class="page-btn" id="prevBtn">上一页</button>
+        <button class="btn btn--ghost" id="firstBtn">首页</button>
+        <button class="btn btn--ghost" id="prevBtn">上一页</button>
         <span id="pageInfo"></span>
-        <button class="page-btn" id="nextBtn">下一页</button>
-        <button class="page-btn" id="lastBtn">尾页</button>
+        <button class="btn btn--ghost" id="nextBtn">下一页</button>
+        <button class="btn btn--ghost" id="lastBtn">尾页</button>
         <span style="margin-left:10px;color:var(--secondary);font-size:13px;">
             跳至<input type="number" id="jumpInput" class="jump-input" min="1">页
-            <button class="page-btn" id="jumpBtn" style="padding:4px 10px;">GO</button>
+            <button class="btn btn--ghost" id="jumpBtn" style="padding:4px 10px;">GO</button>
         </span>
     </div>
     </div>

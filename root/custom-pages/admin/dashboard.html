@@ -20,8 +20,8 @@ h1{font-size:20px;font-weight:700;margin:0 0 4px}
 .finding{display:flex;justify-content:space-between;padding:8px 12px;border-bottom:var(--border-width) solid var(--border);font-size:13px}
 /* .finding .action — now uses .badge from design-tokens.css */
 .links{display:flex;gap:16px;flex-wrap:wrap;margin-top:24px}
-.links a{display:inline-block;padding:10px 20px;border:var(--border-width) solid var(--primary);border-radius:var(--radius-md);color:var(--primary);text-decoration:none;font-size:13px;font-weight:500;transition:all var(--transition-fast)}
-.links a:hover{background:var(--primary);color:#fff}
+/* .links a → .btn.btn--secondary (defined in design-tokens.css) */
+.links a { margin-right: 8px; }
 .error{text-align:center;padding:40px;color:var(--color-danger)}
 @media(max-width:600px){.cards{grid-template-columns:repeat(2,1fr)}}
 </style>
@@ -65,10 +65,10 @@ fetch('/admin/data/dashboard.json')
     }
 
     html+='<div class=links>'+
-      '<a href="/admin/collection-review.html">📋 Discovery Review</a>'+
-      '<a href="/admin/collections.html">📚 专题管理</a>'+
-      '<a href="/admin/editorial.html">✍️ 编辑工作台</a>'+
-      '<a href="/collection/index.html">🌐 专题索引 (前台)</a>'+
+      '<a href="/admin/collection-review.html" class="btn btn--secondary">📋 Discovery Review</a>'+
+      '<a href="/admin/collections.html" class="btn btn--secondary">📚 专题管理</a>'+
+      '<a href="/admin/editorial.html" class="btn btn--secondary">✍️ 编辑工作台</a>'+
+      '<a href="/collection/index.html" class="btn btn--secondary">🌐 专题索引 (前台)</a>'+
       '</div>';
 
     document.getElementById('content').innerHTML=html;

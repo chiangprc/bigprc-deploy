@@ -24,8 +24,8 @@ tr:hover td{background:var(--card-bg)}
 .bar{height:8px;border-radius:var(--radius-sm);background:var(--border);min-width:80px;overflow:hidden}
 .bar-fill{height:100%;border-radius:var(--radius-sm);transition:width 0.3s}
 .links{display:flex;gap:16px;flex-wrap:wrap;margin-top:24px}
-.links a{padding:10px 20px;border:var(--border-width) solid var(--primary);border-radius:var(--radius-md);color:var(--primary);text-decoration:none;font-size:13px;font-weight:500;transition:all var(--transition-fast)}
-.links a:hover{background:var(--primary);color:#fff}
+/* .links a → .btn.btn--secondary (defined in design-tokens.css) */
+.links a { margin-right: 8px; }
 .error{text-align:center;padding:40px;color:var(--color-danger)}
 @media(max-width:600px){.cards{grid-template-columns:repeat(2,1fr)}}
 </style>
@@ -70,9 +70,9 @@ fetch('/admin/data/editorial.json')
     html+='</tbody></table></div>';
 
     html+='<div class=links>'+
-      '<a href="/admin/collections.html">📚 专题管理</a>'+
-      '<a href="/admin/collection-review.html">📋 Discovery Review</a>'+
-      '<a href="/admin/dashboard.html">📊 工作台</a>'+
+      '<a href="/admin/collections.html" class="btn btn--secondary">📚 专题管理</a>'+
+      '<a href="/admin/collection-review.html" class="btn btn--secondary">📋 Discovery Review</a>'+
+      '<a href="/admin/dashboard.html" class="btn btn--secondary">📊 工作台</a>'+
       '</div>';
 
     document.getElementById('content').innerHTML=html;

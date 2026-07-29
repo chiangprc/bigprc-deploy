@@ -11,16 +11,13 @@
     .progress-bar { width: 0; height: 1px; background: var(--primary); animation: pbar 5s linear forwards; }
     @keyframes pbar { to { width: 100%; } }
 
-    .cta-button {
-        padding: 14px 36px; font-size: 15px; font-weight: 600;
-        background: var(--cta); color: #fff; border: none; border-radius: 4px;
-        cursor: pointer; text-decoration: none;
+    /* .btn--primary base from _tokens.css; transit page adds reveal animation */
+    .btn--primary {
         opacity: 0; transform: translateY(6px);
         transition: opacity 0.4s ease, transform 0.4s ease;
         pointer-events: none;
     }
-    .cta-button:hover { opacity: 0.9; color: #fff; text-decoration: none; }
-    .cta-button.shown {
+    .btn--primary.shown {
         opacity: 1; transform: translateY(0);
         pointer-events: auto;
     }
@@ -40,7 +37,7 @@
 
     <p class="resource-name">{{ title }}</p>
 
-    <a href="/jump/{{ jump_id }}" id="enterBtn" class="cta-button" rel="nofollow">进入网盘</a>
+    <a href="/jump/{{ jump_id }}" id="enterBtn" class="btn btn--primary" rel="nofollow">进入网盘</a>
 
     <div class="transit-feedback">
         页面无法跳转？<a href="mailto:{{ admin_email }}?subject=%5B%E8%B7%B3%E8%BD%AC%E5%A4%B1%E6%95%88%5D%20{{ title }}%20({{ jump_id }})">反馈问题</a>
@@ -61,7 +58,7 @@
             countdownEl.style.display = 'none';
             document.querySelector('h2').textContent = '验证已通过';
             document.querySelector('.progress-wrap').style.display = 'none';
-            document.getElementById('enterBtn').classList.add('shown');
+            document.getElementById('enterBtn').classList.add('shown'); // .btn--primary.shown
         }
     }, 1000);
 

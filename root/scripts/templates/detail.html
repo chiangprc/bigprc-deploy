@@ -16,21 +16,10 @@
     .info-item .label { font-size: 11px; color: var(--secondary); display: block; margin-bottom: 2px; }
     .info-item .value { font-size: 13px; font-weight: 600; color: var(--text); }
 
-    .cta-button {
-        display: inline-block; padding: 14px 36px; font-size: 15px; font-weight: 600;
-        background: var(--cta); color: #fff; border: none; border-radius: var(--radius-md);
-        cursor: pointer; text-decoration: none; letter-spacing: 0.3px;
-        transition: opacity var(--transition-fast);
-    }
-    .cta-button:hover { opacity: 0.9; text-decoration: none; color: #fff; }
-    .cta-button:active { opacity: 0.8; }
-
-    .btn-sub {
-        display: inline-block; padding: 8px 20px; font-size: 12px;
-        border: var(--border-width) solid var(--border); color: var(--secondary);
-        border-radius: var(--radius-md); text-decoration: none; margin-top: 12px; transition: all var(--transition-fast);
-    }
-    .btn-sub:hover { border-color: var(--primary); color: var(--primary); text-decoration: none; }
+    /* .cta-button → .btn.btn--primary   (defined in _tokens.css) */
+    /* .btn-sub    → .btn.btn--secondary (defined in _tokens.css) */
+    .btn--primary { letter-spacing: 0.3px; font-weight: 600; }
+    .btn--secondary { margin-top: 12px; }
 
     .desc-box {
         padding: var(--space-lg); border: var(--border-width) solid var(--border); border-radius: var(--radius-md);
@@ -86,13 +75,13 @@
 
     <div style="text-align:center; margin-bottom: 24px;">
         {% if short_url %}
-        <a href="/go/{{ res_id }}_short_transit" class="cta-button" target="_blank" rel="nofollow">
+        <a href="/go/{{ res_id }}_short_transit" class="btn btn--primary" target="_blank" rel="nofollow">
             {{ drive_name }} 极速通道
         </a>
         <p style="font-size:12px;color:var(--secondary);margin-top:10px;">手机浏览器体验最佳</p>
-        <a href="/go/{{ res_id }}_transit" class="btn-sub" target="_blank" rel="nofollow">电脑端通道</a>
+        <a href="/go/{{ res_id }}_transit" class="btn btn--secondary" target="_blank" rel="nofollow">电脑端通道</a>
         {% elif normal_url %}
-        <a href="/go/{{ res_id }}_transit" class="cta-button" target="_blank" rel="nofollow">
+        <a href="/go/{{ res_id }}_transit" class="btn btn--primary" target="_blank" rel="nofollow">
             {{ drive_name }} 获取资源
         </a>
         {% else %}
