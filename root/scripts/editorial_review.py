@@ -74,7 +74,7 @@ def cmd_status(cursor, target=None):
         print("No collections found.")
         return
     for cid, title, st, has_en in rows:
-        icon = {'draft':'🟡','reviewed':'🔵','approved':'🟢','published':'✅','rejected':'🔴'}.get(st,'?')
+        icon = {'draft':'[draft]','reviewed':'[review]','approved':'[OK]','published':'[PUB]','rejected':'[REJ]'}.get(st,'?')
         print(f"  {icon} {st:10s}  {cid:25s}  {title}")
 
 

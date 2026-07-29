@@ -65,7 +65,7 @@ def cmd_list(cursor, cid):
         return
     print(f"  Spotlight: {cname[0]} ({len(rows)} resources)")
     for rid, rtitle in rows:
-        print(f"  🌟 {rid}  {rtitle}")
+        print(f"  [*] {rid}  {rtitle}")
 
 
 def cmd_list_all(cursor):

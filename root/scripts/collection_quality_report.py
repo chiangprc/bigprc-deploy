@@ -99,7 +99,7 @@ def print_terminal(report):
     print("  " + "─" * 72)
 
     for c in report["collections"]:
-        tag = "⭐" if c["featured"] else "  "
+        tag = "[*]" if c["featured"] else "   "
         print(f"  {tag} {c['title']:26s} {c['resource_count']:>9d} {c['exclusive_count']:>9d} {c['shared_count']:>6d} {c['coverage_pct']:>5.1f} {c['avg_tags']:>5.1f} {c['quality']:8s}")
 
     print()

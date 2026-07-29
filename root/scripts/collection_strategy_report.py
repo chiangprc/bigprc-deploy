@@ -192,7 +192,7 @@ def print_terminal(ranking, relations, stability):
     # Ranking
     print(f"\n── 首页推荐 Top 10 ──")
     for i, r in enumerate(ranking[:10]):
-        star = "⭐" if r["score"] >= 70 else "  "
+        star = "[*]" if r["score"] >= 70 else "   "
         print(f"  {i+1:2d}. {star} {r['title']:28s} score={r['score']:3d}  "
               f"({r['metrics']['resource_count']}资源, {r['metrics']['exclusive_ratio']}%独占)")
 
@@ -212,7 +212,7 @@ def print_terminal(ranking, relations, stability):
     # Stability
     print(f"\n── Rule 稳定性 ──")
     for r in stability:
-        icon = {"stable":"🟢","warning":"🟡","unstable":"🔴","empty":"⚪","broken":"💀"}.get(r["stability"],"?")
+        icon = {"stable":"[OK]","warning":"[WARN]","unstable":"[FAIL]","empty":"[---]","broken":"[DEAD]"}.get(r["stability"],"?")
         print(f"  {icon} {r['title']:28s} {r['detail']}")
 
     print()
