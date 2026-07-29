@@ -25,7 +25,7 @@
 
 {% for theme in themes %}
 <section class="theme-section">
-    <h2>{{ theme.name }}</h2>
+    <h2><i data-lucide="{{ theme.icon }}" class="icon-sm icon-muted"></i> {{ theme.name }}</h2>
     <div class="coll-grid">
     {% for c in theme.collections %}
         <div class="coll-card card{% if c.featured %} card--featured{% endif %}">

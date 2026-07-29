@@ -354,21 +354,22 @@ def build_collection_pages():
 
     # 生成专题索引页
     # Phase 10.3: Themed sections for collection index
+    # Phase 10.5: theme icons via Lucide (emoji removed from source)
     COLLECTION_THEMES = [
-        ("🌍 自然探索", ["bbc-nature","discovery-science","imax-doc","natgeo-nature","space-universe","ocean-wildlife"]),
-        ("📚 人文经典", ["taoist-classics","taoist-rituals","taoist-manuscripts","bbc-history","war-history"]),
-        ("🛠 效率工具", ["android-tools","windows-software","ai-tools","video-editing"]),
-        ("🎓 学习成长", ["english-learning"]),
+        ("自然探索", "globe",          ["bbc-nature","discovery-science","imax-doc","natgeo-nature","space-universe","ocean-wildlife"]),
+        ("人文经典", "library",         ["taoist-classics","taoist-rituals","taoist-manuscripts","bbc-history","war-history"]),
+        ("效率工具", "wrench",          ["android-tools","windows-software","ai-tools","video-editing"]),
+        ("学习成长", "graduation-cap",  ["english-learning"]),
     ]
     themed_ids = set()
     themes = []
-    for theme_name, theme_ids in COLLECTION_THEMES:
+    for theme_name, theme_icon, theme_ids in COLLECTION_THEMES:
         cards = [{"id": c["id"], "title": c["title"], "intro": c.get("intro",""),
                   "count": len(r["resources"]), "featured": c.get("is_featured",0)}
                  for c, r in [(item["coll"], item) for item in collections]
                  if c["id"] in theme_ids]
         if cards:
-            themes.append({"name": theme_name, "collections": cards})
+            themes.append({"name": theme_name, "icon": theme_icon, "collections": cards})
             themed_ids.update(theme_ids)
     # 其他探索: collections not in any theme
     other_cards = [{"id": c["id"], "title": c["title"], "intro": c.get("intro",""),
@@ -376,7 +377,7 @@ def build_collection_pages():
                    for c, r in [(item["coll"], item) for item in collections]
                    if c["id"] not in themed_ids]
     if other_cards:
-        themes.append({"name": "🔍 其他探索", "collections": other_cards})
+        themes.append({"name": "其他探索", "icon": "compass", "collections": other_cards})
 
     idx_template = Environment(loader=FileSystemLoader(_template_dir)).get_template('collection_index.html')
     total_count = sum(len(t["collections"]) for t in themes)

@@ -21,6 +21,9 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.svg">
     <script src="https://cdn.jsdelivr.net/npm/lucide@latest"></script>
     <script>
+    document.addEventListener('DOMContentLoaded', function(){
+        if(typeof lucide!=='undefined') lucide.createIcons();
+    });
     function trackEvent(name, data) {
         if (window.clarity) { try { clarity('event', name, data); } catch(e){} }
     }

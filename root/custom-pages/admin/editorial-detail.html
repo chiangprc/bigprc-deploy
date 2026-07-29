@@ -45,7 +45,7 @@ fetch('/admin/data/editorial.json')
   .then(function(d){
     var c=(d.collections||[]).find(function(x){return x.id===id});
     if(!c){
-      document.getElementById('content').innerHTML='<div class=error>📄 未找到专题: '+id+'<br><br><a href="/admin/editorial.html">← 返回编辑工作台</a></div>';
+      document.getElementById('content').innerHTML='<div class=error><i data-lucide="file-text" class="icon-sm icon-danger"></i> 未找到专题: '+id+'<br><br><a href="/admin/editorial.html">← 返回编辑工作台</a></div>';
       return;
     }
 
