@@ -7,7 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.svg">
 <link rel="stylesheet" href="/css/design-tokens.css">
-<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@latest"></script>
 <script src="/js/icon-system.js"></script>
 <style>
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;margin:0}
@@ -19,7 +19,7 @@ h1{font-size:var(--text-section);font-weight:700;margin:0 0 4px}
 .card .l{font-size:12px;color:var(--sec);margin-top:4px}
 .section{margin:24px 0}
 .section h2{font-size:16px;font-weight:600;margin-bottom:12px;border-bottom:var(--border-width) solid var(--border);padding-bottom:6px}
-table{width:100%;border-collapse:collapse;font-size:var(--text-body)}
+table{width:100%;border-collapse:collapse;font-size:13px}
 th{text-align:left;padding:10px 8px;border-bottom:2px solid var(--border);color:var(--sec);font-size:11px;font-weight:600}
 td{padding:9px 8px;border-bottom:var(--border-width) solid var(--border)}
 tr:hover td{background:var(--card-bg)}
@@ -80,7 +80,7 @@ fetch('/admin/data/editorial.json')
       '</div>';
 
     document.getElementById('content').innerHTML=html;
-    lucide.createIcons();
+    if(typeof lucide!=='undefined')lucide.createIcons();
 
     function statusIcon(st){
         if(st==='complete') return '<span title="已完成">'+BPRC.icon('success',{color:'success'})+'</span>';
@@ -95,7 +95,7 @@ fetch('/admin/data/editorial.json')
         return '<span title="草稿">'+BPRC.icon('warning',{color:'warning'})+'</span>';
     }
   })
-  .catch(function(e){document.getElementById('content').innerHTML='<div class=error><i data-lucide="x-circle" class="icon-sm icon-danger"></i> 加载失败: '+e.message+'<br><small>python3 collection_dashboard_export.py</small></div>';lucide.createIcons()});
+  .catch(function(e){document.getElementById('content').innerHTML='<div class=error><i data-lucide="x-circle" class="icon-sm icon-danger"></i> 加载失败: '+e.message+'<br><small>python3 collection_dashboard_export.py</small></div>';if(typeof lucide!=='undefined')lucide.createIcons()});
 </script>
 </body>
 </html>

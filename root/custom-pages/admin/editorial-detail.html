@@ -7,7 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.svg">
 <link rel="stylesheet" href="/css/design-tokens.css">
-<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@latest"></script>
 <script src="/js/icon-system.js"></script>
 <style>
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;margin:0}
@@ -91,7 +91,7 @@ fetch('/admin/data/editorial.json')
       '</div>';
 
     document.getElementById('content').innerHTML=html;
-    lucide.createIcons();
+    if(typeof lucide!=='undefined')lucide.createIcons();
 
     function card(label, text, has){
         var dot=has?BPRC.icon('success',{color:'success'}):BPRC.icon('danger',{color:'danger'});
@@ -102,7 +102,7 @@ fetch('/admin/data/editorial.json')
           '<div class="bd '+bodyClass+'">'+body+'</div></div>';
     }
   })
-  .catch(function(e){document.getElementById('content').innerHTML='<div class=error><i data-lucide="x-circle" class="icon-sm icon-danger"></i> 加载失败: '+e.message+'<br><small>python3 collection_dashboard_export.py</small></div>';lucide.createIcons()});
+  .catch(function(e){document.getElementById('content').innerHTML='<div class=error><i data-lucide="x-circle" class="icon-sm icon-danger"></i> 加载失败: '+e.message+'<br><small>python3 collection_dashboard_export.py</small></div>';if(typeof lucide!=='undefined')lucide.createIcons()});
 }
 </script>
 </body>

@@ -7,7 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.svg">
 <link rel="stylesheet" href="/css/design-tokens.css">
-<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@latest"></script>
 <script src="/js/icon-system.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -129,7 +129,7 @@ function renderCards() {
         h += '</div>';
     });
     document.getElementById('content').innerHTML = h || '<div class=loading>无匹配结果</div>';
-lucide.createIcons();
+if(typeof lucide!=='undefined')lucide.createIcons();
 }
 
 function T(el) {
@@ -142,7 +142,7 @@ function T(el) {
 fetch('/admin/data/review-data.json')
     .then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
     .then(function(d){allGroups=d.groups;renderSummary(d);renderCards()})
-    .catch(function(e){document.getElementById('content').innerHTML='<div class=error><i data-lucide="x-circle" class="icon-sm icon-danger"></i> 加载失败: '+e.message+'<br><small>请先运行: python3 collection_review_export.py</small></div>';lucide.createIcons()});
+    .catch(function(e){document.getElementById('content').innerHTML='<div class=error><i data-lucide="x-circle" class="icon-sm icon-danger"></i> 加载失败: '+e.message+'<br><small>请先运行: python3 collection_review_export.py</small></div>';if(typeof lucide!=='undefined')lucide.createIcons()});
 </script>
 </body>
 </html>

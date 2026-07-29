@@ -7,7 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.svg">
 <link rel="stylesheet" href="/css/design-tokens.css">
-<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@latest"></script>
 <script src="/js/icon-system.js"></script>
 <style>
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;margin:0}
@@ -16,7 +16,7 @@ h1{font-size:var(--text-section);font-weight:700;margin:0 0 4px}
 .toolbar{display:flex;gap:10px;margin:12px 0;flex-wrap:wrap;align-items:center}
 .toolbar input,.toolbar select{padding:6px var(--space-md);border:var(--border-width) solid var(--border);border-radius:var(--radius-md);font-size:var(--text-body);background:var(--bg);color:var(--text);font-family:inherit}
 .toolbar input{flex:1;min-width:200px;max-width:300px}
-table{width:100%;border-collapse:collapse;font-size:var(--text-body);margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
 th{text-align:left;padding:10px 8px;border-bottom:2px solid var(--border);color:var(--sec);font-size:11px;font-weight:600;cursor:pointer;user-select:none}
 th:hover{color:var(--primary)}
 th.sorted{color:var(--primary)}
@@ -99,8 +99,8 @@ function render(){
 }
 fetch('/admin/data/collections.json')
   .then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
-  .then(function(d){allData=d;return fetch('/admin/data/editorial.json').then(function(r){return r.json()}).then(function(e){if(e&&e.collections)e.collections.forEach(function(x){editorialMap[x.id]=x})})}).then(function(){render();lucide.createIcons()})
-  .catch(function(e){document.getElementById('content').innerHTML='<div class=error><i data-lucide="x-circle" class="icon-sm icon-danger"></i> 加载失败: '+e.message+'<br><small>python3 collection_dashboard_export.py</small></div>';lucide.createIcons()});
+  .then(function(d){allData=d;return fetch('/admin/data/editorial.json').then(function(r){return r.json()}).then(function(e){if(e&&e.collections)e.collections.forEach(function(x){editorialMap[x.id]=x})})}).then(function(){render();if(typeof lucide!=='undefined')lucide.createIcons()})
+  .catch(function(e){document.getElementById('content').innerHTML='<div class=error><i data-lucide="x-circle" class="icon-sm icon-danger"></i> 加载失败: '+e.message+'<br><small>python3 collection_dashboard_export.py</small></div>';if(typeof lucide!=='undefined')lucide.createIcons()});
 </script>
 </body>
 </html>
