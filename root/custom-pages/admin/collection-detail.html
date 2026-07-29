@@ -13,7 +13,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 .header h1{font-size:22px;font-weight:700;margin:0}
 .header .meta{font-size:13px;color:var(--sec);margin-top:4px}
 .header .badges{display:flex;gap:8px;margin-top:8px}
-.badge{padding:3px var(--space-md);border-radius:var(--radius-pill);font-size:11px;font-weight:500}
+/* .badge — defined in design-tokens.css */
 .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0}
 .card{text-align:center;padding:var(--space-lg);border-radius:var(--radius-md);border:var(--border-width) solid var(--border);background:var(--color-surface);transition:border-color var(--transition-fast)}
 .card .n{font-size:24px;font-weight:700;color:var(--primary)}
@@ -68,8 +68,8 @@ fetch('/admin/data/collection-details.json')
         return;
     }
 
-    var qColor = function(k){ var m={'CORE':{c:'var(--color-success)',bg:'var(--color-success-soft)'},'SOLID':{c:'var(--color-info)',bg:'var(--color-info-soft)'},'NICHE':{c:'var(--color-warning)',bg:'var(--color-warning-soft)'},'THIN':{c:'var(--color-danger)',bg:'var(--color-danger-soft)'},'EMPTY':{c:'var(--color-neutral)',bg:'var(--color-neutral-soft)'}}; return m[k]||m['EMPTY']; };
-    var hColor = function(k){ var m={'stable':{c:'var(--color-success)',bg:'var(--color-success-soft)'},'warning':{c:'var(--color-warning)',bg:'var(--color-warning-soft)'},'unstable':{c:'var(--color-danger)',bg:'var(--color-danger-soft)'},'empty':{c:'var(--color-neutral)',bg:'var(--color-neutral-soft)'},'broken':{c:'var(--color-danger)',bg:'var(--color-danger-soft)'}}; return m[k]||m['empty']; };
+    var qColor = function(k){ var m={'CORE':'success','SOLID':'info','NICHE':'warning','THIN':'danger','EMPTY':'neutral'}; return m[k]||'neutral'; };
+    var hColor = function(k){ var m={'stable':'success','warning':'warning','unstable':'danger','empty':'neutral','broken':'danger'}; return m[k]||'neutral'; };
     var ruleObj = c.rule||{};
     var ruleText = JSON.stringify(ruleObj, null, 2);
 
@@ -77,8 +77,8 @@ fetch('/admin/data/collection-details.json')
       '<h1>'+c.title+'</h1>'+
       '<div class=meta>'+c.id+(c.featured?' · ⭐ featured':'')+(c.auto_generated?' · auto':'')+'</div>'+
       '<div class=badges>'+
-        '<span class=badge style="background:'+qColor(c.quality).bg+';color:'+qColor(c.quality).c+'">'+c.quality+'</span>'+
-        '<span class=badge style="background:'+hColor(c.health).bg+';color:'+hColor(c.health).c+'">'+c.health+'</span>'+
+        '<span class="badge badge--'+qColor(c.quality)+'">'+c.quality+'</span>'+
+        '<span class="badge badge--'+hColor(c.health)+'">'+c.health+'</span>'+
       '</div></div>';
 
     html += '<div class=cards>'+

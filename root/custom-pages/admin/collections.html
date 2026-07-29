@@ -18,7 +18,7 @@ th:hover{color:var(--primary)}
 th.sorted{color:var(--primary)}
 td{padding:9px 8px;border-bottom:var(--border-width) solid var(--border)}
 tr:hover td{background:var(--card-bg)}
-.badge{padding:2px 10px;border-radius:var(--radius-pill);font-size:11px;font-weight:500;white-space:nowrap}
+/* .badge — defined in design-tokens.css */
 .back{margin-top:20px;font-size:13px}
 .back a{color:var(--primary)}
 .error{text-align:center;padding:40px;color:var(--color-danger)}
@@ -51,8 +51,8 @@ function editorialDot(id){
     if(e.status=="partial") return '<span title="partial">🟡</span>';
     return '<span title="empty">⚪</span>';
 }
-function qColor(k){var m={'CORE':{c:'var(--color-success)',bg:'var(--color-success-soft)'},'SOLID':{c:'var(--color-info)',bg:'var(--color-info-soft)'},'NICHE':{c:'var(--color-warning)',bg:'var(--color-warning-soft)'},'THIN':{c:'var(--color-danger)',bg:'var(--color-danger-soft)'},'EMPTY':{c:'var(--color-neutral)',bg:'var(--color-neutral-soft)'}};return m[k]||m['EMPTY']}
-function hColor(k){var m={'stable':{c:'var(--color-success)',bg:'var(--color-success-soft)'},'warning':{c:'var(--color-warning)',bg:'var(--color-warning-soft)'},'unstable':{c:'var(--color-danger)',bg:'var(--color-danger-soft)'},'empty':{c:'var(--color-neutral)',bg:'var(--color-neutral-soft)'},'broken':{c:'var(--color-danger)',bg:'var(--color-danger-soft)'}};return m[k]||m['empty']}
+function qColor(k){var m={'CORE':'success','SOLID':'info','NICHE':'warning','THIN':'danger','EMPTY':'neutral'};return m[k]||'neutral'}
+function hColor(k){var m={'stable':'success','warning':'warning','unstable':'danger','empty':'neutral','broken':'danger'};return m[k]||'neutral'}
 var allData=[], editorialMap={}, sortCol='resource_count', sortDir=-1;
 function S(col){
     if(sortCol===col) sortDir*=-1; else{sortCol=col;sortDir=-1}
@@ -85,8 +85,8 @@ function render(){
         html+='<tr>'+
           '<td><b>'+c.title+'</b> <span style="font-size:11px;color:var(--sec)">'+c.id+'</span></td>'+
           '<td>'+c.resource_count+'</td>'+
-          '<td><span class=badge style="background:'+qColor(c.quality).bg+';color:'+qColor(c.quality).c+'">'+c.quality+'</span></td>'+
-          '<td><span class=badge style="background:'+hColor(c.health).bg+';color:'+hColor(c.health).c+'">'+c.health+'</span></td>'+
+          '<td><span class="badge badge--'+qColor(c.quality)+'">'+c.quality+'</span></td>'+
+          '<td><span class="badge badge--'+hColor(c.health)+'">'+c.health+'</span></td>'+
           '<td>'+editorialDot(c.id)+'</td><td><a href="/admin/collection-detail.html?id='+c.id+'">详情 →</a></td>'+
           '</tr>';
     });

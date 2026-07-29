@@ -14,7 +14,7 @@
 
     /* Hero */
     .hero { text-align: center; padding: 52px 0 40px; }
-    .hero .badge { display: inline-block; padding: 4px 14px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; background: var(--accent-soft); color: var(--accent); margin-bottom: 16px; }
+    .hero .badge { padding: 4px 14px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 16px; background: var(--accent-soft); color: var(--accent); }
     .hero h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.3px; margin: 0 0 12px; line-height: 1.2; }
     .hero .desc { font-size: 16px; color: var(--secondary); line-height: 1.65; max-width: 540px; margin: 0 auto; }
     .hero .stat-row { display: flex; justify-content: center; gap: 24px; margin-top: 20px; flex-wrap: wrap; }
@@ -44,7 +44,7 @@
     .ed-panel-title { font-size:15px; font-weight:700; margin:0 0 8px; color:var(--text); }
     .ed-note { font-size:14px; color:var(--secondary); line-height:1.7; margin:0; }
     .ed-meta { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
-    .ed-meta-tag { font-size:11px; color:var(--secondary); background:var(--color-bg); padding:2px 10px; border-radius:var(--radius-pill); border:var(--border-width) solid var(--border); }
+    .ed-meta-tag { border:var(--border-width) solid var(--border); } /* uses .badge base from tokens */
     .ed-spotlight-title { font-size:14px; font-weight:700; margin:0 0 10px; color:var(--text); }
     .spotlight-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px; }
     .related-title { font-size:14px; font-weight:600; margin-bottom:10px; }
@@ -127,8 +127,8 @@
             <p class="ed-note">{{ editor_note[:150] }}{% if editor_note|length > 150 %}...{% endif %}</p>
             {% if why_collect or audience %}
             <div class="ed-meta">
-                {% if why_collect %}<span class="ed-meta-tag">{{ why_collect }}</span>{% endif %}
-                {% if audience %}<span class="ed-meta-tag">👥 {{ audience }}</span>{% endif %}
+                {% if why_collect %}<span class="badge badge--neutral ed-meta-tag">{{ why_collect }}</span>{% endif %}
+                {% if audience %}<span class="badge badge--neutral ed-meta-tag">👥 {{ audience }}</span>{% endif %}
             </div>
             {% endif %}
         </div>

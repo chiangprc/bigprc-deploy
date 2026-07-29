@@ -21,7 +21,7 @@ h1{font-size:22px;font-weight:700;margin-bottom:4px}
 .card:hover{border-color:var(--color-accent)}
 .card .hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
 .card .hdr .tags{font-size:15px;font-weight:600}
-.card .hdr .action{font-size:12px;font-weight:500;padding:3px 10px;border-radius:var(--radius-pill)}
+/* .card .hdr .action — now uses .badge from design-tokens.css */
 .card .meta{font-size:13px;color:var(--sec);margin-bottom:6px;line-height:1.6}
 .card .reason{font-size:12px;color:var(--sec);font-style:italic}
 .card .details{display:none;margin-top:12px;padding-top:12px;border-top:var(--border-width) solid var(--border)}
@@ -47,10 +47,9 @@ h1{font-size:22px;font-weight:700;margin-bottom:4px}
 <script>
 var allGroups = [], currentFilter = 'ALL', currentSort = 'match';
 
-function actionStyle(a) {
-    var m = {'KEEP':{bg:'var(--color-success-soft)',c:'var(--color-success)'},'EXPAND_RULE':{bg:'var(--color-warning-soft)',c:'var(--color-warning)'},'NEW_COLLECTION':{bg:'var(--color-info-soft)',c:'var(--color-info)'},'MERGE_REVIEW':{bg:'var(--color-danger-soft)',c:'var(--color-danger)'}};
-    var s = m[a];
-    return s ? 'background:'+s.bg+';color:'+s.c : '';
+function actionClass(a) {
+    var m = {'KEEP':'success','EXPAND_RULE':'warning','NEW_COLLECTION':'info','MERGE_REVIEW':'danger'};
+    return m[a] || 'neutral';
 }
 
 function renderSummary(d) {
@@ -97,7 +96,7 @@ function renderCards() {
     groups.forEach(function(g){
         var tags = g.candidate_tags.join(' ');
         h += '<div class="card '+g.action+'">' +
-            '<div class=hdr><span class=tags>'+tags+'</span><span class=action style="'+actionStyle(g.action)+'">'+g.action_label+'</span></div>' +
+            '<div class=hdr><span class=tags>'+tags+'</span><span class="badge badge--'+actionClass(g.action)+'">'+g.action_label+'</span></div>' +
             '<div class=meta>发现 <b>'+g.match_count+'</b> 条 · 覆盖 <b>'+g.covered_count+'</b> 条 · 未覆盖 <b>'+g.uncovered_count+'</b> 条 · 覆盖率 <b>'+g.coverage_pct+'%</b></div>' +
             '<div class=meta>最佳匹配: <b>'+(g.best_match?g.best_match.title:'—')+'</b>'+(g.best_match?' ('+g.best_match.covered_count+' 条)':'')+'</div>';
         if (g.representative_tags && g.representative_tags.length) {
