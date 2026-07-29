@@ -68,8 +68,8 @@ fetch('/admin/data/collection-details.json')
         return;
     }
 
-    var qColor = function(k){ var m={'CORE':'#1a6b4f','SOLID':'#4285f4','NICHE':'#f0a030','THIN':'#ea4335','EMPTY':'#999'}; return m[k]||'#999'; };
-    var hColor = function(k){ var m={'stable':'#1a6b4f','warning':'#f0a030','unstable':'#ea4335','empty':'#999','broken':'#c5221f'}; return m[k]||'#999'; };
+    var qColor = function(k){ var m={'CORE':{c:'var(--color-success)',bg:'var(--color-success-soft)'},'SOLID':{c:'var(--color-info)',bg:'var(--color-info-soft)'},'NICHE':{c:'var(--color-warning)',bg:'var(--color-warning-soft)'},'THIN':{c:'var(--color-danger)',bg:'var(--color-danger-soft)'},'EMPTY':{c:'var(--color-neutral)',bg:'var(--color-neutral-soft)'}}; return m[k]||m['EMPTY']; };
+    var hColor = function(k){ var m={'stable':{c:'var(--color-success)',bg:'var(--color-success-soft)'},'warning':{c:'var(--color-warning)',bg:'var(--color-warning-soft)'},'unstable':{c:'var(--color-danger)',bg:'var(--color-danger-soft)'},'empty':{c:'var(--color-neutral)',bg:'var(--color-neutral-soft)'},'broken':{c:'var(--color-danger)',bg:'var(--color-danger-soft)'}}; return m[k]||m['empty']; };
     var ruleObj = c.rule||{};
     var ruleText = JSON.stringify(ruleObj, null, 2);
 
@@ -77,8 +77,8 @@ fetch('/admin/data/collection-details.json')
       '<h1>'+c.title+'</h1>'+
       '<div class=meta>'+c.id+(c.featured?' · ⭐ featured':'')+(c.auto_generated?' · auto':'')+'</div>'+
       '<div class=badges>'+
-        '<span class=badge style="background:'+qColor(c.quality)+'20;color:'+qColor(c.quality)+'">'+c.quality+'</span>'+
-        '<span class=badge style="background:'+hColor(c.health)+'20;color:'+hColor(c.health)+'">'+c.health+'</span>'+
+        '<span class=badge style="background:'+qColor(c.quality).bg+';color:'+qColor(c.quality).c+'">'+c.quality+'</span>'+
+        '<span class=badge style="background:'+hColor(c.health).bg+';color:'+hColor(c.health).c+'">'+c.health+'</span>'+
       '</div></div>';
 
     html += '<div class=cards>'+
@@ -142,13 +142,13 @@ fetch('/admin/data/collection-details.json')
 
     if(gap.type==='under'){
         html += '<div style="background:var(--color-warning-soft);border:var(--border-width) solid var(--color-warning);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:12px">';
-        html += '<div style="font-size:13px;font-weight:600;color:#b06000;margin-bottom:4px">⚠ 规则漏匹配 '+gap.missing_count+' 个资源</div>';
+        html += '<div style="font-size:13px;font-weight:600;color:var(--color-warning);margin-bottom:4px">⚠ 规则漏匹配 '+gap.missing_count+' 个资源</div>';
         html += '<div style="font-size:12px;color:var(--sec);margin-bottom:8px">以下标签在漏匹配资源中高频出现。建议评估是否加入 rule_json。</div>';
         gap.missing_tags.forEach(function(t){
             html += '<div style="margin-bottom:6px">';
             html += '<span style="font-weight:500;font-size:13px">'+t.name+'</span> <span style="font-size:11px;color:var(--sec)">('+t.count+' 次)</span>';
             if(t.preview && t.preview.added > 0){
-                html += ' <span style="font-size:11px;color:#1a6b4f;font-weight:500">预计 +'+t.preview.added+' 资源</span>';
+                html += ' <span style="font-size:11px;color:var(--color-success);font-weight:500">预计 +'+t.preview.added+' 资源</span>';
             }
             html += '<div style="font-size:11px;color:var(--sec);margin-top:2px">例: '+t.samples.slice(0,3).join(' &middot; ')+'</div>';
             html += '</div>';
@@ -157,7 +157,7 @@ fetch('/admin/data/collection-details.json')
         html += '</div>';
     } else if(gap.type==='over'){
         html += '<div style="background:var(--color-danger-soft);border:var(--border-width) solid var(--color-danger);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:12px">';
-        html += '<div style="font-size:13px;font-weight:600;color:#c5221f;margin-bottom:4px">⚠ 规则多匹配 '+gap.extra_count+' 个资源</div>';
+        html += '<div style="font-size:13px;font-weight:600;color:var(--color-danger);margin-bottom:4px">⚠ 规则多匹配 '+gap.extra_count+' 个资源</div>';
         html += '<div style="font-size:12px;color:var(--sec);margin-bottom:8px">以下标签在多匹配资源中高频出现。建议评估是否通过 exclude_tags 排除。</div>';
         gap.extra_tags.forEach(function(t){
             html += '<div style="margin-bottom:6px">';

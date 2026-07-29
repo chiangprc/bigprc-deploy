@@ -26,7 +26,7 @@ tr:hover td{background:var(--card-bg)}
 .links{display:flex;gap:16px;flex-wrap:wrap;margin-top:24px}
 .links a{padding:10px 20px;border:var(--border-width) solid var(--primary);border-radius:var(--radius-md);color:var(--primary);text-decoration:none;font-size:13px;font-weight:500;transition:all var(--transition-fast)}
 .links a:hover{background:var(--primary);color:#fff}
-.error{text-align:center;padding:40px;color:#c0392b}
+.error{text-align:center;padding:40px;color:var(--color-danger)}
 @media(max-width:600px){.cards{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -55,7 +55,7 @@ fetch('/admin/data/editorial.json')
     html+='<div class=section><h2>编辑状态</h2><table><thead><tr><th>专题</th><th>完成</th><th>审核</th><th>编辑推荐</th><th>收藏理由</th><th>受众</th><th>亮点</th><th>完成度</th></tr></thead><tbody>';
     cols.forEach(function(c){
         var pct=c.pct_complete||0;
-        var barColor=pct===100?'#1a6b4f':pct>0?'#f0a030':'#ccc';
+        var barColor=pct===100?'var(--color-success)':pct>0?'var(--color-warning)':'var(--color-neutral)';
         html+='<tr>'+
           '<td><a href="/admin/editorial-detail.html?id='+c.id+'" style="color:var(--text);font-weight:600">'+c.title+'</a></td>'+
           '<td>'+statusIcon(c.status)+'</td>'+

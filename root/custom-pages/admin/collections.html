@@ -21,7 +21,7 @@ tr:hover td{background:var(--card-bg)}
 .badge{padding:2px 10px;border-radius:var(--radius-pill);font-size:11px;font-weight:500;white-space:nowrap}
 .back{margin-top:20px;font-size:13px}
 .back a{color:var(--primary)}
-.error{text-align:center;padding:40px;color:#c0392b}
+.error{text-align:center;padding:40px;color:var(--color-danger)}
 .none{text-align:center;padding:20px;color:var(--sec);font-size:13px}
 </style>
 </head>
@@ -51,8 +51,8 @@ function editorialDot(id){
     if(e.status=="partial") return '<span title="partial">🟡</span>';
     return '<span title="empty">⚪</span>';
 }
-function qColor(k){var m={'CORE':'#1a6b4f','SOLID':'#4285f4','NICHE':'#f0a030','THIN':'#ea4335','EMPTY':'#999'};return m[k]||'#999'}
-function hColor(k){var m={'stable':'#1a6b4f','warning':'#f0a030','unstable':'#ea4335','empty':'#999','broken':'#c5221f'};return m[k]||'#999'}
+function qColor(k){var m={'CORE':{c:'var(--color-success)',bg:'var(--color-success-soft)'},'SOLID':{c:'var(--color-info)',bg:'var(--color-info-soft)'},'NICHE':{c:'var(--color-warning)',bg:'var(--color-warning-soft)'},'THIN':{c:'var(--color-danger)',bg:'var(--color-danger-soft)'},'EMPTY':{c:'var(--color-neutral)',bg:'var(--color-neutral-soft)'}};return m[k]||m['EMPTY']}
+function hColor(k){var m={'stable':{c:'var(--color-success)',bg:'var(--color-success-soft)'},'warning':{c:'var(--color-warning)',bg:'var(--color-warning-soft)'},'unstable':{c:'var(--color-danger)',bg:'var(--color-danger-soft)'},'empty':{c:'var(--color-neutral)',bg:'var(--color-neutral-soft)'},'broken':{c:'var(--color-danger)',bg:'var(--color-danger-soft)'}};return m[k]||m['empty']}
 var allData=[], editorialMap={}, sortCol='resource_count', sortDir=-1;
 function S(col){
     if(sortCol===col) sortDir*=-1; else{sortCol=col;sortDir=-1}
@@ -85,8 +85,8 @@ function render(){
         html+='<tr>'+
           '<td><b>'+c.title+'</b> <span style="font-size:11px;color:var(--sec)">'+c.id+'</span></td>'+
           '<td>'+c.resource_count+'</td>'+
-          '<td><span class=badge style="background:'+qColor(c.quality)+'20;color:'+qColor(c.quality)+'">'+c.quality+'</span></td>'+
-          '<td><span class=badge style="background:'+hColor(c.health)+'20;color:'+hColor(c.health)+'">'+c.health+'</span></td>'+
+          '<td><span class=badge style="background:'+qColor(c.quality).bg+';color:'+qColor(c.quality).c+'">'+c.quality+'</span></td>'+
+          '<td><span class=badge style="background:'+hColor(c.health).bg+';color:'+hColor(c.health).c+'">'+c.health+'</span></td>'+
           '<td>'+editorialDot(c.id)+'</td><td><a href="/admin/collection-detail.html?id='+c.id+'">详情 →</a></td>'+
           '</tr>';
     });

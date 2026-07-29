@@ -32,7 +32,7 @@ h1{font-size:22px;font-weight:700;margin-bottom:4px}
 .sample-table th{text-align:left;padding:6px 8px;border-bottom:var(--border-width) solid var(--border);color:var(--sec);font-weight:500}
 .sample-table td{padding:6px 8px;border-bottom:var(--border-width) solid var(--border)}
 .loading{text-align:center;padding:40px;color:var(--sec)}
-.error{text-align:center;padding:40px;color:#c0392b}
+.error{text-align:center;padding:40px;color:var(--color-danger)}
 @media(max-width:600px){.summary{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -48,8 +48,9 @@ h1{font-size:22px;font-weight:700;margin-bottom:4px}
 var allGroups = [], currentFilter = 'ALL', currentSort = 'match';
 
 function actionStyle(a) {
-    var m = {'KEEP':'background:#e8f5e9;color:#1a6b4f','EXPAND_RULE':'background:#fef9f0;color:#b06000','NEW_COLLECTION':'background:#e8f0fe;color:#1a56db','MERGE_REVIEW':'background:#fde8e8;color:#c5221f'};
-    return m[a] || '';
+    var m = {'KEEP':{bg:'var(--color-success-soft)',c:'var(--color-success)'},'EXPAND_RULE':{bg:'var(--color-warning-soft)',c:'var(--color-warning)'},'NEW_COLLECTION':{bg:'var(--color-info-soft)',c:'var(--color-info)'},'MERGE_REVIEW':{bg:'var(--color-danger-soft)',c:'var(--color-danger)'}};
+    var s = m[a];
+    return s ? 'background:'+s.bg+';color:'+s.c : '';
 }
 
 function renderSummary(d) {
@@ -115,8 +116,8 @@ function renderCards() {
             h += '<span class=toggle onclick="T(this)">▶ 查看资源 ('+g.match_count+' 条)</span>';
             h += '<div class=details><table class=sample-table><tr><th></th><th>ID</th><th>标题</th><th>当前所属专题</th></tr>';
             g.resource_samples.forEach(function(s){
-                var dot = s.covered ? '<span style="color:#1a6b4f;font-weight:700">●</span>' : '<span style="color:#c0392b;font-weight:700">●</span>';
-                var colls = s.collections && s.collections.length ? s.collections.map(function(c){return c.title}).join(', ') : (s.covered ? '—' : '<span style="color:#c0392b">未归属</span>');
+                var dot = s.covered ? '<span style="color:var(--color-success);font-weight:700">●</span>' : '<span style="color:var(--color-danger);font-weight:700">●</span>';
+                var colls = s.collections && s.collections.length ? s.collections.map(function(c){return c.title}).join(', ') : (s.covered ? '—' : '<span style="color:var(--color-danger)">未归属</span>');
                 h += '<tr><td>'+dot+'</td><td>'+s.id+'</td><td><a href="/go/'+s.id+'">'+s.title+'</a></td><td>'+colls+'</td></tr>';
             });
             if (g.match_count > 20) h += '<tr><td colspan=4 style="color:var(--sec)">... 仅展示前 20 条，共 '+g.match_count+' 条</td></tr>';

@@ -22,7 +22,7 @@ h1{font-size:20px;font-weight:700;margin:0 0 4px}
 .links{display:flex;gap:16px;flex-wrap:wrap;margin-top:24px}
 .links a{display:inline-block;padding:10px 20px;border:var(--border-width) solid var(--primary);border-radius:var(--radius-md);color:var(--primary);text-decoration:none;font-size:13px;font-weight:500;transition:all var(--transition-fast)}
 .links a:hover{background:var(--primary);color:#fff}
-.error{text-align:center;padding:40px;color:#c0392b}
+.error{text-align:center;padding:40px;color:var(--color-danger)}
 @media(max-width:600px){.cards{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -58,7 +58,7 @@ fetch('/admin/data/dashboard.json')
     if(d.recent_findings.length){
       html+='<div class=section><h2>最近发现</h2>';
       d.recent_findings.forEach(function(f){
-        var c=f.action==='NEW_COLLECTION'?'#4285f4':'#f0a030';
+        var c=f.action==='NEW_COLLECTION'?'var(--color-info)':'var(--color-warning)';
         html+='<div class=finding><span>'+f.candidate_tags.join(' ')+' — '+f.match_count+' 资源</span><span class=action style="background:'+c+'20;color:'+c+'">'+f.action_label+'</span></div>';
       });
       html+='</div>';
