@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>专题详情 — BigPRC 编辑工作台</title>
+<link rel="stylesheet" href="/css/design-tokens.css">
 <style>
-:root{--bg:#fff;--text:#1a1a1a;--sec:#666;--border:#e5e5e5;--primary:#1a6b4f;--card-bg:#fafafa;--red:#c5221f;--amber:#f0a030;--blue:#4285f4}
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;margin:0}
 .wrap{max-width:900px;margin:0 auto;padding:24px 20px}
 .back{font-size:13px;margin-bottom:16px}
@@ -13,21 +13,21 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 .header h1{font-size:22px;font-weight:700;margin:0}
 .header .meta{font-size:13px;color:var(--sec);margin-top:4px}
 .header .badges{display:flex;gap:8px;margin-top:8px}
-.badge{padding:3px 12px;border-radius:10px;font-size:11px;font-weight:500}
+.badge{padding:3px var(--space-md);border-radius:var(--radius-pill);font-size:11px;font-weight:500}
 .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:20px 0}
-.card{text-align:center;padding:16px;border-radius:8px;border:1px solid var(--border)}
+.card{text-align:center;padding:var(--space-lg);border-radius:var(--radius-md);border:var(--border-width) solid var(--border);background:var(--color-surface);transition:border-color var(--transition-fast)}
 .card .n{font-size:24px;font-weight:700;color:var(--primary)}
 .card .l{font-size:12px;color:var(--sec);margin-top:2px}
 .section{margin:24px 0}
-.section h2{font-size:15px;font-weight:600;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:4px}
-.rule-box{background:var(--card-bg);border:1px solid var(--border);border-radius:6px;padding:12px 16px;font-size:13px;font-family:monospace;white-space:pre-wrap;word-break:break-all}
+.section h2{font-size:15px;font-weight:600;margin-bottom:10px;border-bottom:var(--border-width) solid var(--border);padding-bottom:4px}
+.rule-box{background:var(--color-surface);border:var(--border-width) solid var(--border);border-radius:var(--radius-md);padding:var(--space-md) var(--space-lg);font-size:13px;font-family:var(--font-mono);white-space:pre-wrap;word-break:break-all}
 .engine-summary{font-size:12px;color:var(--sec);margin-top:8px;display:flex;flex-wrap:wrap;gap:8px}
-.engine-summary span{background:var(--card-bg);padding:3px 10px;border-radius:8px;border:1px solid var(--border)}
+.engine-summary span{background:var(--color-surface);padding:3px 10px;border-radius:var(--radius-pill);border:var(--border-width) solid var(--border)}
 .tag-cloud{display:flex;flex-wrap:wrap;gap:6px}
-.tag-item{padding:3px 10px;border-radius:8px;font-size:12px;border:1px solid var(--border);color:var(--sec)}
+.tag-item{padding:3px 10px;border-radius:var(--radius-pill);font-size:12px;border:var(--border-width) solid var(--border);color:var(--sec)}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{text-align:left;padding:8px;border-bottom:2px solid var(--border);color:var(--sec);font-size:11px;font-weight:600}
-td{padding:7px 8px;border-bottom:1px solid var(--border)}
+td{padding:7px 8px;border-bottom:var(--border-width) solid var(--border)}
 tr:hover td{background:var(--card-bg)}
 summary{cursor:pointer;font-size:14px;font-weight:500;color:var(--sec);padding:8px 0}
 details{margin-bottom:8px}
@@ -48,7 +48,7 @@ if(!id){
       '<div style="font-size:48px;margin-bottom:16px">📚</div>'+
       '<div style="font-size:18px;font-weight:600;margin-bottom:8px;color:var(--text)">未选择专题</div>'+
       '<div style="font-size:14px;color:var(--sec);margin-bottom:24px">请先从「专题列表」选择一个专题进入</div>'+
-      '<a href="/admin/collections.html" style="display:inline-block;padding:10px 24px;border:1px solid var(--primary);border-radius:6px;color:var(--primary);text-decoration:none;font-size:14px;font-weight:500">← 返回专题列表</a>'+
+      '<a href="/admin/collections.html" style="display:inline-block;padding:10px 24px;border:var(--border-width) solid var(--primary);border-radius:var(--radius-md);color:var(--primary);text-decoration:none;font-size:14px;font-weight:500">← 返回专题列表</a>'+
       '</div>';
 }
 else{
@@ -60,10 +60,10 @@ fetch('/admin/data/collection-details.json')
         document.getElementById('content').innerHTML='<div style="text-align:center;padding:60px 20px">'+
           '<div style="font-size:48px;margin-bottom:16px">📄</div>'+
           '<div style="font-size:18px;font-weight:600;margin-bottom:8px;color:var(--text)">未找到专题</div>'+
-          '<div style="font-size:14px;color:var(--sec);margin-bottom:4px">专题 ID：<span style="font-family:monospace;background:var(--card-bg);padding:2px 8px;border-radius:4px">'+id+'</span></div>'+
+          '<div style="font-size:14px;color:var(--sec);margin-bottom:4px">专题 ID：<span style="font-family:var(--font-mono);background:var(--color-surface);padding:2px 8px;border-radius:var(--radius-sm)">'+id+'</span></div>'+
           '<div style="font-size:12px;color:var(--sec);margin-bottom:24px;line-height:1.8">'+
           '可能原因：<br>· 专题已删除<br>· 数据尚未重新导出<br>· URL 输入错误</div>'+
-          '<a href="/admin/collections.html" style="display:inline-block;padding:10px 24px;border:1px solid var(--primary);border-radius:6px;color:var(--primary);text-decoration:none;font-size:14px;font-weight:500">← 返回专题列表</a>'+
+          '<a href="/admin/collections.html" style="display:inline-block;padding:10px 24px;border:var(--border-width) solid var(--primary);border-radius:var(--radius-md);color:var(--primary);text-decoration:none;font-size:14px;font-weight:500">← 返回专题列表</a>'+
           '</div>';
         return;
     }
@@ -90,7 +90,7 @@ fetch('/admin/data/collection-details.json')
 
     // ── Rule Summary (自然语言, 默认展开) ──
     html += '<div class=section><h2>规则摘要</h2>';
-    html += '<div style="border:1px solid var(--border);border-radius:6px;padding:16px;background:var(--card-bg)">';
+    html += '<div style="border:var(--border-width) solid var(--border);border-radius:var(--radius-md);padding:var(--space-lg);background:var(--color-surface)">';
 
     var hasTags = ruleObj.tags && ruleObj.tags.length;
     var hasTagsOr = ruleObj.tags_or && ruleObj.tags_or.length;
@@ -100,25 +100,25 @@ fetch('/admin/data/collection-details.json')
     if(hasTags){
         html += '<div style="margin-bottom:12px"><span style="font-weight:600;font-size:13px">包含全部标签</span>';
         html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">';
-        ruleObj.tags.forEach(function(t){html += '<span style="background:var(--bg);padding:3px 10px;border-radius:8px;font-size:12px;border:1px solid var(--border)">'+t+'</span>';});
+        ruleObj.tags.forEach(function(t){html += '<span style="background:var(--color-bg);padding:3px 10px;border-radius:var(--radius-pill);font-size:12px;border:var(--border-width) solid var(--border)">'+t+'</span>';});
         html += '</div></div>';
     }
     if(hasTagsOr){
         html += '<div style="margin-bottom:12px"><span style="font-weight:600;font-size:13px">包含任一标签</span>';
         html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">';
-        ruleObj.tags_or.forEach(function(t){html += '<span style="background:var(--bg);padding:3px 10px;border-radius:8px;font-size:12px;border:1px solid var(--border)">'+t+'</span>';});
+        ruleObj.tags_or.forEach(function(t){html += '<span style="background:var(--color-bg);padding:3px 10px;border-radius:var(--radius-pill);font-size:12px;border:var(--border-width) solid var(--border)">'+t+'</span>';});
         html += '</div></div>';
     }
     if(hasCats){
         html += '<div style="margin-bottom:12px"><span style="font-weight:600;font-size:13px">分类限制</span>';
         html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">';
-        ruleObj.cats.forEach(function(t){html += '<span style="background:var(--bg);padding:3px 10px;border-radius:8px;font-size:12px;border:1px solid var(--border)">'+t+'</span>';});
+        ruleObj.cats.forEach(function(t){html += '<span style="background:var(--color-bg);padding:3px 10px;border-radius:var(--radius-pill);font-size:12px;border:var(--border-width) solid var(--border)">'+t+'</span>';});
         html += '</div></div>';
     }
     if(hasExclude){
         html += '<div style="margin-bottom:12px"><span style="font-weight:600;font-size:13px">排除标签</span>';
         html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">';
-        ruleObj.exclude_tags.forEach(function(t){html += '<span style="background:var(--bg);padding:3px 10px;border-radius:8px;font-size:12px;border:1px solid var(--border)">'+t+'</span>';});
+        ruleObj.exclude_tags.forEach(function(t){html += '<span style="background:var(--color-bg);padding:3px 10px;border-radius:var(--radius-pill);font-size:12px;border:var(--border-width) solid var(--border)">'+t+'</span>';});
         html += '</div></div>';
     }
     if(!hasTags && !hasTagsOr && !hasCats && !hasExclude){
@@ -130,7 +130,7 @@ fetch('/admin/data/collection-details.json')
     var gap = c.gap_evidence||{};
     var deltaIcon = c.health==='stable'?'🟢':c.health==='warning'?'🟡':'🔴';
     html += '<div class=section><h2>规则差距分析</h2>';
-    html += '<div style="border:1px solid var(--border);border-radius:6px;padding:16px;background:var(--card-bg)">';
+    html += '<div style="border:var(--border-width) solid var(--border);border-radius:var(--radius-md);padding:var(--space-lg);background:var(--color-surface)">';
 
     // Compact match stats row
     html += '<div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:16px">';
@@ -141,7 +141,7 @@ fetch('/admin/data/collection-details.json')
     html += '</div>';
 
     if(gap.type==='under'){
-        html += '<div style="background:#fef9f0;border:1px solid #f0a030;border-radius:6px;padding:14px 16px;margin-bottom:12px">';
+        html += '<div style="background:var(--color-warning-soft);border:var(--border-width) solid var(--color-warning);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:12px">';
         html += '<div style="font-size:13px;font-weight:600;color:#b06000;margin-bottom:4px">⚠ 规则漏匹配 '+gap.missing_count+' 个资源</div>';
         html += '<div style="font-size:12px;color:var(--sec);margin-bottom:8px">以下标签在漏匹配资源中高频出现。建议评估是否加入 rule_json。</div>';
         gap.missing_tags.forEach(function(t){
@@ -156,7 +156,7 @@ fetch('/admin/data/collection-details.json')
         html += '<div style="font-size:10px;color:var(--sec);margin-top:8px;font-style:italic">※ 预计效果为单独加入该标签后的模拟结果，多个标签同时调整时结果可能不同。</div>';
         html += '</div>';
     } else if(gap.type==='over'){
-        html += '<div style="background:#fde8e8;border:1px solid #ea4335;border-radius:6px;padding:14px 16px;margin-bottom:12px">';
+        html += '<div style="background:var(--color-danger-soft);border:var(--border-width) solid var(--color-danger);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:12px">';
         html += '<div style="font-size:13px;font-weight:600;color:#c5221f;margin-bottom:4px">⚠ 规则多匹配 '+gap.extra_count+' 个资源</div>';
         html += '<div style="font-size:12px;color:var(--sec);margin-bottom:8px">以下标签在多匹配资源中高频出现。建议评估是否通过 exclude_tags 排除。</div>';
         gap.extra_tags.forEach(function(t){
@@ -167,7 +167,7 @@ fetch('/admin/data/collection-details.json')
         });
         html += '</div>';
     } else {
-        html += '<div style="background:#e8f5e9;border-radius:6px;padding:12px 16px"><span style="font-size:13px;font-weight:500;color:#1a6b4f">✅ 规则精确匹配，无差距</span></div>';
+        html += '<div style="background:var(--color-success-soft);border-radius:var(--radius-md);padding:12px var(--space-lg)"><span style="font-size:13px;font-weight:500;color:var(--color-success)">✅ 规则精确匹配，无差距</span></div>';
     }
     html += '</div></div>';
 
@@ -205,7 +205,7 @@ fetch('/admin/data/collection-details.json')
     var idx = data.indexOf(c);
     var prev = idx > 0 ? data[idx-1] : null;
     var next = idx < data.length-1 ? data[idx+1] : null;
-    html += '<div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">';
+    html += '<div style="margin-top:var(--space-2xl);padding-top:var(--space-lg);border-top:var(--border-width) solid var(--border);display:flex;justify-content:space-between;align-items:center">';
     html += '<span>'+(prev?'<a href="?id='+prev.id+'" style="font-size:13px">← '+prev.title+'</a>':'')+'</span>';
     html += '<a href="/collection/'+c.id+'.html" style="color:var(--primary);font-size:13px">🌐 前台页面</a>';
     html += '<span>'+(next?'<a href="?id='+next.id+'" style="font-size:13px">'+next.title+' →</a>':'')+'</span>';
@@ -236,7 +236,7 @@ fetch('/admin/data/collection-details.json')
     }
 
     html += '<div class=section><h2>下一步操作</h2>';
-    html += '<div style="border:1px solid var(--border);border-radius:6px;padding:16px;background:var(--card-bg)">';
+    html += '<div style="border:var(--border-width) solid var(--border);border-radius:var(--radius-md);padding:var(--space-lg);background:var(--color-surface)">';
     actions.forEach(function(a){
         html += '<div style="margin-bottom:'+(a.cmd?'14px':'0')+'">';
         html += '<div style="font-size:13px;font-weight:600;margin-bottom:2px">'+a.icon+' '+a.label+'</div>';

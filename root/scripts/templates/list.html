@@ -11,9 +11,9 @@
 
     .tags { text-align: center; margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
     .tags span {
-        padding: 6px 14px; border-radius: 14px; font-size: 12px; cursor: pointer;
-        border: 1px solid var(--border); color: var(--secondary); background: var(--bg);
-        transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+        padding: 6px 14px; border-radius: var(--radius-pill); font-size: 12px; cursor: pointer;
+        border: var(--border-width) solid var(--border); color: var(--secondary); background: var(--bg);
+        transition: all var(--transition-fast); -webkit-tap-highlight-color: transparent;
     }
     .tags span.active { background: var(--primary); color: #fff; border-color: var(--primary); }
     .tags span:hover:not(.active) { border-color: var(--primary); color: var(--primary); }
@@ -21,7 +21,7 @@
     .search-box { text-align: center; margin-bottom: 20px; }
     .search-box input {
         width: 100%; max-width: 400px; height: 40px; padding: 0 16px;
-        font-size: 14px; border: 1px solid var(--border); border-radius: 4px;
+        font-size: 14px; border: var(--border-width) solid var(--border); border-radius: var(--radius-md);
         background: var(--bg); color: var(--text); outline: none; font-family: inherit;
         text-align: center;
     }
@@ -30,7 +30,7 @@
     table { width: 100%; max-width: 800px; margin: 0 auto; border-collapse: collapse; }
     th { background: var(--card-bg); border-bottom: 2px solid var(--border); padding: 10px 8px; font-size: 12px; color: var(--secondary); cursor: pointer; user-select: none; font-weight: 500; }
     th:hover { color: var(--primary); }
-    td { padding: 10px 8px; border-bottom: 1px solid var(--border); text-align: center; font-size: 13px; }
+    td { padding: 10px 8px; border-bottom: var(--border-width) solid var(--border); text-align: center; font-size: 13px; }
     tr:hover td { background: var(--card-bg); }
     td a { color: var(--text); }
 
@@ -41,14 +41,14 @@
     td a:hover { color: var(--primary); text-decoration: none; }
 
     .page-btn {
-        padding: 8px 14px; background: var(--bg); border: 1px solid var(--border);
-        color: var(--text); border-radius: 4px; cursor: pointer; font-size: 13px; margin: 0 2px;
-        min-width: 44px; transition: all 0.15s; font-family: inherit;
+        padding: 8px 14px; background: var(--bg); border: var(--border-width) solid var(--border);
+        color: var(--text); border-radius: var(--radius-md); cursor: pointer; font-size: 13px; margin: 0 2px;
+        min-width: 44px; transition: all var(--transition-fast); font-family: inherit;
     }
     .page-btn:hover:not(:disabled) { border-color: var(--primary); }
     .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
     #pageInfo { font-size: 13px; color: var(--secondary); margin: 0 8px; }
-    .jump-input { width: 48px; padding: 6px; text-align: center; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); outline: none; font-family: inherit; }
+    .jump-input { width: 48px; padding: 6px; text-align: center; border: var(--border-width) solid var(--border); border-radius: var(--radius-md); background: var(--bg); color: var(--text); outline: none; font-family: inherit; }
     .jump-input:focus { border-color: var(--primary); }
 
     .no-result { text-align: center; padding: 60px 20px; color: var(--secondary); }

@@ -1,0 +1,148 @@
+/* ============================================================
+   BigPRC Design System — Design Tokens
+   CANONICAL SOURCE OF TRUTH
+   ⚠  Do NOT edit copies manually.
+   ⚠  Edit HERE, then run: bash sync_tokens.sh
+   ============================================================
+   Phase 10.4A-1: Design Token Foundation
+   ============================================================ */
+
+/* ── Primitive Tokens ────────────────────────────────────── */
+:root {
+    /* spacing */
+    --space-xs:  4px;
+    --space-sm:  8px;
+    --space-md:  12px;
+    --space-lg:  16px;
+    --space-xl:  20px;
+    --space-2xl: 24px;
+    --space-3xl: 32px;
+
+    /* radius */
+    --radius-sm:   4px;
+    --radius-md:   8px;
+    --radius-pill: 999px;
+
+    /* border */
+    --border-width: 1px;
+
+    /* transition */
+    --transition-fast: 0.15s;
+
+    /* typography */
+    --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+/* ── Semantic Tokens — Light Theme ───────────────────────── */
+:root {
+    /* surface */
+    --color-bg:             #ffffff;
+    --color-surface:        #fafafa;
+
+    /* text */
+    --color-text:           #1a1a1a;
+    --color-text-secondary: #666666;
+
+    /* border */
+    --color-border:         #e5e5e5;
+
+    /* accent */
+    --color-accent:         #1a365d;
+    --color-accent-soft:    #e8edf3;
+
+    /* semantic: success / stable */
+    --color-success:        #1a6b4f;
+    --color-success-soft:   #e8f5e9;
+
+    /* semantic: warning / pending */
+    --color-warning:        #b06000;
+    --color-warning-soft:   #fef9f0;
+
+    /* semantic: danger / error */
+    --color-danger:         #c5221f;
+    --color-danger-soft:    #fde8e8;
+
+    /* semantic: info / neutral */
+    --color-info:           #1a56db;
+    --color-info-soft:      #e8f0fe;
+}
+
+/* ── Semantic Tokens — Dark Theme ────────────────────────── */
+[data-theme="dark"] {
+    --color-bg:             #121212;
+    --color-surface:        #1a1a1a;
+
+    --color-text:           #e0e0e0;
+    --color-text-secondary: #999999;
+
+    --color-border:         #2a2a2a;
+
+    --color-accent:         #5c9ce6;
+    --color-accent-soft:    #1a2a3a;
+
+    --color-success:        #4db88d;
+    --color-success-soft:   #1a2f24;
+
+    --color-warning:        #e0b050;
+    --color-warning-soft:   #2a2218;
+
+    --color-danger:         #e74c3c;
+    --color-danger-soft:    #2a1a1a;
+
+    --color-info:           #6b9fff;
+    --color-info-soft:      #1a2240;
+}
+
+/* ── Legacy Aliases (backward compatible, migrate gradually) */
+:root {
+    --bg:        var(--color-bg);
+    --text:      var(--color-text);
+    --secondary: var(--color-text-secondary);
+    --border:    var(--color-border);
+    --primary:   var(--color-accent);
+    --card-bg:   var(--color-surface);
+    --sec:       var(--color-text-secondary);
+    --red:       var(--color-danger);
+}
+
+[data-theme="dark"] {
+    --bg:        var(--color-bg);
+    --text:      var(--color-text);
+    --secondary: var(--color-text-secondary);
+    --border:    var(--color-border);
+    --primary:   var(--color-accent);
+    --card-bg:   var(--color-surface);
+    --sec:       var(--color-text-secondary);
+    --red:       var(--color-danger);
+}
+
+/* ── Component Token: Card (Phase 10.4A-2 will expand) ───── */
+.card {
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    transition: border-color var(--transition-fast);
+}
+.card:hover {
+    border-color: var(--color-accent);
+}
+
+.card--interactive {
+    cursor: pointer;
+}
+
+.card--static {
+    cursor: default;
+}
+.card--static:hover {
+    border-color: var(--color-border);
+}
+
+.card--featured {
+    border-color: var(--color-accent);
+}
+
+.card--compact {
+    padding: var(--space-lg);
+}

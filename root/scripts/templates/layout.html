@@ -33,24 +33,12 @@
     <meta name="twitter:card" content="summary">
 
     <style>
-        :root {
-            --bg: #ffffff;
-            --text: #1a1a1a;
-            --secondary: #666666;
-            --border: #e5e5e5;
-            --primary: #1a365d;
-            --cta: #c0392b;
-            --card-bg: #fafafa;
-        }
-        [data-theme="dark"] {
-            --bg: #121212;
-            --text: #e0e0e0;
-            --secondary: #999999;
-            --border: #2a2a2a;
-            --primary: #5c9ce6;
-            --cta: #e74c3c;
-            --card-bg: #1a1a1a;
-        }
+        /* Design Tokens (canonical: _tokens.css) */
+        {% include "_tokens.css" %}
+
+        /* CTA override — not part of Design Tokens */
+        :root { --cta: #c0392b; }
+        [data-theme="dark"] { --cta: #e74c3c; }
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; }
@@ -79,7 +67,7 @@
             position: sticky; top: 0; z-index: 100;
             display: flex; justify-content: space-between; align-items: center;
             height: 48px; background: var(--bg);
-            border-bottom: 1px solid var(--border);
+            border-bottom: var(--border-width) solid var(--border);
             padding: 0;
         }
         nav.topbar a, nav.topbar button {
@@ -95,7 +83,7 @@
         .content { max-width: 860px; margin: 0 auto; padding: 40px 20px 60px; }
         .footer {
             text-align: center; padding: 30px 20px; font-size: 12px; color: var(--secondary);
-            border-top: 1px solid var(--border);
+            border-top: var(--border-width) solid var(--border);
         }
         .footer a { color: var(--secondary); }
 
@@ -117,6 +105,9 @@
             .desc-box { border-left: 1px solid #ccc; background: none; padding-left: 12px; }
             @page { margin: 2cm; }
         }
+    /* Card modifiers — base .card is defined in _tokens.css */
+    .card { padding: var(--space-xl) var(--space-2xl); }
+    .card--compact { padding: var(--space-md) var(--space-lg); }
     </style>
 </head>
 <body>

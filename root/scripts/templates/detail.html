@@ -10,7 +10,7 @@
     .info-grid {
         display: grid; grid-template-columns: repeat(4, 1fr);
         gap: 1px; margin-bottom: 28px;
-        border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
+        border: var(--border-width) solid var(--border); border-radius: var(--radius-md); overflow: hidden;
     }
     .info-item { background: var(--bg); padding: 14px 12px; text-align: center; }
     .info-item .label { font-size: 11px; color: var(--secondary); display: block; margin-bottom: 2px; }
@@ -18,23 +18,23 @@
 
     .cta-button {
         display: inline-block; padding: 14px 36px; font-size: 15px; font-weight: 600;
-        background: var(--cta); color: #fff; border: none; border-radius: 4px;
+        background: var(--cta); color: #fff; border: none; border-radius: var(--radius-md);
         cursor: pointer; text-decoration: none; letter-spacing: 0.3px;
-        transition: opacity 0.15s;
+        transition: opacity var(--transition-fast);
     }
     .cta-button:hover { opacity: 0.9; text-decoration: none; color: #fff; }
     .cta-button:active { opacity: 0.8; }
 
     .btn-sub {
         display: inline-block; padding: 8px 20px; font-size: 12px;
-        border: 1px solid var(--border); color: var(--secondary);
-        border-radius: 4px; text-decoration: none; margin-top: 12px; transition: all 0.15s;
+        border: var(--border-width) solid var(--border); color: var(--secondary);
+        border-radius: var(--radius-md); text-decoration: none; margin-top: 12px; transition: all var(--transition-fast);
     }
     .btn-sub:hover { border-color: var(--primary); color: var(--primary); text-decoration: none; }
 
     .desc-box {
-        padding: 16px; border-left: 3px solid var(--primary);
-        margin: 24px 0; background: var(--card-bg); font-size: 14px;
+        padding: var(--space-lg); border: var(--border-width) solid var(--border); border-radius: var(--radius-md);
+        margin: var(--space-2xl) 0; background: var(--color-surface); font-size: 14px;
         line-height: 1.8; color: var(--text);
     }
     .ai-disclaimer { font-size: 11px; color: var(--secondary); text-align: right; margin-top: 8px; }
@@ -47,6 +47,8 @@
     .related-list { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 20px; }
     .related-list a { font-size: 13px; color: var(--secondary); }
     .related-list a:hover { color: var(--primary); }
+    .rel-pill { display:inline-flex; align-items:center; gap:6px; padding:4px 14px; border:var(--border-width) solid var(--border); border-radius:var(--radius-pill); font-size:13px; color:var(--text); text-decoration:none; transition:border-color var(--transition-fast); }
+    .rel-pill:hover { border-color:var(--color-accent); text-decoration:none; }
 
     .back-link { display: inline-block; margin-top: 32px; font-size: 13px; color: var(--secondary); }
 
@@ -115,11 +117,11 @@
     </div>
 
     {% if collections %}
-    <div class="related-box" style="margin-top:24px;border-top:1px solid var(--border);padding-top:20px;">
+    <div class="related-box" style="margin-top:24px;border-top:var(--border-width) solid var(--border);padding-top:20px;">
         <h3>精选专题</h3>
         <div class="related-list">
             {% for c in collections %}
-            <a href="/collection/{{ c.id }}.html" style="display:inline-flex;align-items:center;gap:6px;padding:4px 14px;border:1px solid var(--border);border-radius:14px;font-size:13px;color:var(--text);">
+            <a href="/collection/{{ c.id }}.html" class="rel-pill">
                 {{ c.title }}<span style="font-size:11px;color:var(--secondary);">{{ c.count }} 项</span>
             </a>
             {% endfor %}

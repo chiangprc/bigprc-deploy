@@ -7,13 +7,14 @@
 
 {% block extra_css %}
     <link rel="preload" href="/index.json" as="fetch" crossorigin="anonymous">
-    :root { --accent: #1a6b4f; --accent-soft: #e8f5e9; --warn: #f0a030; --warn-soft: #fef9f0; }
-    [data-theme="dark"] { --accent: #4db88d; --accent-soft: #1a2f24; --warn: #e0b050; --warn-soft: #2a2218; }
+    /* accent / warn — mapped to Design Tokens */
+    :root { --accent: var(--color-accent); --accent-soft: var(--color-accent-soft); --warn: var(--color-warning); --warn-soft: var(--color-warning-soft); }
+    [data-theme="dark"] { --accent: var(--color-accent); --accent-soft: var(--color-accent-soft); --warn: var(--color-warning); --warn-soft: var(--color-warning-soft); }
     .wrap { max-width: 780px; margin: 0 auto; padding: 0 20px; }
 
     /* Hero */
     .hero { text-align: center; padding: 52px 0 40px; }
-    .hero .badge { display: inline-block; padding: 4px 14px; border-radius: 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; background: var(--accent-soft); color: var(--accent); margin-bottom: 16px; }
+    .hero .badge { display: inline-block; padding: 4px 14px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; background: var(--accent-soft); color: var(--accent); margin-bottom: 16px; }
     .hero h1 { font-size: 32px; font-weight: 800; letter-spacing: -0.3px; margin: 0 0 12px; line-height: 1.2; }
     .hero .desc { font-size: 16px; color: var(--secondary); line-height: 1.65; max-width: 540px; margin: 0 auto; }
     .hero .stat-row { display: flex; justify-content: center; gap: 24px; margin-top: 20px; flex-wrap: wrap; }
@@ -21,36 +22,51 @@
     .hero .stat .n { font-size: 26px; font-weight: 700; color: var(--accent); }
     .hero .stat .l { font-size: 12px; color: var(--secondary); }
 
-    /* Editorial cards */
-    .ed { display: grid; gap: 14px; padding: 0 0 32px; }
-    .ed-card { border-radius: 10px; border: 1px solid var(--border); overflow: hidden; }
-    .ed-card .hd { padding: 16px 22px; border-bottom: 1px solid var(--border); background: var(--card-bg); font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-    .ed-card .bd { padding: 18px 22px; font-size: 15px; color: var(--secondary); line-height: 1.8; }
-    .ed-card .bd ul { padding-left: 18px; margin: 0; }
-    .ed-card .bd ul li { margin-bottom: 6px; }
-    .ed-card .bd ul li::marker { color: var(--accent); }
+    /* Hero tag row */
+    .tag-row { display:flex; justify-content:center; gap:8px; flex-wrap:wrap; margin-top:14px; }
+    .tag { padding:3px 12px; border-radius:var(--radius-pill); font-size:12px; background:var(--color-surface); border:var(--border-width) solid var(--border); color:var(--secondary); }
 
-    /* Highlight grid */
+    /* Highlight grid — uses .card from layout */
     .hl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; padding: 0 0 32px; }
-    .hl-card { border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; background: var(--card-bg); }
+    .hl-card { text-decoration:none; }
     .hl-card .n { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
     .hl-card .t { font-size: 12px; color: var(--secondary); line-height: 1.5; }
-    .hl-card:hover { border-color: var(--accent); }
 
     /* Search bar */
     .sbar { padding: 0 0 20px; }
-    .sbar input { width: 100%; height: 42px; padding: 0 16px; font-size: 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); outline: none; font-family: inherit; }
+    .sbar input { width: 100%; height: 42px; padding: 0 16px; font-size: 14px; border: var(--border-width) solid var(--border); border-radius: var(--radius-md); background: var(--color-bg); color: var(--text); outline: none; font-family: inherit; }
     .sbar input:focus { border-color: var(--accent); }
+
+    /* Editorial panel */
+    .ed-panel { margin-bottom:var(--space-2xl); border:var(--border-width) solid var(--border); border-radius:var(--radius-md); overflow:hidden; }
+    .ed-panel-hd { background:var(--color-surface); padding:var(--space-lg) var(--space-xl); border-bottom:var(--border-width) solid var(--border); }
+    .ed-panel-bd { padding:var(--space-lg) var(--space-xl); }
+    .ed-panel-title { font-size:15px; font-weight:700; margin:0 0 8px; color:var(--text); }
+    .ed-note { font-size:14px; color:var(--secondary); line-height:1.7; margin:0; }
+    .ed-meta { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+    .ed-meta-tag { font-size:11px; color:var(--secondary); background:var(--color-bg); padding:2px 10px; border-radius:var(--radius-pill); border:var(--border-width) solid var(--border); }
+    .ed-spotlight-title { font-size:14px; font-weight:700; margin:0 0 10px; color:var(--text); }
+    .spotlight-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px; }
+    .related-title { font-size:14px; font-weight:600; margin-bottom:10px; }
+    .related-links { display:flex; flex-wrap:wrap; gap:8px; }
+    .filter-label { font-size:12px; color:var(--sec); font-weight:500; }
+    .filter-count { font-size:11px; color:var(--sec); margin-left:4px; }
+    .hl-cat { margin-top:4px; }
+
+    /* Filter bar */
+    .filter-bar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding-bottom:var(--space-lg); }
+    .filter-pill { padding:4px 12px; border-radius:var(--radius-pill); font-size:12px; cursor:pointer; border:var(--border-width) solid var(--border); color:var(--secondary); background:var(--color-bg); transition:all var(--transition-fast); }
+    .filter-pill.active { background:var(--accent); color:#fff; border-color:var(--accent); }
 
     /* Table (compact) */
     .rt { padding-bottom: 24px; }
     .rt h3 { font-size: 15px; font-weight: 700; margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
     .rt h3 .n { font-size: 12px; color: var(--secondary); font-weight: 400; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th { background: var(--card-bg); padding: 10px 8px; font-size: 11px; color: var(--secondary); cursor: pointer; user-select: none; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; border-bottom: 2px solid var(--border); }
+    th { background: var(--color-surface); padding: 10px 8px; font-size: 11px; color: var(--secondary); cursor: pointer; user-select: none; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; border-bottom: 2px solid var(--border); }
     th:hover { color: var(--accent); }
-    td { padding: 9px 8px; border-bottom: 1px solid var(--border); }
-    tr:hover td { background: var(--card-bg); }
+    td { padding: 9px 8px; border-bottom: var(--border-width) solid var(--border); }
+    tr:hover td { background: var(--color-surface); }
     td a { color: var(--text); font-weight: 500; }
     td a:hover { color: var(--accent); text-decoration: none; }
     th:first-child, td:first-child { text-align: left; }
@@ -58,22 +74,27 @@
     th:nth-child(2), td:nth-child(2) { text-align: right; padding-right: 20px; width: 70px; }
 
     .pg { text-align: center; padding: 16px 0; }
-    .pg button { padding: 7px 14px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text); cursor: pointer; font-size: 12px; margin: 0 2px; font-family: inherit; }
+    .pg button { padding: 7px 14px; border: var(--border-width) solid var(--border); border-radius: var(--radius-md); background: var(--color-bg); color: var(--text); cursor: pointer; font-size: 12px; margin: 0 2px; font-family: inherit; }
     .pg button:hover:not(:disabled) { border-color: var(--accent); }
     .pg button:disabled { opacity: 0.3; cursor: not-allowed; }
     .pg .info { font-size: 12px; color: var(--secondary); margin: 0 6px; }
 
     /* FAQ */
-    .faq { border-top: 1px solid var(--border); padding: 32px 0 0; }
+    .faq { border-top: var(--border-width) solid var(--border); padding: var(--space-3xl) 0 0; }
     .faq h2 { font-size: 18px; font-weight: 700; margin: 0 0 16px; }
-    .faq details { background: var(--card-bg); border-radius: 8px; padding: 16px 20px; margin-bottom: 10px; border: 1px solid var(--border); transition: border-color 0.15s; }
+    .faq details { background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-lg) var(--space-xl); margin-bottom: 10px; border: var(--border-width) solid var(--border); transition: border-color var(--transition-fast); }
     .faq details[open] { border-color: var(--accent); }
     .faq summary { cursor: pointer; font-size: 14px; font-weight: 500; outline: none; }
     .faq summary:hover { color: var(--accent); }
     .faq .a { margin-top: 10px; font-size: 13px; color: var(--secondary); line-height: 1.7; }
 
+    /* Related collections */
+    .related-section { padding:var(--space-xl) 0; border-top:var(--border-width) solid var(--border); margin-top:var(--space-md); }
+    .pill-link { padding:6px 14px; border:var(--border-width) solid var(--border); border-radius:var(--radius-pill); font-size:12px; color:var(--text); text-decoration:none; display:inline-block; transition:border-color var(--transition-fast); }
+    .pill-link:hover { border-color:var(--accent); text-decoration:none; }
+
     /* Footer */
-    .ft { text-align: center; padding: 36px 0 48px; border-top: 1px solid var(--border); margin-top: 24px; }
+    .ft { text-align: center; padding: 36px 0 48px; border-top: var(--border-width) solid var(--border); margin-top: 24px; }
     .ft a { color: var(--primary); font-size: 14px; font-weight: 500; }
 
     @media (max-width: 600px) {
@@ -81,7 +102,6 @@
         .hero h1 { font-size: 24px; }
         .hero .desc { font-size: 14px; }
         .hl-grid { grid-template-columns: 1fr; }
-        .ed-card .hd, .ed-card .bd { padding: 14px 16px; }
     }
 {% endblock %}
 
@@ -92,7 +112,7 @@
         <div class="badge">BigPRC 策展</div>
         <h1>{{ coll_title }}</h1>
         {% if coll_intro %}<p class="desc">{{ coll_intro }}</p>{% endif %}
-        {% if cat_tags %}<div style="display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:14px;">{% for c in cat_tags %}<span style="padding:3px 12px;border-radius:12px;font-size:12px;background:var(--card-bg);border:1px solid var(--border);color:var(--secondary);">{{ c }}</span>{% endfor %}</div>{% endif %}
+        {% if cat_tags %}<div class="tag-row">{% for c in cat_tags %}<span class="tag">{{ c }}</span>{% endfor %}</div>{% endif %}
         <div class="stat-row">
             <div class="stat"><div class="n">{{ resources|length }}</div><div class="l">精选资源</div></div>
             <div class="stat"><div class="n">{{ (resources|map(attribute='category')|select|list|unique|list)|length }}</div><div class="l">覆盖分类</div></div>
@@ -101,25 +121,25 @@
 
     <!-- ── Curation Block: Editorial + Spotlight merged ── -->
     {% if editorial_status == 'published' and editor_note %}
-    <section style="margin-bottom:24px;border:1px solid var(--border);border-radius:10px;overflow:hidden">
-        <div style="background:var(--card-bg);padding:16px 20px;border-bottom:1px solid var(--border)">
-            <h2 style="font-size:15px;font-weight:700;margin:0 0 8px;color:var(--text)">📝 编辑视角</h2>
-            <p style="font-size:14px;color:var(--secondary);line-height:1.7;margin:0">{{ editor_note[:150] }}{% if editor_note|length > 150 %}...{% endif %}</p>
+    <section class="ed-panel">
+        <div class="ed-panel-hd">
+            <h2 class="ed-panel-title">📝 编辑视角</h2>
+            <p class="ed-note">{{ editor_note[:150] }}{% if editor_note|length > 150 %}...{% endif %}</p>
             {% if why_collect or audience %}
-            <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-                {% if why_collect %}<span style="font-size:11px;color:var(--sec);background:var(--bg);padding:2px 10px;border-radius:10px;border:1px solid var(--border)">{{ why_collect }}</span>{% endif %}
-                {% if audience %}<span style="font-size:11px;color:var(--sec);background:var(--bg);padding:2px 10px;border-radius:10px;border:1px solid var(--border)">👥 {{ audience }}</span>{% endif %}
+            <div class="ed-meta">
+                {% if why_collect %}<span class="ed-meta-tag">{{ why_collect }}</span>{% endif %}
+                {% if audience %}<span class="ed-meta-tag">👥 {{ audience }}</span>{% endif %}
             </div>
             {% endif %}
         </div>
         {% if spotlight_resources %}
-        <div style="padding:16px 20px">
-            <h3 style="font-size:14px;font-weight:700;margin:0 0 10px;color:var(--text)">🌟 编辑精选</h3>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
+        <div class="ed-panel-bd">
+            <h3 class="ed-spotlight-title">🌟 编辑精选</h3>
+            <div class="spotlight-grid">
             {% for r in spotlight_resources %}
-                <a href="/go/{{ r.res_id }}" class="hl-card" style="text-decoration:none">
+                <a href="/go/{{ r.res_id }}" class="hl-card">
                     <div class="t">{{ r.title }}</div>
-                    {% if r.category %}<div class="n" style="margin-top:4px">{{ r.category }}</div>{% endif %}
+                    {% if r.category %}<div class="n hl-cat">{{ r.category }}</div>{% endif %}
                 </a>
             {% endfor %}
             </div>
@@ -131,13 +151,13 @@
     <!-- ── Quick Filter ── -->
     {% set cats = resources | map(attribute='category') | reject('none') | unique | list %}
     {% if cats|length > 1 %}
-    <section style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-bottom:16px">
-        <span style="font-size:12px;color:var(--sec);font-weight:500">筛选:</span>
-        <span class="qf-pill active" onclick="FLT('')" style="padding:4px 12px;border-radius:12px;font-size:12px;cursor:pointer;border:1px solid var(--border);background:var(--primary);color:#fff">全部</span>
+    <section class="filter-bar">
+        <span class="filter-label">筛选:</span>
+        <span class="filter-pill active" onclick="FLT('')">全部</span>
         {% for cat in cats[:8] %}
-        <span class="qf-pill" onclick="FLT('{{ cat }}')" style="padding:4px 12px;border-radius:12px;font-size:12px;cursor:pointer;border:1px solid var(--border);color:var(--sec)">{{ cat }}</span>
+        <span class="filter-pill" onclick="FLT('{{ cat }}')">{{ cat }}</span>
         {% endfor %}
-        <span style="font-size:11px;color:var(--sec);margin-left:4px">{{ resources|length }} 个资源</span>
+        <span class="filter-count">{{ resources|length }} 个资源</span>
     </section>
     {% endif %}
 
@@ -153,11 +173,11 @@
 
     <!-- ── Related Collections (moved to navigation layer) ── -->
     {% if related_collections %}
-    <section style="padding:20px 0;border-top:1px solid var(--border);margin-top:12px">
-        <h3 style="font-size:14px;font-weight:600;margin-bottom:10px">🔗 探索更多专题</h3>
-        <div style="display:flex;flex-wrap:wrap;gap:8px">
+    <section class="related-section">
+        <h3 class="related-title">🔗 探索更多专题</h3>
+        <div class="related-links">
         {% for rc in related_collections %}
-            <a href="/collection/{{ rc.id }}.html" style="padding:6px 14px;border:1px solid var(--border);border-radius:14px;font-size:12px;color:var(--text);text-decoration:none">{{ rc.title }} ({{ rc.count }})</a>
+            <a href="/collection/{{ rc.id }}.html" class="pill-link">{{ rc.title }} ({{ rc.count }})</a>
         {% endfor %}
         </div>
     </section>
@@ -182,7 +202,7 @@
 <script>
 var R,PS=50,CP=1;
 (function(){R=Array.from(document.querySelectorAll('#resourceTable tbody tr'));P()})();
-function FLT(cat){var ps=document.querySelectorAll('.qf-pill');ps.forEach(function(p){var isActive=(p.textContent===cat||(cat===''&&p.textContent==='全部'));p.style.background=isActive?'var(--primary)':'';p.style.color=isActive?'#fff':'var(--sec)'});R.forEach(function(r){r.style.display=cat?(r.dataset.cat===cat?'':'none'):''});CP=1;P()}
+function FLT(cat){var ps=document.querySelectorAll('.filter-pill');ps.forEach(function(p){var isActive=(p.textContent===cat||(cat===''&&p.textContent==='全部'));p.className=isActive?'filter-pill active':'filter-pill'});R.forEach(function(r){r.style.display=cat?(r.dataset.cat===cat?'':'none'):''});CP=1;P()}
 function F(){var q=(document.getElementById('s').value||'').toLowerCase();R.forEach(function(r){r.style.display=q?(r.dataset.q.toLowerCase().indexOf(q)>=0?'':'none'):''});CP=1;P()}
 function S(c){var tb=document.querySelector('#resourceTable tbody'),rs=Array.from(tb.querySelectorAll('tr'));rs.sort(function(a,b){var va=(a.cells[c].textContent||'').trim(),vb=(b.cells[c].textContent||'').trim();if(c===1)return(parseFloat(va)||0)-(parseFloat(vb)||0);return va.localeCompare(vb,'zh')});rs.forEach(function(r){tb.appendChild(r)});R=rs;CP=1;P()}
 function P(){var t=R.length,p=Math.ceil(t/PS),s=(CP-1)*PS;R.forEach(function(r,i){r.style.display=(i>=s&&i<s+PS)?'':'none'});var h='';for(var i=1;i<=p;i++)h+='<button onclick=G('+i+')'+(i===CP?' disabled':'')+'>'+i+'</button>';document.getElementById('pg').innerHTML=h+'<span class=info>'+CP+'/'+p+'</span>'}

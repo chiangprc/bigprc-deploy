@@ -4,36 +4,33 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Collection Review — BigPRC 编辑部</title>
+<link rel="stylesheet" href="/css/design-tokens.css">
 <style>
-:root{--bg:#fff;--text:#1a1a1a;--sec:#666;--border:#e5e5e5;--primary:#1a6b4f;--card-bg:#fafafa;--green:#e8f5e9;--amber:#fef9f0;--blue:#e8f0fe;--red:#fde8e8}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
 h1{font-size:22px;font-weight:700;margin-bottom:4px}
 .wrap{max-width:900px;margin:0 auto;padding:32px 20px}
 .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0}
-.sum-item{text-align:center;padding:16px;border-radius:8px;border:1px solid var(--border)}
+.sum-item{text-align:center;padding:var(--space-lg);border-radius:var(--radius-md);border:var(--border-width) solid var(--border);background:var(--color-surface)}
 .sum-item .n{font-size:28px;font-weight:700;color:var(--primary)}
 .sum-item .l{font-size:12px;color:var(--sec);margin-top:2px}
 .filters{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
-.filters button{padding:6px 16px;border:1px solid var(--border);border-radius:16px;font-size:13px;cursor:pointer;background:var(--bg);color:var(--text);font-family:inherit}
+.filters button{padding:6px var(--space-lg);border:var(--border-width) solid var(--border);border-radius:var(--radius-pill);font-size:13px;cursor:pointer;background:var(--bg);color:var(--text);font-family:inherit}
 .filters button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
-.card{border:1px solid var(--border);border-radius:8px;padding:18px 20px;margin-bottom:12px;background:var(--card-bg)}
-.card.KEEP{border-left:3px solid var(--primary)}
-.card.EXPAND_RULE{border-left:3px solid #f0a030}
-.card.NEW_COLLECTION{border-left:3px solid #4285f4}
-.card.MERGE_REVIEW{border-left:3px solid #ea4335}
+.card{border:var(--border-width) solid var(--border);border-radius:var(--radius-md);padding:18px var(--space-xl);margin-bottom:var(--space-md);background:var(--color-surface);transition:border-color var(--transition-fast)}
+.card:hover{border-color:var(--color-accent)}
 .card .hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
 .card .hdr .tags{font-size:15px;font-weight:600}
-.card .hdr .action{font-size:12px;font-weight:500;padding:3px 10px;border-radius:12px}
+.card .hdr .action{font-size:12px;font-weight:500;padding:3px 10px;border-radius:var(--radius-pill)}
 .card .meta{font-size:13px;color:var(--sec);margin-bottom:6px;line-height:1.6}
 .card .reason{font-size:12px;color:var(--sec);font-style:italic}
-.card .details{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.card .details{display:none;margin-top:12px;padding-top:12px;border-top:var(--border-width) solid var(--border)}
 .card .details.open{display:block}
 .card .toggle{font-size:12px;color:var(--primary);cursor:pointer;margin-top:6px;display:inline-block}
 .card .toggle:hover{text-decoration:underline}
 .sample-table{width:100%;font-size:12px;border-collapse:collapse;margin-top:8px}
-.sample-table th{text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);color:var(--sec);font-weight:500}
-.sample-table td{padding:6px 8px;border-bottom:1px solid var(--border)}
+.sample-table th{text-align:left;padding:6px 8px;border-bottom:var(--border-width) solid var(--border);color:var(--sec);font-weight:500}
+.sample-table td{padding:6px 8px;border-bottom:var(--border-width) solid var(--border)}
 .loading{text-align:center;padding:40px;color:var(--sec)}
 .error{text-align:center;padding:40px;color:#c0392b}
 @media(max-width:600px){.summary{grid-template-columns:repeat(2,1fr)}}

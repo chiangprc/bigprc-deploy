@@ -4,27 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>编辑工作台 — BigPRC 编辑部</title>
+<link rel="stylesheet" href="/css/design-tokens.css">
 <style>
-:root{--bg:#fff;--text:#1a1a1a;--sec:#666;--border:#e5e5e5;--primary:#1a6b4f;--card-bg:#fafafa;--green:#e8f5e9;--amber:#fef9f0}
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;margin:0}
 .wrap{max-width:900px;margin:0 auto;padding:24px 20px}
 h1{font-size:20px;font-weight:700;margin:0 0 4px}
 .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
-.card{text-align:center;padding:20px 12px;border-radius:8px;border:1px solid var(--border)}
+.card{text-align:center;padding:var(--space-xl) var(--space-md);border-radius:var(--radius-md);border:var(--border-width) solid var(--border);background:var(--color-surface);transition:border-color var(--transition-fast)}
 .card .n{font-size:28px;font-weight:700;color:var(--primary)}
 .card .l{font-size:12px;color:var(--sec);margin-top:4px}
 .section{margin:24px 0}
-.section h2{font-size:16px;font-weight:600;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:6px}
+.section h2{font-size:16px;font-weight:600;margin-bottom:12px;border-bottom:var(--border-width) solid var(--border);padding-bottom:6px}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{text-align:left;padding:10px 8px;border-bottom:2px solid var(--border);color:var(--sec);font-size:11px;font-weight:600}
-td{padding:9px 8px;border-bottom:1px solid var(--border)}
+td{padding:9px 8px;border-bottom:var(--border-width) solid var(--border)}
 tr:hover td{background:var(--card-bg)}
 .dot{font-size:14px;text-align:center}
 .dot span{margin:0 2px}
-.bar{height:8px;border-radius:4px;background:var(--border);min-width:80px;overflow:hidden}
-.bar-fill{height:100%;border-radius:4px;transition:width 0.3s}
+.bar{height:8px;border-radius:var(--radius-sm);background:var(--border);min-width:80px;overflow:hidden}
+.bar-fill{height:100%;border-radius:var(--radius-sm);transition:width 0.3s}
 .links{display:flex;gap:16px;flex-wrap:wrap;margin-top:24px}
-.links a{padding:10px 20px;border:1px solid var(--primary);border-radius:6px;color:var(--primary);text-decoration:none;font-size:13px;font-weight:500}
+.links a{padding:10px 20px;border:var(--border-width) solid var(--primary);border-radius:var(--radius-md);color:var(--primary);text-decoration:none;font-size:13px;font-weight:500;transition:all var(--transition-fast)}
 .links a:hover{background:var(--primary);color:#fff}
 .error{text-align:center;padding:40px;color:#c0392b}
 @media(max-width:600px){.cards{grid-template-columns:repeat(2,1fr)}}
