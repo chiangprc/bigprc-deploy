@@ -5,7 +5,7 @@
 
 {% block extra_css %}
     .details { max-width: 680px; margin: 0 auto; }
-    h1 { font-size: 22px; font-weight: 600; margin-bottom: 24px; color: var(--text); text-align: center; }
+    h1 { font-size: var(--text-title); font-weight: 600; margin-bottom: 24px; color: var(--text); text-align: center; }
 
     .info-grid {
         display: grid; grid-template-columns: repeat(4, 1fr);
@@ -13,7 +13,7 @@
         border: var(--border-width) solid var(--border); border-radius: var(--radius-md); overflow: hidden;
     }
     .info-item { background: var(--bg); padding: 14px 12px; text-align: center; }
-    .info-item .label { font-size: 11px; color: var(--secondary); display: block; margin-bottom: 2px; }
+    .info-item .label { font-size: var(--text-caption); color: var(--secondary); display: block; margin-bottom: 2px; }
     .info-item .value { font-size: var(--text-body); font-weight: 600; color: var(--text); }
 
     /* .cta-button → .btn.btn--primary   (defined in _tokens.css) */
@@ -26,7 +26,7 @@
         margin: var(--space-2xl) 0; background: var(--color-surface); font-size: var(--text-body);
         line-height: 1.8; color: var(--text);
     }
-    .ai-disclaimer { font-size: 11px; color: var(--secondary); text-align: right; margin-top: 8px; }
+    .ai-disclaimer { font-size: var(--text-caption); color: var(--secondary); text-align: right; margin-top: 8px; }
 
     .feedback-row { text-align: center; margin-top: 16px; font-size: var(--text-meta); color: var(--secondary); }
     .feedback-row a { color: var(--secondary); }
@@ -111,7 +111,7 @@
         <div class="related-list">
             {% for c in collections %}
             <a href="/collection/{{ c.id }}.html" class="rel-pill">
-                {{ c.title }}<span style="font-size:11px;color:var(--secondary);">{{ c.count }} 项</span>
+                {{ c.title }}<span style="font-size:var(--text-caption);color:var(--secondary);">{{ c.count }} 项</span>
             </a>
             {% endfor %}
         </div>

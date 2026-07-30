@@ -15,12 +15,12 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 h1{font-size:var(--text-section);font-weight:700;margin:0 0 4px}
 .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
 .card{text-align:center;padding:var(--space-xl) var(--space-md);border-radius:var(--radius-md);border:var(--border-width) solid var(--border);background:var(--color-surface);transition:border-color var(--transition-fast)}
-.card .n{font-size:28px;font-weight:700;color:var(--primary)}
+.card .n{font-size:var(--text-hero);font-weight:700;color:var(--primary)}
 .card .l{font-size:var(--text-meta);color:var(--sec);margin-top:4px}
 .section{margin:24px 0}
-.section h2{font-size:16px;font-weight:600;margin-bottom:12px;border-bottom:var(--border-width) solid var(--border);padding-bottom:6px}
+.section h2{font-size:var(--text-section);font-weight:600;margin-bottom:12px;border-bottom:var(--border-width) solid var(--border);padding-bottom:6px}
 table{width:100%;border-collapse:collapse;font-size:13px}
-th{text-align:left;padding:10px 8px;border-bottom:2px solid var(--border);color:var(--sec);font-size:11px;font-weight:600}
+th{text-align:left;padding:10px 8px;border-bottom:2px solid var(--border);color:var(--sec);font-size:var(--text-caption);font-weight:600}
 td{padding:9px 8px;border-bottom:var(--border-width) solid var(--border)}
 tr:hover td{background:var(--card-bg)}
 .dot{font-size:var(--text-body);text-align:center}
@@ -68,7 +68,7 @@ fetch('/admin/data/editorial.json')
           '<td class=dot>'+dot(c.has_why_collect)+'</td>'+
           '<td class=dot>'+dot(c.has_audience)+'</td>'+
           '<td class=dot>'+dot(c.has_highlights)+'</td>'+
-          '<td style="min-width:120px"><div class=bar><div class=bar-fill style="width:'+pct+'%;background:'+barColor+'"></div></div><span style="font-size:11px;color:var(--sec)">'+pct+'%</span></td>'+
+          '<td style="min-width:120px"><div class=bar><div class=bar-fill style="width:'+pct+'%;background:'+barColor+'"></div></div><span style="font-size:var(--text-caption);color:var(--sec)">'+pct+'%</span></td>'+
           '</tr>';
     });
     html+='</tbody></table></div></div>';

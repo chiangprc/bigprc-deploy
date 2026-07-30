@@ -17,7 +17,7 @@ h1{font-size:var(--text-section);font-weight:700;margin:0 0 4px}
 .toolbar input,.toolbar select{padding:6px var(--space-md);border:var(--border-width) solid var(--border);border-radius:var(--radius-md);font-size:var(--text-body);background:var(--bg);color:var(--text);font-family:inherit}
 .toolbar input{flex:1;min-width:200px;max-width:300px}
 table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
-th{text-align:left;padding:10px 8px;border-bottom:2px solid var(--border);color:var(--sec);font-size:11px;font-weight:600;cursor:pointer;user-select:none}
+th{text-align:left;padding:10px 8px;border-bottom:2px solid var(--border);color:var(--sec);font-size:var(--text-caption);font-weight:600;cursor:pointer;user-select:none}
 th:hover{color:var(--primary)}
 th.sorted{color:var(--primary)}
 td{padding:9px 8px;border-bottom:var(--border-width) solid var(--border)}
@@ -87,7 +87,7 @@ function render(){
     if(!list.length){html+='<tr><td colspan=5 class=none>无匹配结果</td></tr>'}
     list.forEach(function(c){
         html+='<tr>'+
-          '<td><b>'+c.title+'</b> <span style="font-size:11px;color:var(--sec)">'+c.id+'</span></td>'+
+          '<td><b>'+c.title+'</b> <span style="font-size:var(--text-caption);color:var(--sec)">'+c.id+'</span></td>'+
           '<td>'+c.resource_count+'</td>'+
           '<td><span class="badge badge--'+qColor(c.quality)+'">'+c.quality+'</span></td>'+
           '<td><span class="badge badge--'+hColor(c.health)+'">'+c.health+'</span></td>'+
