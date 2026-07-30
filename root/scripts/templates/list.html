@@ -11,7 +11,7 @@
 
     .tags { text-align: center; margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
     .tags span {
-        padding: 6px 14px; border-radius: var(--radius-pill); font-size: 12px; cursor: pointer;
+        padding: 6px 14px; border-radius: var(--radius-pill); font-size: var(--text-meta); cursor: pointer;
         border: var(--border-width) solid var(--border); color: var(--secondary); background: var(--bg);
         transition: all var(--transition-fast); -webkit-tap-highlight-color: transparent;
     }
@@ -21,14 +21,14 @@
     .search-box { text-align: center; margin-bottom: 20px; }
     .search-box input {
         width: 100%; max-width: 400px; height: 40px; padding: 0 16px;
-        font-size: 14px; border: var(--border-width) solid var(--border); border-radius: var(--radius-md);
+        font-size: var(--text-body); border: var(--border-width) solid var(--border); border-radius: var(--radius-md);
         background: var(--bg); color: var(--text); outline: none; font-family: inherit;
         text-align: center;
     }
     .search-box input:focus { border-color: var(--primary); }
 
     table { width: 100%; max-width: 800px; margin: 0 auto; border-collapse: collapse; }
-    th { background: var(--card-bg); border-bottom: 2px solid var(--border); padding: 10px 8px; font-size: 12px; color: var(--secondary); cursor: pointer; user-select: none; font-weight: 500; }
+    th { background: var(--card-bg); border-bottom: 2px solid var(--border); padding: 10px 8px; font-size: var(--text-meta); color: var(--secondary); cursor: pointer; user-select: none; font-weight: 500; }
     th:hover { color: var(--primary); }
     td { padding: 10px 8px; border-bottom: var(--border-width) solid var(--border); text-align: center; font-size: 13px; }
     tr:hover td { background: var(--card-bg); }
@@ -50,12 +50,12 @@
 
     @media (max-width: 600px) {
         body { padding: 0; }
-        table { font-size: 12px; }
+        table { font-size: var(--text-meta); }
         th, td { padding: 8px 3px; }
         td a { display: inline-block; padding: 6px 2px; min-height: 44px; line-height: 32px; }
-        .btn--ghost { padding: 10px 12px; font-size: 14px; min-height: 44px; margin: 0 1px; }
+        .btn--ghost { padding: 10px 12px; font-size: var(--text-body); min-height: 44px; margin: 0 1px; }
         .search-box input { font-size: 16px; }
-        .jump-input { height: 40px; font-size: 14px; }
+        .jump-input { height: 40px; font-size: var(--text-body); }
     }
 {% endblock %}
 

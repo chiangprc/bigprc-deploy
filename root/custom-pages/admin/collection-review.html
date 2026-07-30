@@ -17,7 +17,7 @@ h1{font-size:22px;font-weight:700;margin-bottom:4px}
 .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:24px 0}
 .sum-item{text-align:center;padding:var(--space-lg);border-radius:var(--radius-md);border:var(--border-width) solid var(--border);background:var(--color-surface)}
 .sum-item .n{font-size:28px;font-weight:700;color:var(--primary)}
-.sum-item .l{font-size:12px;color:var(--sec);margin-top:2px}
+.sum-item .l{font-size:var(--text-meta);color:var(--sec);margin-top:2px}
 .filters{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
 .filters button{padding:6px var(--space-lg);border:var(--border-width) solid var(--border);border-radius:var(--radius-pill);font-size:var(--text-body);cursor:pointer;background:var(--bg);color:var(--text);font-family:inherit}
 .filters button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
@@ -27,12 +27,12 @@ h1{font-size:22px;font-weight:700;margin-bottom:4px}
 .card .hdr .tags{font-size:var(--text-subtitle);font-weight:600}
 /* .card .hdr .action — now uses .badge from design-tokens.css */
 .card .meta{font-size:var(--text-body);color:var(--sec);margin-bottom:6px;line-height:1.6}
-.card .reason{font-size:12px;color:var(--sec);font-style:italic}
+.card .reason{font-size:var(--text-meta);color:var(--sec);font-style:italic}
 .card .details{display:none;margin-top:12px;padding-top:12px;border-top:var(--border-width) solid var(--border)}
 .card .details.open{display:block}
-.card .toggle{font-size:12px;color:var(--primary);cursor:pointer;margin-top:6px;display:inline-block}
+.card .toggle{font-size:var(--text-meta);color:var(--primary);cursor:pointer;margin-top:6px;display:inline-block}
 .card .toggle:hover{text-decoration:underline}
-.sample-table{width:100%;font-size:12px;border-collapse:collapse;margin-top:8px}
+.sample-table{width:100%;font-size:var(--text-meta);border-collapse:collapse;margin-top:8px}
 .sample-table th{text-align:left;padding:6px 8px;border-bottom:var(--border-width) solid var(--border);color:var(--sec);font-weight:500}
 .sample-table td{padding:6px 8px;border-bottom:var(--border-width) solid var(--border)}
 .loading{text-align:center;padding:40px;color:var(--sec)}
@@ -92,7 +92,7 @@ function renderCards() {
     else groups.sort(function(a,b){return b.match_count - a.match_count});
 
     var h = '<div class="sort-row filters" style="margin-bottom:12px">' +
-        '<span style="font-size:12px;color:var(--sec);padding:6px 8px 6px 0">排序:</span>' +
+        '<span style="font-size:var(--text-meta);color:var(--sec);padding:6px 8px 6px 0">排序:</span>' +
         '<button class="'+(currentSort==='match'?'active':'')+'" onclick=S("match")">发现数量 ↓</button>' +
         '<button class="'+(currentSort==='uncovered'?'active':'')+'" onclick=S("uncovered")">未覆盖数量 ↓</button>' +
         '<button class="'+(currentSort==='coverage'?'active':'')+'" onclick=S("coverage")">覆盖率 ↑</button>' +
@@ -104,14 +104,14 @@ function renderCards() {
             '<div class=meta>发现 <b>'+g.match_count+'</b> 条 · 覆盖 <b>'+g.covered_count+'</b> 条 · 未覆盖 <b>'+g.uncovered_count+'</b> 条 · 覆盖率 <b>'+g.coverage_pct+'%</b></div>' +
             '<div class=meta>最佳匹配: <b>'+(g.best_match?g.best_match.title:'—')+'</b>'+(g.best_match?' ('+g.best_match.covered_count+' 条)':'')+'</div>';
         if (g.representative_tags && g.representative_tags.length) {
-            h += '<div class=meta style="font-size:12px;color:var(--sec)">标签: '+g.representative_tags.slice(0,8).join(' · ')+'</div>';
+            h += '<div class=meta style="font-size:var(--text-meta);color:var(--sec)">标签: '+g.representative_tags.slice(0,8).join(' · ')+'</div>';
         }
         h += '<div class=reason>'+g.reason+'</div>';
         if (g.group_id && g.action !== 'KEEP') {
             h += '<div style="font-size:11px;color:var(--sec);margin-top:4px;font-family:monospace">'+BPRC.icon('cli',{color:'muted'})+' python3 collection_rule_assist.py --preview '+g.group_id+'</div>';
         }
         if (g.top_matches && g.top_matches.length >= 2 && g.action === 'MERGE_REVIEW') {
-            h += '<div style="font-size:12px;color:var(--sec);margin-top:4px;">';
+            h += '<div style="font-size:var(--text-meta);color:var(--sec);margin-top:4px;">';
             g.top_matches.forEach(function(m){h += m.title + ' (' + m.covered_count + ') · ';});
             h += '</div>';
         }

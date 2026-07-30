@@ -23,16 +23,16 @@
 
     .desc-box {
         padding: var(--space-lg); border: var(--border-width) solid var(--border); border-radius: var(--radius-md);
-        margin: var(--space-2xl) 0; background: var(--color-surface); font-size: 14px;
+        margin: var(--space-2xl) 0; background: var(--color-surface); font-size: var(--text-body);
         line-height: 1.8; color: var(--text);
     }
     .ai-disclaimer { font-size: 11px; color: var(--secondary); text-align: right; margin-top: 8px; }
 
-    .feedback-row { text-align: center; margin-top: 16px; font-size: 12px; color: var(--secondary); }
+    .feedback-row { text-align: center; margin-top: 16px; font-size: var(--text-meta); color: var(--secondary); }
     .feedback-row a { color: var(--secondary); }
 
     .related-box { margin-top: 40px; border-top: var(--border-width) solid var(--border); padding-top: 24px; }
-    .related-box h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--text); }
+    .related-box h3 { font-size: var(--text-body); font-weight: 600; margin-bottom: 12px; color: var(--text); }
     .related-list { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 20px; }
     .related-list a { font-size: var(--text-body); color: var(--secondary); }
     .related-list a:hover { color: var(--primary); }
@@ -44,7 +44,7 @@
     @media (max-width: 768px) {
         .info-grid { grid-template-columns: 1fr 1fr; }
         h1 { font-size: 18px; }
-        .cta-button { padding: 12px 24px; font-size: 14px; }
+        .cta-button { padding: 12px 24px; font-size: var(--text-body); }
     }
 {% endblock %}
 
@@ -78,21 +78,21 @@
         <a href="/go/{{ res_id }}_short_transit" class="btn btn--primary" target="_blank" rel="nofollow">
             {{ drive_name }} 极速通道
         </a>
-        <p style="font-size:12px;color:var(--secondary);margin-top:10px;">手机浏览器体验最佳</p>
+        <p style="font-size:var(--text-meta);color:var(--secondary);margin-top:10px;">手机浏览器体验最佳</p>
         <a href="/go/{{ res_id }}_transit" class="btn btn--secondary" target="_blank" rel="nofollow">电脑端通道</a>
         {% elif normal_url %}
         <a href="/go/{{ res_id }}_transit" class="btn btn--primary" target="_blank" rel="nofollow">
             {{ drive_name }} 获取资源
         </a>
         {% else %}
-        <p style="color:var(--secondary);font-size:14px;">该资源暂无可用链接</p>
-        <p style="font-size:12px;">
+        <p style="color:var(--secondary);font-size:var(--text-body);">该资源暂无可用链接</p>
+        <p style="font-size:var(--text-meta);">
             <a href="mailto:{{ admin_email }}?subject=%5B%E9%93%BE%E6%8E%A5%E7%BC%BA%E5%A4%B1%5D%20{{ title }}%20({{ res_id }})" style="color:var(--secondary);">反馈缺失</a>
         </p>
         {% endif %}
     </div>
 
-    <p style="text-align:center;font-size:12px;color:var(--secondary);">收录于 BigPRC 数字资源策展库</p>
+    <p style="text-align:center;font-size:var(--text-meta);color:var(--secondary);">收录于 BigPRC 数字资源策展库</p>
 
     <div class="feedback-row">
         链接失效？<a href="mailto:{{ admin_email }}?subject=%5B%E5%A4%B1%E6%95%88%E5%8F%8D%E9%A6%88%5D%20{{ title }}%20({{ res_id }})">报告失效</a>
