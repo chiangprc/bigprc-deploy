@@ -16,7 +16,7 @@
     .hero { text-align: center; padding: 52px 0 40px; }
     .hero .badge { padding: 4px 14px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 16px; background: var(--accent-soft); color: var(--accent); }
     .hero h1 { font-size: var(--text-hero); font-weight: 800; letter-spacing: -0.3px; margin: 0 0 12px; line-height: 1.2; }
-    .hero .desc { font-size: 16px; color: var(--secondary); line-height: 1.65; max-width: 540px; margin: 0 auto; }
+    .hero .desc { font-size: var(--text-body); color: var(--secondary); line-height: 1.65; max-width: 540px; margin: 0 auto; }
     .hero .stat-row { display: flex; justify-content: center; gap: 24px; margin-top: 20px; flex-wrap: wrap; }
     .hero .stat { text-align: center; }
     .hero .stat .n { font-size: 26px; font-weight: 700; color: var(--accent); }
@@ -47,7 +47,7 @@
     .ed-meta { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
     /* .ed-meta-tag → .tag (defined in _tokens.css) */
     .ed-spotlight-title { font-size:var(--text-body); font-weight:700; margin:0 0 10px; color:var(--text); }
-    .spotlight-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px; }
+    .spotlight-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:var(--space-md); }
     .related-title { font-size:var(--text-body); font-weight:600; margin-bottom:10px; }
     .related-links { display:flex; flex-wrap:wrap; gap:8px; }
     .filter-label { font-size:var(--text-meta); color:var(--sec); font-weight:500; }
