@@ -41,7 +41,66 @@
 
     .back-link { display: inline-block; margin-top: 32px; font-size: var(--text-body); color: var(--secondary); }
 
+    /* Editor's Take panel — reuses Design System tokens */
+    .ed-take {
+        margin-bottom: var(--space-2xl);
+        border: var(--border-width) solid var(--color-border);
+        border-radius: var(--radius-md);
+        background: var(--color-surface);
+        overflow: hidden;
+    }
+    .ed-take-hd {
+        padding: var(--space-lg) var(--space-xl);
+        border-bottom: var(--border-width) solid var(--color-border);
+    }
+    .ed-take-title {
+        font-size: var(--text-body);
+        font-weight: 700;
+        color: var(--text);
+        margin: 0 0 8px;
+    }
+    .ed-take-rec {
+        font-size: var(--text-body);
+        color: var(--text);
+        line-height: 1.7;
+        margin: 0;
+    }
+    .ed-take-bd {
+        padding: var(--space-lg) var(--space-xl);
+    }
+    .ed-take-audience {
+        font-size: var(--text-body);
+        color: var(--text);
+        margin: 0 0 var(--space-md);
+    }
+    .ed-take-audience strong {
+        color: var(--color-text);
+        font-weight: 600;
+    }
+    .ed-take-list {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 var(--space-md);
+        font-size: var(--text-body);
+        color: var(--text);
+    }
+    .ed-take-list li {
+        padding: 2px 0;
+        line-height: 1.6;
+    }
+    .ed-take-list .plus { color: var(--color-accent); font-weight: 600; }
+    .ed-take-list .dot { color: var(--color-text-secondary); }
+    .ed-take-subtitle {
+        font-size: var(--text-meta);
+        font-weight: 600;
+        color: var(--color-text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin: 0 0 6px;
+    }
+
     @media (max-width: 768px) {
+        .ed-take-hd, .ed-take-bd { padding: var(--space-md); }
         .info-grid { grid-template-columns: 1fr 1fr; }
         h1 { font-size: var(--text-section); }
         .cta-button { padding: 12px 24px; font-size: var(--text-body); }
@@ -53,6 +112,38 @@
 <article class="details">
 
     <h1>{{ title }}</h1>
+    {% if tagline %}<p class="ed-take-rec" style="text-align:center;color:var(--secondary);margin-bottom:var(--space-2xl);">{{ tagline }}</p>{% endif %}
+
+    <!-- ── Editor's Take ── -->
+    {% if editorial_status == 'published' and editor_recommendation %}
+    <section class="ed-take">
+        <div class="ed-take-hd">
+            <h2 class="ed-take-title"><i data-lucide="pencil-line" class="icon-sm icon-muted"></i> 编辑推荐</h2>
+            <p class="ed-take-rec">{{ editor_recommendation }}</p>
+        </div>
+        <div class="ed-take-bd">
+            {% if target_audience %}
+            <p class="ed-take-audience"><strong>适合</strong> {{ target_audience }}</p>
+            {% endif %}
+            {% if strengths %}
+            <p class="ed-take-subtitle">推荐理由</p>
+            <ul class="ed-take-list">
+            {% for s in strengths %}
+                <li><span class="plus">+</span> {{ s }}</li>
+            {% endfor %}
+            </ul>
+            {% endif %}
+            {% if caveats %}
+            <p class="ed-take-subtitle">需要注意</p>
+            <ul class="ed-take-list">
+            {% for c in caveats %}
+                <li><span class="dot">·</span> {{ c }}</li>
+            {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+    </section>
+    {% endif %}
 
     <div class="info-grid">
         <div class="info-item">
