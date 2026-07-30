@@ -330,6 +330,106 @@ def pilot_report(conn):
         print(f"  Avg caveats:   {sum(c_counts)/len(c_counts):.1f}")
 
 
+# ── Production Metrics ───────────────────────────────────────
+def production_metrics(conn):
+    """Print production dashboard for editorial pipeline."""
+    cur = conn.cursor()
+
+    # Generation stats
+    cur.execute("""
+        SELECT
+            COUNT(*) as total_gen,
+            SUM(CASE WHEN editorial_status = 'draft' THEN 1 ELSE 0 END) as drafts,
+            SUM(CASE WHEN editorial_status = 'reviewed' THEN 1 ELSE 0 END) as reviewed,
+            SUM(CASE WHEN editorial_status = 'published' THEN 1 ELSE 0 END) as published,
+            SUM(CASE WHEN editorial_status = 'rejected' THEN 1 ELSE 0 END) as rejected,
+            AVG(LENGTH(editor_recommendation)) as avg_rec_len,
+            AVG(LENGTH(target_audience)) as avg_aud_len
+        FROM resources
+        WHERE editorial_status IS NOT NULL
+    """)
+    r = cur.fetchone()
+
+    # Model usage
+    cur.execute("""
+        SELECT ai_model, COUNT(*) as cnt
+        FROM resources
+        WHERE ai_model IS NOT NULL
+        GROUP BY ai_model ORDER BY cnt DESC
+    """)
+    models = cur.fetchall()
+
+    # Strengths/caveats averages
+    cur.execute("SELECT strengths, caveats FROM resources WHERE editorial_status IS NOT NULL")
+    s_lens, c_lens = [], []
+    for s, c in cur.fetchall():
+        try:
+            s_lens.append(len(json.loads(s)) if s else 0)
+            c_lens.append(len(json.loads(c)) if c else 0)
+        except json.JSONDecodeError:
+            pass
+
+    print("\n=== Editorial Production Metrics ===")
+    print(f"Total generated:     {r['total_gen'] or 0}")
+    print(f"  Draft:             {r['drafts'] or 0}")
+    print(f"  Reviewed:          {r['reviewed'] or 0}")
+    print(f"  Published:         {r['published'] or 0}")
+    print(f"  Rejected:          {r['rejected'] or 0}")
+    if r['total_gen']:
+        reject_rate = (r['rejected'] or 0) / r['total_gen'] * 100
+        publish_rate = (r['published'] or 0) / r['total_gen'] * 100
+        print(f"  Publish rate:      {publish_rate:.0f}%")
+        print(f"  Reject rate:       {reject_rate:.0f}%")
+    print(f"Avg rec length:      {r['avg_rec_len'] or 0:.0f} chars")
+    print(f"Avg audience length: {r['avg_aud_len'] or 0:.0f} chars")
+    if s_lens:
+        print(f"Avg strengths:       {sum(s_lens)/len(s_lens):.1f}")
+        print(f"Avg caveats:         {sum(c_lens)/len(c_lens):.1f}")
+    if models:
+        print(f"Model usage:")
+        for m, c in models:
+            print(f"  {m}: {c}")
+    print()
+
+    # Generation times
+    cur.execute("""
+        SELECT generated_at, reviewed_at
+        FROM resources
+        WHERE generated_at IS NOT NULL AND reviewed_at IS NOT NULL
+        LIMIT 20
+    """)
+    # Simple pass/fail thresholds
+    checks = []
+    if (r['published'] or 0) / max(r['total_gen'] or 1, 1) < 0.5:
+        checks.append("⚠ Publish rate < 50%")
+    if (r['rejected'] or 0) / max(r['total_gen'] or 1, 1) > 0.1:
+        checks.append("⚠ Reject rate > 10%")
+    if (r['avg_rec_len'] or 0) < 40:
+        checks.append("⚠ Avg recommendation < 40 chars (too short)")
+    if s_lens and sum(s_lens)/len(s_lens) < 2.0:
+        checks.append("⚠ Avg strengths < 2.0")
+    if c_lens and sum(c_lens)/len(c_lens) < 1.0:
+        checks.append("⚠ Avg caveats < 1.0")
+
+    if checks:
+        print("Quality Alerts:")
+        for c in checks:
+            print(f"  {c}")
+    else:
+        print("✅ All quality thresholds met.")
+
+    return {
+        "total": r['total_gen'] or 0,
+        "published": r['published'] or 0,
+        "rejected": r['rejected'] or 0,
+        "publish_rate": (r['published'] or 0) / max(r['total_gen'] or 1, 1),
+        "reject_rate": (r['rejected'] or 0) / max(r['total_gen'] or 1, 1),
+        "avg_rec_len": r['avg_rec_len'] or 0,
+        "avg_strengths": sum(s_lens)/len(s_lens) if s_lens else 0,
+        "avg_caveats": sum(c_lens)/len(c_lens) if c_lens else 0,
+    }
+
+
 # ── Export for Admin UI ──────────────────────────────────────
 def export_review_data(conn, out_path):
     """Export pending/reviewed editorial data for admin UI consumption."""
@@ -387,6 +487,7 @@ def main():
     parser.add_argument("--review", action="store_true", help="List drafts awaiting review")
     parser.add_argument("--publish", nargs="+", metavar="ID", help="Publish one or more resources")
     parser.add_argument("--report", action="store_true", help="Print pilot statistics")
+    parser.add_argument("--metrics", action="store_true", help="Print production metrics dashboard")
     parser.add_argument("--export", type=str, metavar="PATH", help="Export pending data as JSON for admin UI")
     args = parser.parse_args()
 
@@ -416,6 +517,10 @@ def main():
 
     if args.report:
         pilot_report(conn)
+        return
+
+    if args.metrics:
+        production_metrics(conn)
         return
 
     if args.export:
