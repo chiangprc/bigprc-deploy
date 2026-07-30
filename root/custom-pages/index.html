@@ -97,7 +97,7 @@
 
         main { display: flex; flex-direction: column; align-items: center; padding: 80px 20px 60px; min-height: calc(100vh - 48px); }
 
-        h1 { font-size: 36px; font-weight: 700; letter-spacing: 1px; color: var(--text); }
+        h1 { font-size: var(--text-hero); font-weight: 700; letter-spacing: 1px; color: var(--text); }
         .subtitle { font-size: var(--text-body); color: var(--secondary); margin: 8px 0 32px; }
 
         /* search */
@@ -168,7 +168,7 @@
         /* mobile search takeover */
         @media (max-width: 768px) {
             main { padding: 40px 16px 40px; }
-            h1 { font-size: 28px; }
+            h1 { font-size: var(--text-title); }
             .coll-grid { grid-template-columns: 1fr; }
             .search-wrap { max-width: 100%; }
             .is-searching main { padding: 16px; }
