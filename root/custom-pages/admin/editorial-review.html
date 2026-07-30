@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Editorial Review — BigPRC 编辑审核</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/apple-touch-icon.svg">
+<link rel="stylesheet" href="/css/design-tokens.css">
+<script src="https://cdn.jsdelivr.net/npm/lucide@latest"></script>
+<script src="/js/icon-system.js"></script>
+<style>
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;margin:0}
+.wrap{max-width:900px;margin:0 auto;padding:24px 20px}
+h1{font-size:var(--text-title);font-weight:700;margin:0 0 4px}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-md);margin:var(--space-2xl) 0}
+.sum-item{text-align:center;padding:var(--space-lg);border-radius:var(--radius-md);border:var(--border-width) solid var(--border);background:var(--color-surface)}
+.sum-item .n{font-size:var(--text-hero);font-weight:700;color:var(--color-accent)}
+.sum-item .l{font-size:var(--text-meta);color:var(--sec);margin-top:2px}
+
+.filters{display:flex;gap:8px;margin-bottom:var(--space-xl);flex-wrap:wrap}
+.filters button{padding:6px var(--space-lg);border:var(--border-width) solid var(--border);border-radius:var(--radius-pill);font-size:var(--text-body);cursor:pointer;background:var(--bg);color:var(--text);font-family:inherit;transition:all var(--transition-fast)}
+.filters button.active{background:var(--color-accent);color:#fff;border-color:var(--color-accent)}
+
+.ed-card{border:var(--border-width) solid var(--border);border-radius:var(--radius-md);margin-bottom:var(--space-lg);overflow:hidden;background:var(--color-surface)}
+.ed-card .hd{background:var(--color-surface);padding:var(--space-md) var(--space-xl);border-bottom:var(--border-width) solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:var(--space-md)}
+.ed-card .hd .title{font-size:var(--text-subtitle);font-weight:600;color:var(--text);flex:1}
+.ed-card .hd .meta{font-size:var(--text-caption);color:var(--sec);white-space:nowrap}
+.ed-card .bd{padding:var(--space-lg) var(--space-xl)}
+.ed-field{margin-bottom:var(--space-md)}
+.ed-field:last-child{margin-bottom:0}
+.ed-field-label{font-size:var(--text-caption);font-weight:600;color:var(--sec);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.ed-field-value{font-size:var(--text-body);color:var(--text);line-height:1.7}
+.ed-field-list{list-style:none;padding:0;margin:0;font-size:var(--text-body);color:var(--text)}
+.ed-field-list li{padding:2px 0;line-height:1.6}
+.ed-field-list .plus{color:var(--color-accent);font-weight:600}
+
+.ed-actions{display:flex;gap:8px;margin-top:var(--space-md);padding-top:var(--space-md);border-top:var(--border-width) solid var(--border);flex-wrap:wrap}
+.ed-actions .hint{font-size:var(--text-caption);color:var(--sec);font-family:var(--font-mono);display:flex;align-items:center;gap:4px}
+
+.back{margin-top:var(--space-2xl);font-size:var(--text-body)}
+.back a{color:var(--color-accent)}
+.loading{text-align:center;padding:40px;color:var(--sec)}
+.error{text-align:center;padding:40px;color:var(--color-danger)}
+.empty{text-align:center;padding:60px 20px;color:var(--sec);font-size:var(--text-body)}
+@media(max-width:600px){.summary{grid-template-columns:repeat(2,1fr)}.ed-card .hd{flex-direction:column;align-items:flex-start}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Editorial Review</h1>
+<p style="color:var(--sec);font-size:var(--text-body);margin:0">资源编辑审核 · 只读预览 · <span id="freshness">—</span></p>
+<div class="summary" id="summary"></div>
+<div class="filters" id="filters"></div>
+<div id="content"><div class="loading">加载中...</div></div>
+<div class="back"><a href="/admin/dashboard.html">← 返回工作台</a> &nbsp;·&nbsp; <a href="/admin/editorial.html">编辑工作台</a></div>
+</div>
+<script>
+var allItems=[], currentFilter='ALL';
+
+function renderSummary(d){
+    document.getElementById('freshness').textContent = d.generated_at ? new Date(d.generated_at).toLocaleString() : '—';
+    document.getElementById('summary').innerHTML =
+        '<div class=sum-item><div class=n>'+d.total+'</div><div class=l>待审核</div></div>'+
+        '<div class=sum-item><div class=n>'+d.drafts+'</div><div class=l>草稿</div></div>'+
+        '<div class=sum-item><div class=n>'+d.reviewed+'</div><div class=l>已审核</div></div>';
+
+    var fs='<button class=active onclick=F("ALL")>全部 ('+d.total+')</button>';
+    fs+='<button onclick=F("draft")>草稿 ('+d.drafts+')</button>';
+    fs+='<button onclick=F("reviewed")>已审核 ('+d.reviewed+')</button>';
+    document.getElementById('filters').innerHTML=fs;
+}
+
+function F(f){
+    currentFilter=f;
+    var btns=document.querySelectorAll('.filters button');
+    btns.forEach(function(b){b.className=(b.textContent.indexOf(f)>=0||(f==='ALL'&&b.textContent.indexOf('全部')>=0))?'active':''});
+    renderCards();
+}
+
+function renderCards(){
+    var items=currentFilter==='ALL'?allItems.slice():allItems.filter(function(i){return i.editorial_status===currentFilter});
+    if(!items.length){document.getElementById('content').innerHTML='<div class=empty>'+BPRC.icon('complete',{color:'success'})+' 没有待审核项<br><small>运行: python3 editorial_pilot.py --generate</small></div>';lucide.createIcons();return}
+    var h='';
+    items.forEach(function(r){
+        var statusBadge=r.editorial_status==='draft'?'badge--warning':'badge--info';
+        var statusLabel=r.editorial_status==='draft'?'草稿':'已审核';
+        var genTime=r.generated_at?new Date(r.generated_at).toLocaleString():'—';
+
+        h+='<div class=ed-card>';
+        h+='<div class=hd>';
+        h+='<span class=title>'+r.title+'</span>';
+        h+='<span class=meta>'+r.category+'</span>';
+        h+='<span class="badge '+statusBadge+'">'+statusLabel+'</span>';
+        h+='</div>';
+
+        h+='<div class=bd>';
+        if(r.collections) h+='<div class=ed-field><div class=ed-field-label>所属专题</div><div class=ed-field-value>'+r.collections+'</div></div>';
+        h+='<div class=ed-field><div class=ed-field-label>编辑推荐</div><div class=ed-field-value>'+(r.editor_recommendation||'(空)')+'</div></div>';
+        h+='<div class=ed-field><div class=ed-field-label>适合人群</div><div class=ed-field-value>'+(r.target_audience||'(空)')+'</div></div>';
+        if(r.strengths&&r.strengths.length){
+            h+='<div class=ed-field><div class=ed-field-label>推荐理由</div><ul class=ed-field-list>';
+            r.strengths.forEach(function(s){h+='<li><span class=plus>+</span> '+s+'</li>'});
+            h+='</ul></div>';
+        }
+        if(r.caveats&&r.caveats.length){
+            h+='<div class=ed-field><div class=ed-field-label>注意事项</div><ul class=ed-field-list>';
+            r.caveats.forEach(function(c){h+='<li><span class=dot>·</span> '+c+'</li>'});
+            h+='</ul></div>';
+        }
+        h+='<div class=ed-field><div class=ed-field-label>生成信息</div><div class=ed-field-value>'+genTime+(r.ai_model?' · '+r.ai_model:'')+'</div></div>';
+
+        h+='<div class=ed-actions>';
+        if(r.editorial_status==='draft'){
+            h+='<span class=hint>'+BPRC.icon('cli',{color:'muted'})+' python3 editorial_pilot.py --publish '+r.id+'</span>';
+        }
+        h+='</div>';
+        h+='</div></div>';
+    });
+    document.getElementById('content').innerHTML=h;
+    if(typeof lucide!=='undefined')lucide.createIcons();
+}
+
+fetch('/admin/data/editorial-pending.json')
+    .then(function(r){if(!r.ok)throw Error('HTTP '+r.status);return r.json()})
+    .then(function(d){allItems=d.items||[];renderSummary(d);renderCards()})
+    .catch(function(e){document.getElementById('content').innerHTML='<div class=error><i data-lucide="x-circle" class="icon-sm icon-danger"></i> 加载失败: '+e.message+'<br><small>python3 editorial_pilot.py --export /var/www/site/web/admin/data/editorial-pending.json</small></div>';if(typeof lucide!=='undefined')lucide.createIcons()});
+</script>
+</body>
+</html>

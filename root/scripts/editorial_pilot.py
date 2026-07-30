@@ -189,6 +189,50 @@ def pilot_report(conn):
         print(f"  Avg caveats:   {sum(c_counts)/len(c_counts):.1f}")
 
 
+# ── Export for Admin UI ──────────────────────────────────────
+def export_review_data(conn, out_path):
+    """Export pending/reviewed editorial data for admin UI consumption."""
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT r.id, r.title, r.category,
+               r.editor_recommendation, r.target_audience,
+               r.strengths, r.caveats,
+               r.editorial_status, r.generated_at, r.reviewed_at,
+               r.ai_model,
+               GROUP_CONCAT(c.title, ', ') as collections
+        FROM resources r
+        LEFT JOIN resource_collections rc ON r.id = rc.resource_id
+        LEFT JOIN collections c ON rc.collection_id = c.id
+        WHERE r.editorial_status IN ('draft', 'reviewed')
+        GROUP BY r.id
+        ORDER BY
+            CASE r.editorial_status WHEN 'draft' THEN 0 ELSE 1 END,
+            r.generated_at DESC
+    """)
+    rows = []
+    for r in cur.fetchall():
+        row = dict(r)
+        # Parse JSON arrays
+        for field in ['strengths', 'caveats']:
+            try:
+                row[field] = json.loads(row[field]) if row[field] else []
+            except json.JSONDecodeError:
+                row[field] = []
+        rows.append(row)
+
+    data = {
+        "generated_at": datetime.now().isoformat(),
+        "total": len(rows),
+        "drafts": sum(1 for r in rows if r['editorial_status'] == 'draft'),
+        "reviewed": sum(1 for r in rows if r['editorial_status'] == 'reviewed'),
+        "items": rows,
+    }
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    with open(out_path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    print(f"Exported {len(rows)} items → {out_path}")
+
+
 # ── CLI ──────────────────────────────────────────────────────
 def main():
     import argparse
@@ -198,6 +242,7 @@ def main():
     parser.add_argument("--review", action="store_true", help="List drafts awaiting review")
     parser.add_argument("--publish", type=str, metavar="ID", help="Publish a resource")
     parser.add_argument("--report", action="store_true", help="Print pilot statistics")
+    parser.add_argument("--export", type=str, metavar="PATH", help="Export pending data as JSON for admin UI")
     args = parser.parse_args()
 
     conn = sqlite3.connect(DB_FILE)
@@ -225,6 +270,10 @@ def main():
 
     if args.report:
         pilot_report(conn)
+        return
+
+    if args.export:
+        export_review_data(conn, args.export)
         return
 
     if args.generate:
