@@ -36,15 +36,15 @@
     /* state */
     --opacity-disabled: 0.4;
 
-    /* type scale */
+    /* type scale — refined for editorial curation feel */
     --text-caption:  11px;
     --text-meta:     12px;
     --text-body:     14px;
-    --text-subtitle: 16px;
-    --text-section:  18px;
-    --text-title:    22px;
-    --text-hero:     32px;
-    --text-display:  48px;
+    --text-subtitle: 14px;
+    --text-section:  17px;
+    --text-title:    19px;
+    --text-hero:     26px;
+    --text-display:  44px;
 
     /* typography */
     --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
