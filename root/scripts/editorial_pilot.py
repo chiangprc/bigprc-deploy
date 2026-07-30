@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
-"""Phase 10.8.7 — Editorial Content Pilot Generator
+"""Phase 10.10.2 — Editorial Generation Engine
 
-Generates Editor's Take content for 50 pilot resources using AI,
-with Guideline Check validation before writing to database.
+Real AI-powered Editor's Take content generation with:
+- A/B prompt variants (Differentiation vs Editorial Voice)
+- Tier filter (spotlight/core/solid)
+- Batch retry on API failure
+- Guideline Check before DB write
 
 Usage:
-  python3 editorial_pilot.py --dry-run       Preview without writing
-  python3 editorial_pilot.py --generate      Generate and write (draft)
-  python3 editorial_pilot.py --review        List drafts awaiting review
-  python3 editorial_pilot.py --publish ID    Publish a reviewed resource
-  python3 editorial_pilot.py --report        Print pilot statistics
+  python3 editorial_pilot.py --generate --tier CORE --limit 20
+  python3 editorial_pilot.py --generate --prompt B --tier SOLID --limit 30
+  python3 editorial_pilot.py --review
+  python3 editorial_pilot.py --publish ID1 ID2 ID3
+  python3 editorial_pilot.py --report
+  python3 editorial_pilot.py --export /var/www/site/web/admin/data/editorial-pending.json
 
 Rules (from PHASE10_8_1_EDITORIAL_WRITING_GUIDELINE.md):
   - No "非常优秀" "功能强大" "强烈推荐" "值得推荐"
@@ -19,12 +23,32 @@ Rules (from PHASE10_8_1_EDITORIAL_WRITING_GUIDELINE.md):
   - Editor recommendation must be 30+ chars
 """
 
-import os, sys, json, sqlite3, re, time
+import os, sys, json, sqlite3, re, time, logging
 from datetime import datetime
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 DB_FILE = os.getenv("DB_FILE", str(SCRIPT_DIR / "database.db"))
+API_BASE_URL = os.getenv("API_BASE_URL")
+API_KEY = os.getenv("API_KEY")
+
+# ── AI Client Setup ──────────────────────────────────────────
+_client = None
+
+def get_client():
+    global _client
+    if _client is None:
+        if not API_KEY:
+            print("❌ API_KEY not set in .env")
+            sys.exit(1)
+        from openai import OpenAI
+        _client = OpenAI(api_key=API_KEY, base_url=API_BASE_URL, timeout=90.0)
+    return _client
+
+FALLBACK_MODELS = ["gpt-4o", "gpt-4o-mini"]
+ERROR_LOG = SCRIPT_DIR / "editorial_generation_errors.log"
+logging.basicConfig(filename=str(ERROR_LOG), level=logging.WARNING,
+                    format='%(asctime)s %(message)s')
 
 # ── Guideline Check ──────────────────────────────────────────
 FORBIDDEN_PHRASES = [
@@ -56,35 +80,151 @@ def guideline_check(rec, audience, strengths, caveats):
     return (len(issues) == 0, issues)
 
 
-# ── AI Generation (mock — replace with real API call) ─────────
-def generate_editorial(resource):
-    """
-    Calls AI API to generate Editor's Take content.
-    Replace this function body with actual API call.
-    Prompt template from PHASE10_8_1_EDITORIAL_WRITING_GUIDELINE.md §7.
-    """
-    # TODO: Replace with actual API call using the Guideline prompt template
-    # For pilot, this would call the same AI endpoint as ai_seo_writer.py
-    # but with the editorial-specific system prompt.
-    raise NotImplementedError(
-        "Replace with actual AI API call. "
-        "See PHASE10_8_1_EDITORIAL_WRITING_GUIDELINE.md §7 for prompt template."
+# ── A/B Prompt Variants ──────────────────────────────────────
+PROMPT_A = """你是 BigPRC 的数字资源策展编辑。你的任务是帮助用户判断一个资源是否适合他们。
+你的重点是帮助用户理解：这个资源与其他选择有什么不同，为什么这个版本值得收藏。
+
+资源信息：
+名称: {title}
+类型: {category}
+大小: {file_size}
+平台: {platform}
+版本: {version}
+所属专题: {collections}
+现有描述: {seo_desc}
+
+请输出 JSON：
+{{
+  "editor_recommendation": "1-3 句，告诉用户为什么这个资源值得花时间。必须包含与其他选择相比的特点。如果没有其他版本，说明为什么这个资源稀缺。",
+  "target_audience": "从以下类型至少选一种并具体化：零基础入门 / 有基础进阶 / 专业从业者 / 学生 / 内容创作者 / 开发者 / 家庭用户 / 教育者。禁止写'所有人'。",
+  "strengths": ["+ 具体可验证优势1", "+ 具体可验证优势2", "+ 具体可验证优势3"],
+  "caveats": ["· 真实限制1", "· 真实限制2"]
+}}
+
+禁止使用这些词：非常优秀、功能强大、强烈推荐、值得推荐、必备、神器、全网最全、最好用"""
+
+PROMPT_B = """你是 BigPRC 的资深数字资源策展编辑。你在为读者写推荐理由。
+你的重点是让推荐读起来像一个真正了解这个领域的编辑在说话——有判断、有取舍、有态度。
+
+资源信息：
+名称: {title}
+类型: {category}
+大小: {file_size}
+平台: {platform}
+版本: {version}
+所属专题: {collections}
+现有描述: {seo_desc}
+
+请用编辑的口吻输出 JSON：
+{{
+  "editor_recommendation": "像一个编辑在向朋友推荐——不夸张，不推销，只是告诉你为什么他选了这一个。1-3句。",
+  "target_audience": "写具体的用户画像，不要写'适合所有人'。想想谁会真正需要这个？从零基础/进阶/专业/学生/创作者/开发者/家庭/教育者中选择。",
+  "strengths": ["+ 优势1（用具体的、可验证的事实）", "+ 优势2", "+ 优势3"],
+  "caveats": ["· 真实的使用限制（不要编造，但也不要省略）", "· 限制2"]
+}}
+
+记住：你是编辑，不是销售。你的读者信任你，因为他们知道你会说真话。"""
+
+
+# ── AI Generation ────────────────────────────────────────────
+def call_ai(prompt):
+    """Call AI API with fallback chain. Returns parsed dict or None."""
+    client = get_client()
+
+    for model in FALLBACK_MODELS:
+        # Attempt 1: JSON mode
+        try:
+            print(f"   [{model}] ", end="", flush=True)
+            resp = client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.7,
+                max_tokens=1200,
+                response_format={"type": "json_object"},
+            )
+            raw = resp.choices[0].message.content.strip()
+            parsed = json.loads(raw)
+            print("✅")
+            return parsed
+        except (json.JSONDecodeError, TypeError):
+            print("retry...", end=" ", flush=True)
+            # Attempt 2: no JSON mode
+            try:
+                resp2 = client.chat.completions.create(
+                    model=model,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.7,
+                    max_tokens=1200,
+                )
+                raw2 = resp2.choices[0].message.content.strip()
+                parsed2 = json.loads(raw2)
+                print("✅")
+                return parsed2
+            except Exception:
+                pass
+        except Exception as e:
+            print(f"err ({e})", end=" ", flush=True)
+            continue
+
+    print("❌ all models failed")
+    return None
+
+
+def generate_editorial(resource, prompt_variant="A"):
+    """Generate Editor's Take content using AI.
+    Returns dict with editorial fields, or None on failure."""
+    template = PROMPT_A if prompt_variant == "A" else PROMPT_B
+    prompt = template.format(
+        title=resource.get("title", ""),
+        category=resource.get("category", ""),
+        file_size=resource.get("file_size", "") or resource.get("size", ""),
+        platform=resource.get("platform", ""),
+        version=resource.get("version", ""),
+        collections=resource.get("collections", "") or resource.get("coll_titles", ""),
+        seo_desc=(resource.get("seo_desc", "") or "")[:300],
     )
+    result = call_ai(prompt)
+    if not result:
+        return None
+
+    # Normalize output
+    return {
+        "editor_recommendation": str(result.get("editor_recommendation", "")),
+        "target_audience": str(result.get("target_audience", "")),
+        "strengths": result.get("strengths", []) if isinstance(result.get("strengths"), list) else [],
+        "caveats": result.get("caveats", []) if isinstance(result.get("caveats"), list) else [],
+        "ai_model": FALLBACK_MODELS[0],
+    }
 
 
 # ── Database Operations ──────────────────────────────────────
-def get_pilot_resources(conn, limit=50):
-    """Select 50 representative resources for the pilot."""
+def get_pilot_resources(conn, limit=50, tier=None, force=False):
+    """Select resources for editorial generation.
+    tier: 'spotlight', 'core', 'solid' (None = all)
+    force: if True, include rejected resources for regeneration."""
     cur = conn.cursor()
-    # Priority: spotlight → CORE collections → SOLID → diverse types
-    cur.execute("""
+    where = "WHERE (r.editorial_status IS NULL"
+    if force:
+        where += " OR r.editorial_status = 'rejected'"
+    where += ")"
+
+    tier_clause = ""
+    if tier == 'spotlight':
+        where += " AND rc.spotlight = 1"
+    elif tier == 'core':
+        where += " AND c.quality = 'CORE'"
+        tier_clause = ""
+    elif tier == 'solid':
+        where += " AND c.quality IN ('CORE', 'SOLID')"
+
+    query = f"""
         SELECT r.id, r.title, r.category, r.file_size, r.platform,
                r.version, r.seo_desc,
                GROUP_CONCAT(c.title, ', ') as coll_titles
         FROM resources r
         LEFT JOIN resource_collections rc ON r.id = rc.resource_id
         LEFT JOIN collections c ON rc.collection_id = c.id
-        WHERE r.editorial_status IS NULL
+        {where}
         GROUP BY r.id
         ORDER BY
             CASE WHEN rc.spotlight = 1 THEN 0 ELSE 1 END,
@@ -93,7 +233,8 @@ def get_pilot_resources(conn, limit=50):
                  ELSE 2 END,
             RANDOM()
         LIMIT ?
-    """, (limit,))
+    """
+    cur.execute(query, (limit,))
     return cur.fetchall()
 
 
@@ -239,8 +380,12 @@ def main():
     parser = argparse.ArgumentParser(description="Editorial Content Pilot")
     parser.add_argument("--dry-run", action="store_true", help="Preview without writing")
     parser.add_argument("--generate", action="store_true", help="Generate and write drafts")
+    parser.add_argument("--tier", type=str, choices=["spotlight","core","solid"], help="Filter by quality tier")
+    parser.add_argument("--limit", type=int, default=50, help="Max resources to generate (default 50)")
+    parser.add_argument("--prompt", type=str, choices=["A","B"], default="A", help="Prompt variant: A=Differentiation, B=Editorial Voice")
+    parser.add_argument("--force", action="store_true", help="Regenerate rejected resources")
     parser.add_argument("--review", action="store_true", help="List drafts awaiting review")
-    parser.add_argument("--publish", type=str, metavar="ID", help="Publish a resource")
+    parser.add_argument("--publish", nargs="+", metavar="ID", help="Publish one or more resources")
     parser.add_argument("--report", action="store_true", help="Print pilot statistics")
     parser.add_argument("--export", type=str, metavar="PATH", help="Export pending data as JSON for admin UI")
     args = parser.parse_args()
@@ -264,8 +409,9 @@ def main():
         return
 
     if args.publish:
-        ok, msg = publish_editorial(conn, args.publish)
-        print(f"{'✅' if ok else '❌'} {msg}")
+        for rid in args.publish:
+            ok, msg = publish_editorial(conn, rid)
+            print(f"{'✅' if ok else '❌'} {rid}: {msg}")
         return
 
     if args.report:
@@ -277,13 +423,59 @@ def main():
         return
 
     if args.generate:
-        resources = get_pilot_resources(conn)
-        print(f"Selected {len(resources)} resources for pilot generation.")
-        print("Replace generate_editorial() with real AI API call before running.\n")
-        for i, r in enumerate(resources[:5]):
-            print(f"  {i+1}. [{r['id']}] {r['title'][:60]}")
-        if len(resources) > 5:
-            print(f"  ... and {len(resources)-5} more")
+        resources = get_pilot_resources(conn, limit=args.limit, tier=args.tier, force=args.force)
+        print(f"Selected {len(resources)} resources (tier={args.tier or 'all'}, prompt={args.prompt}, limit={args.limit})")
+        if args.dry_run:
+            for i, r in enumerate(resources[:10]):
+                print(f"  {i+1}. [{r['id']}] {r['title'][:60]}")
+            if len(resources) > 10:
+                print(f"  ... and {len(resources)-10} more")
+            return
+
+        ok, fail, skip = 0, 0, 0
+        for i, r in enumerate(resources):
+            rid = r['id']
+            title = r['title'][:50]
+            print(f"[{i+1}/{len(resources)}] {rid} {title}")
+
+            # Generate with retry
+            data = None
+            for attempt in range(3):
+                data = generate_editorial(dict(r), prompt_variant=args.prompt)
+                if data:
+                    break
+                print(f"   Retry {attempt+1}/3...")
+                time.sleep(2)
+
+            if not data:
+                print(f"   ❌ Failed after 3 attempts")
+                logging.warning(f"AI_FAIL {rid} {title}")
+                fail += 1
+                continue
+
+            # Guideline Check
+            passed, issues = guideline_check(
+                data["editor_recommendation"],
+                data["target_audience"],
+                data["strengths"],
+                data["caveats"],
+            )
+            if not passed:
+                print(f"   ⚠ Guideline issues: {', '.join(issues)}")
+                logging.warning(f"GUIDELINE_FAIL {rid}: {'; '.join(issues)}")
+
+            # Write to DB
+            wrote, msg = insert_editorial(conn, rid, data, dry_run=args.dry_run)
+            if wrote:
+                ok += 1
+                print(f"   ✅ {msg}")
+            else:
+                skip += 1
+                print(f"   ⏭ {msg}")
+
+        print(f"\nDone: ✅ {ok} generated  ⏭ {skip} skipped  ❌ {fail} failed")
+        if fail > 0:
+            print(f"Errors logged to: {ERROR_LOG}")
         return
 
     parser.print_help()
