@@ -1,0 +1,13 @@
+-- ROLLBACK 019: Resource Editorial Layer
+-- SQLite does not support DROP COLUMN in older versions.
+-- For SQLite 3.35.0+: uncomment below.
+-- For older SQLite: restore pre-migration backup (preferred method).
+
+-- ALTER TABLE resources DROP COLUMN editor_recommendation;
+-- ALTER TABLE resources DROP COLUMN target_audience;
+-- ALTER TABLE resources DROP COLUMN strengths;
+-- ALTER TABLE resources DROP COLUMN caveats;
+-- ALTER TABLE resources DROP COLUMN editorial_status;
+-- ALTER TABLE resources DROP COLUMN reviewed_at;
+-- ALTER TABLE resources DROP COLUMN generated_at;
+-- ALTER TABLE resources DROP COLUMN ai_model;
