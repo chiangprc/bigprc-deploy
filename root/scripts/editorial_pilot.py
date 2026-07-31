@@ -84,50 +84,76 @@ def guideline_check(rec, audience, strengths, caveats):
     return (len(issues) == 0, issues)
 
 
-# ── A/B Prompt Variants ──────────────────────────────────────
-PROMPT_A = """你是 BigPRC 的数字资源策展编辑。你的任务是帮助用户判断一个资源是否适合他们。
-你的重点是帮助用户理解：这个资源与其他选择有什么不同，为什么这个版本值得收藏。
+# ── Editorial Prompt (Phase 10.10.2 optimized) ─────────────────
+PROMPT_V2 = """你是 BigPRC 的数字资源策展编辑。
 
-资源信息：
+BigPRC 是一个数字资源策展库。用户来这里不是为了看评测，而是为了判断：
+- 这个资源是否值得长期收藏？
+- 和网上其他版本比，为什么选这一个？
+- 下载前需要知道什么？
+
+你的任务：根据已知信息，用编辑的判断力帮助用户做出选择。
+
+═══════════════════════════════════════
+资源信息（仅基于以下事实，不要推测）：
+═══════════════════════════════════════
 名称: {title}
 类型: {category}
 大小: {file_size}
 平台: {platform}
 版本: {version}
 所属专题: {collections}
-现有描述: {seo_desc}
+现有说明: {seo_desc}
 
-请输出 JSON：
-{{
-  "editor_recommendation": "1-3 句，告诉用户为什么这个资源值得花时间。必须包含与其他选择相比的特点。如果没有其他版本，说明为什么这个资源稀缺。",
-  "target_audience": "从以下类型至少选一种并具体化：零基础入门 / 有基础进阶 / 专业从业者 / 学生 / 内容创作者 / 开发者 / 家庭用户 / 教育者。禁止写'所有人'。",
-  "strengths": ["+ 具体可验证优势1", "+ 具体可验证优势2", "+ 具体可验证优势3"],
-  "caveats": ["· 真实限制1", "· 真实限制2"]
-}}
+═══════════════════════════════════════
+写作规则：
+═══════════════════════════════════════
 
-禁止使用这些词：非常优秀、功能强大、强烈推荐、值得推荐、必备、神器、全网最全、最好用"""
+1. 只基于以上信息写作。如果某个细节不在上述信息中，不要编造。
+   例如：不知道拍摄技术就不要提拍摄技术。不知道作者就不要提作者。
+   如果信息不足以做出判断，诚实地缩小推荐范围，不要用泛泛的夸奖填充。
 
-PROMPT_B = """你是 BigPRC 的资深数字资源策展编辑。你在为读者写推荐理由。
-你的重点是让推荐读起来像一个真正了解这个领域的编辑在说话——有判断、有取舍、有态度。
+2. 禁止使用以下词汇或类似表达：
+   震撼、惊艳、必看、神作、强烈推荐、非常优秀、功能强大、
+   最好用、必备、神器、全网最全、不容错过、巨好用
 
-资源信息：
-名称: {title}
-类型: {category}
-大小: {file_size}
-平台: {platform}
-版本: {version}
-所属专题: {collections}
-现有描述: {seo_desc}
+3. editor_recommendation (1-3句):
+   像编辑在告诉朋友"为什么我选了这一个保留在库里"。
+   重点：稀缺性、版本优势、专题内的定位、长期价值。
+   不要写成内容简介——seo_desc 已经做了那个。
 
-请用编辑的口吻输出 JSON：
-{{
-  "editor_recommendation": "像一个编辑在向朋友推荐——不夸张，不推销，只是告诉你为什么他选了这一个。1-3句。",
-  "target_audience": "写具体的用户画像，不要写'适合所有人'。想想谁会真正需要这个？从零基础/进阶/专业/学生/创作者/开发者/家庭/教育者中选择。",
-  "strengths": ["+ 优势1（用具体的、可验证的事实）", "+ 优势2", "+ 优势3"],
-  "caveats": ["· 真实的使用限制（不要编造，但也不要省略）", "· 限制2"]
-}}
+4. target_audience (1句):
+   具体到用户场景。至少从以下选一种并细化：
+   零基础入门 / 有基础进阶 / 专业从业者 / 学生 /
+   内容创作者 / 开发者 / 家庭用户 / 教育者
+   禁止："所有人""适合所有人""每个人"
 
-记住：你是编辑，不是销售。你的读者信任你，因为他们知道你会说真话。"""
+5. strengths (2-3条):
+   每条开头用 + 号。每条必须可验证，不能是主观感受。
+   参考角度：
+   - 版本稀缺：这个版本为什么比网上其他版本更好？
+   - 完整性：是否包含了别人缺失的内容？
+   - 可用性：下载后能否直接使用？是否需要额外配置？
+   - 长期价值：为什么值得保存在硬盘里而不是在线观看？
+   反面示例（禁止）：
+   + 内容丰富  + 画质清晰  + 非常实用  + 讲解详细
+
+6. caveats (1-3条):
+   每条开头用 · 号。必须是用户在下载/使用前真正需要知道的信息。
+   参考角度：
+   - 技术限制：需要什么软件/硬件/系统？
+   - 范围限制：这个资源不包含什么（用户可能误以为包含）？
+   - 质量说明：和更新/更好的版本相比有什么差距？
+   - 使用门槛：需要什么前置知识或技能？
+   反面示例（禁止）：
+   · 画质一般  · 文件较大  · 需要耐心观看
+
+请输出严格 JSON（不要包含 markdown 代码块标记）：
+{{"editor_recommendation":"...","target_audience":"...","strengths":["+ ...","+ ..."],"caveats":["· ...","· ..."]}}"""
+
+# Backward-compatible aliases
+PROMPT_A = PROMPT_V2
+PROMPT_B = PROMPT_V2
 
 
 # ── AI Generation ────────────────────────────────────────────
@@ -175,8 +201,9 @@ def call_ai(prompt):
 
 def generate_editorial(resource, prompt_variant="A"):
     """Generate Editor's Take content using AI.
-    Returns dict with editorial fields, or None on failure."""
-    template = PROMPT_A if prompt_variant == "A" else PROMPT_B
+    Returns dict with editorial fields, or None on failure.
+    prompt_variant kept for CLI compatibility — always uses optimized V2 prompt."""
+    template = PROMPT_V2  # single optimized prompt
     prompt = template.format(
         title=resource.get("title", ""),
         category=resource.get("category", ""),
