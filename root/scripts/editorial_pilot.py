@@ -256,7 +256,7 @@ def insert_editorial(conn, res_id, data, dry_run=False):
             editorial_status = 'draft',
             generated_at = ?,
             ai_model = ?
-        WHERE id = ?
+        WHERE res_id = ?
     """, (
         data["editor_recommendation"],
         data["target_audience"],
@@ -284,7 +284,7 @@ def publish_editorial(conn, res_id):
         UPDATE resources SET
             editorial_status = 'published',
             reviewed_at = ?
-        WHERE id = ?
+        WHERE res_id = ?
     """, (datetime.now().isoformat(), res_id))
     conn.commit()
     return True, "Published"
