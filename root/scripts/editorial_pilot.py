@@ -84,21 +84,95 @@ def guideline_check(rec, audience, strengths, caveats):
     return (len(issues) == 0, issues)
 
 
-# ── Editorial Prompt (Phase 10.10.2 optimized) ─────────────────
-PROMPT_V2 = """你是 BigPRC 的数字资源策展编辑。
+# ── Resource Type Detection ──────────────────────────────────
+def detect_resource_type(category):
+    """Map resource category to evaluation type for prompt routing."""
+    if not category:
+        return "default"
+    c = category.lower()
+    if any(w in c for w in ["软件","系统","工具","应用","插件","驱动"]):
+        return "software"
+    if any(w in c for w in ["纪录","电影","视频","影视","影片"]):
+        return "documentary"
+    if any(w in c for w in ["教程","课程","学习","培训","教育"]):
+        return "course"
+    if any(w in c for w in ["书籍","图书","文本","古籍","经典","文献","阅读"]):
+        return "book"
+    return "default"
 
-BigPRC 是一个数字资源策展库。用户来这里不是为了看评测，而是为了判断：
-- 这个资源是否值得长期收藏？
-- 和网上其他版本比，为什么选这一个？
-- 下载前需要知道什么？
 
-你的任务：根据已知信息，用编辑的判断力帮助用户做出选择。
+# ── Type-Specific Evaluation Criteria ────────────────────────
+TYPE_CRITERIA = {
+    "software": """评估角度（软件/工具）：
+- 版本价值：是否官方原版？是否已从官方下架？是否为买断版（非订阅）？
+- 平台兼容：支持哪些系统？是否有32/64位区分？
+- 使用场景：适合什么工作流？解决了什么具体问题？
+- 替代关系：和同类软件比有什么不可替代的地方？""",
+
+    "documentary": """评估角度（纪录片/视频）：
+- 版本优势：是否为原盘压制？和流媒体版有什么区别？
+- 内容稀缺：是否在流媒体平台已下架或需要付费？
+- 完整性：是否包含特辑/花絮/多语言字幕？
+- 长期价值：是否具有重复观看或教学使用的长期价值？""",
+
+    "course": """评估角度（教程/课程）：
+- 知识体系：是否覆盖完整学习路径？还是碎片化内容？
+- 学习阶段：适合什么水平的学习者？是否有前置要求？
+- 版本匹配：教程对应的软件版本是否仍然可用？
+- 语言质量：字幕/讲解是机翻还是人工？是否准确？""",
+
+    "book": """评估角度（书籍/文本）：
+- 版本权威：是否为学界公认的标准版本？注释者/译者是否有学术地位？
+- 内容体系：是否包含注释/翻译/原文对照？排版是否适合阅读？
+- 版本价值：和市面上其他版本相比有什么优势？
+- 长期价值：是否具有反复查阅的参考价值？""",
+
+    "default": """评估角度：
+- 版本稀缺：这个版本为什么值得保存？
+- 可用性：下载后能否直接使用？是否需要额外配置？
+- 长期价值：这个资源在5年后还有用吗？""",
+}
+
+STRENGTH_EXAMPLES = {
+    "software": """反面示例（禁止）：+ 功能强大 + 非常好用 + 界面美观 + 值得推荐
+正面示例：+ 官方原版ISO，SHA256可验证，无任何修改
++ 包含Access和Publisher（Microsoft 365默认不含这些组件）
++ 支持32位和64位双版本，兼容新旧设备""",
+
+    "documentary": """反面示例（禁止）：+ 画质清晰 + 内容丰富 + 非常精彩 + 必看神作
+正面示例：+ 4K HDR原盘压制，非流媒体录制版，保留了暗部细节
++ 中英双语字幕可切换，适合英语学习场景
++ 两季完整收录，不需要分开寻找不同版本""",
+
+    "course": """反面示例（禁止）：+ 讲解详细 + 非常实用 + 适合学习 + 内容全面
+正面示例：+ 覆盖建模→渲染完整流程，不需要另外找教程
++ 每个案例都有源文件，可以跟着操作练习
++ 中文字幕为人工翻译，非机翻，专业术语准确""",
+
+    "book": """反面示例（禁止）：+ 内容经典 + 值得阅读 + 排版精美 + 非常推荐
+正面示例：+ 四层对照排版（原文/郭注/成疏/今译），不需要来回翻书
++ 郭象注是学界公认标准注本，引用可靠
++ 现代汉语翻译保持了原文简洁，没有过度白话化""",
+
+    "default": """反面示例（禁止）：+ 非常实用 + 质量很高 + 值得收藏 + 强烈推荐
+正面示例：+ 官方原版，未经第三方修改
++ 包含全部组件，不需要额外下载
++ 支持离线使用，不需要网络连接""",
+}
+
+
+# ── Editorial Prompt V3 ──────────────────────────────────────
+PROMPT_V3 = """你是 BigPRC 的数字资源策展编辑。
+
+BigPRC 定位：帮助用户找到值得长期收藏的数字资源。
+用户不是来看评测的，而是判断：是否值得下载保存？和网上其他版本有什么不同？
 
 ═══════════════════════════════════════
 资源信息（仅基于以下事实，不要推测）：
 ═══════════════════════════════════════
 名称: {title}
 类型: {category}
+资源形态: {resource_type}
 大小: {file_size}
 平台: {platform}
 版本: {version}
@@ -106,54 +180,59 @@ BigPRC 是一个数字资源策展库。用户来这里不是为了看评测，�
 现有说明: {seo_desc}
 
 ═══════════════════════════════════════
+评估标准（{resource_type}类资源）：
+═══════════════════════════════════════
+{type_criteria}
+
+═══════════════════════════════════════
 写作规则：
 ═══════════════════════════════════════
 
-1. 只基于以上信息写作。如果某个细节不在上述信息中，不要编造。
-   例如：不知道拍摄技术就不要提拍摄技术。不知道作者就不要提作者。
-   如果信息不足以做出判断，诚实地缩小推荐范围，不要用泛泛的夸奖填充。
+【反幻觉】只使用以上信息。不知道就不要写。信息不足以做出有意义判断时，
+返回 skip:true。不要用泛泛的夸奖填充空白。
 
-2. 禁止使用以下词汇或类似表达：
-   震撼、惊艳、必看、神作、强烈推荐、非常优秀、功能强大、
-   最好用、必备、神器、全网最全、不容错过、巨好用
+【禁止词】禁止：震撼 惊艳 必看 神作 强烈推荐 非常优秀 功能强大
+最好用 必备 神器 全网最全 不容错过 巨好用 值得收藏 不可错过
+经典之作 精心整理 强烈建议 必下 绝佳 完美
 
-3. editor_recommendation (1-3句):
-   像编辑在告诉朋友"为什么我选了这一个保留在库里"。
-   重点：稀缺性、版本优势、专题内的定位、长期价值。
-   不要写成内容简介——seo_desc 已经做了那个。
+【禁止第一人称】禁止："我认为""我推荐""我看过""我觉得"
+使用客观编辑视角。
 
-4. target_audience (1句):
-   具体到用户场景。至少从以下选一种并细化：
-   零基础入门 / 有基础进阶 / 专业从业者 / 学生 /
-   内容创作者 / 开发者 / 家庭用户 / 教育者
-   禁止："所有人""适合所有人""每个人"
+【编辑声音】BigPRC编辑的推荐读起来像这样：
+"这个版本是官方原版，没有第三方修改。网上流传的大多数版本
+都捆绑了额外软件，这个是干净的起点。"
+而不是："这款软件功能强大，界面友好，非常优秀，强烈推荐。"
 
-5. strengths (2-3条):
-   每条开头用 + 号。每条必须可验证，不能是主观感受。
-   参考角度：
-   - 版本稀缺：这个版本为什么比网上其他版本更好？
-   - 完整性：是否包含了别人缺失的内容？
-   - 可用性：下载后能否直接使用？是否需要额外配置？
-   - 长期价值：为什么值得保存在硬盘里而不是在线观看？
-   反面示例（禁止）：
-   + 内容丰富  + 画质清晰  + 非常实用  + 讲解详细
+【skip规则】如果资源无明显差异化特征，或信息不足以做出编辑判断，返回：
+{{"skip":true,"skip_reason":"简短的跳过原因"}}
 
-6. caveats (1-3条):
-   每条开头用 · 号。必须是用户在下载/使用前真正需要知道的信息。
-   参考角度：
-   - 技术限制：需要什么软件/硬件/系统？
-   - 范围限制：这个资源不包含什么（用户可能误以为包含）？
-   - 质量说明：和更新/更好的版本相比有什么差距？
-   - 使用门槛：需要什么前置知识或技能？
-   反面示例（禁止）：
-   · 画质一般  · 文件较大  · 需要耐心观看
+═══════════════════════════════════════
+字段要求：
+═══════════════════════════════════════
 
-请输出严格 JSON（不要包含 markdown 代码块标记）：
-{{"editor_recommendation":"...","target_audience":"...","strengths":["+ ...","+ ..."],"caveats":["· ...","· ..."]}}"""
+editorial_score (0-100): 综合评分。依据：稀缺性(25) + 长期价值(25) +
+  用户价值(25) + 信息完整度(25)。60以上才值得写推荐。
+
+editor_recommendation (1-3句): 为什么这个具体版本值得保留在硬盘里？
+  不要描述内容（seo_desc已做），要给出选择判断。
+
+target_audience (1句或空): 从以下选一种并具体化：
+  零基础入门/有基础进阶/专业从业者/学生/内容创作者/开发者/家庭用户/教育者
+  信息不足时写空字符串。
+
+strengths (2-3条，+ 号开头):
+{strength_examples}
+
+caveats (1-3条，· 号开头): 用户下载前必须知道的信息。
+  技术限制/范围限制/质量差距/使用门槛。不是"画质一般""文件较大"。
+
+输出严格JSON（不含markdown代码块）：
+{{"editorial_score":0-100,"editor_recommendation":"...","target_audience":"...","strengths":["+ ..."],"caveats":["· ..."]}}
+或 {{"skip":true,"skip_reason":"..."}}"""
 
 # Backward-compatible aliases
-PROMPT_A = PROMPT_V2
-PROMPT_B = PROMPT_V2
+PROMPT_A = PROMPT_V3
+PROMPT_B = PROMPT_V3
 
 
 # ── AI Generation ────────────────────────────────────────────
@@ -200,13 +279,19 @@ def call_ai(prompt):
 
 
 def generate_editorial(resource, prompt_variant="A"):
-    """Generate Editor's Take content using AI.
-    Returns dict with editorial fields, or None on failure.
-    prompt_variant kept for CLI compatibility — always uses optimized V2 prompt."""
-    template = PROMPT_V2  # single optimized prompt
-    prompt = template.format(
+    """Generate Editor's Take content using AI (V3 with type routing).
+    Returns dict with editorial fields + score, or None on failure/skip.
+    Returns special sentinel {{"skip": True, "reason": "..."}} for skipped resources."""
+    rtype = detect_resource_type(resource.get("category", ""))
+    criteria = TYPE_CRITERIA.get(rtype, TYPE_CRITERIA["default"])
+    examples = STRENGTH_EXAMPLES.get(rtype, STRENGTH_EXAMPLES["default"])
+
+    prompt = PROMPT_V3.format(
         title=resource.get("title", ""),
         category=resource.get("category", ""),
+        resource_type=rtype,
+        type_criteria=criteria,
+        strength_examples=examples,
         file_size=resource.get("file_size", "") or resource.get("size", ""),
         platform=resource.get("platform", ""),
         version=resource.get("version", ""),
@@ -217,13 +302,26 @@ def generate_editorial(resource, prompt_variant="A"):
     if not result:
         return None
 
+    # Handle skip signal
+    if result.get("skip"):
+        return {"skip": True, "reason": result.get("skip_reason", result.get("reason", "未说明"))}
+
     # Normalize output
+    score = result.get("editorial_score", 0)
+    if isinstance(score, str):
+        try:
+            score = int(score)
+        except ValueError:
+            score = 0
+
     return {
         "editor_recommendation": str(result.get("editor_recommendation", "")),
         "target_audience": str(result.get("target_audience", "")),
         "strengths": result.get("strengths", []) if isinstance(result.get("strengths"), list) else [],
         "caveats": result.get("caveats", []) if isinstance(result.get("caveats"), list) else [],
+        "editorial_score": min(max(score, 0), 100),
         "ai_model": model_used,
+        "resource_type": rtype,
     }
 
 
@@ -562,11 +660,12 @@ def main():
                 print(f"  ... and {len(resources)-10} more")
             return
 
-        ok, fail, skip = 0, 0, 0
+        ok, fail, skipped, skip_no_write = 0, 0, 0, 0
         for i, r in enumerate(resources):
             rid = r['res_id']
             title = r['title'][:50]
-            print(f"[{i+1}/{len(resources)}] {rid} {title}")
+            rtype = detect_resource_type(r.get('category', ''))
+            print(f"[{i+1}/{len(resources)}] {rid} [{rtype}] {title}")
 
             # Generate with retry
             data = None
@@ -583,6 +682,18 @@ def main():
                 fail += 1
                 continue
 
+            # Handle AI skip signal
+            if data.get("skip"):
+                reason = data.get("reason", "未说明")
+                print(f"   ⏩ SKIPPED: {reason}")
+                logging.info(f"SKIP {rid} [{rtype}]: {reason}")
+                skipped += 1
+                continue
+
+            # Log editorial score
+            score = data.get("editorial_score", 0)
+            print(f"   📊 Score: {score}/100", end="")
+
             # Guideline Check
             passed, issues = guideline_check(
                 data["editor_recommendation"],
@@ -591,8 +702,10 @@ def main():
                 data["caveats"],
             )
             if not passed:
-                print(f"   ⚠ Guideline issues: {', '.join(issues)}")
+                print(f"  ⚠ Guideline: {', '.join(issues)}")
                 logging.warning(f"GUIDELINE_FAIL {rid}: {'; '.join(issues)}")
+            else:
+                print()
 
             # Write to DB
             wrote, msg = insert_editorial(conn, rid, data, dry_run=args.dry_run)
@@ -600,10 +713,10 @@ def main():
                 ok += 1
                 print(f"   ✅ {msg}")
             else:
-                skip += 1
+                skip_no_write += 1
                 print(f"   ⏭ {msg}")
 
-        print(f"\nDone: ✅ {ok} generated  ⏭ {skip} skipped  ❌ {fail} failed")
+        print(f"\nDone: ✅ {ok} generated  ⏩ {skipped} AI-skipped  ⏭ {skip_no_write} already-exist  ❌ {fail} failed")
         if fail > 0:
             print(f"Errors logged to: {ERROR_LOG}")
         return
