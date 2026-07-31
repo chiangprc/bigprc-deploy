@@ -47,7 +47,9 @@ def get_client():
         _client = OpenAI(api_key=API_KEY, base_url=API_BASE_URL, timeout=90.0)
     return _client
 
-FALLBACK_MODELS = ["gpt-4o", "gpt-4o-mini"]
+_PRIMARY = os.getenv("AI_PRIMARY_MODEL", "deepseek-v4-pro")
+_FALLBACK = os.getenv("AI_FALLBACK_MODEL", "deepseek-v4-flash")
+FALLBACK_MODELS = [_PRIMARY, _FALLBACK]
 ERROR_LOG = "/root/scripts/editorial_generation_errors.log"
 logging.basicConfig(filename=str(ERROR_LOG), level=logging.WARNING,
                     format='%(asctime)s %(message)s')
@@ -130,7 +132,7 @@ PROMPT_B = """你是 BigPRC 的资深数字资源策展编辑。你在为读者�
 
 # ── AI Generation ────────────────────────────────────────────
 def call_ai(prompt):
-    """Call AI API with fallback chain. Returns parsed dict or None."""
+    """Call AI API with fallback chain. Returns (parsed_dict, model_name) or (None, None)."""
     client = get_client()
 
     for model in FALLBACK_MODELS:
@@ -147,10 +149,9 @@ def call_ai(prompt):
             raw = resp.choices[0].message.content.strip()
             parsed = json.loads(raw)
             print("✅")
-            return parsed
+            return parsed, model
         except (json.JSONDecodeError, TypeError):
             print("retry...", end=" ", flush=True)
-            # Attempt 2: no JSON mode
             try:
                 resp2 = client.chat.completions.create(
                     model=model,
@@ -161,7 +162,7 @@ def call_ai(prompt):
                 raw2 = resp2.choices[0].message.content.strip()
                 parsed2 = json.loads(raw2)
                 print("✅")
-                return parsed2
+                return parsed2, model
             except Exception:
                 pass
         except Exception as e:
@@ -169,7 +170,7 @@ def call_ai(prompt):
             continue
 
     print("❌ all models failed")
-    return None
+    return None, None
 
 
 def generate_editorial(resource, prompt_variant="A"):
@@ -185,7 +186,7 @@ def generate_editorial(resource, prompt_variant="A"):
         collections=resource.get("collections", "") or resource.get("coll_titles", ""),
         seo_desc=(resource.get("seo_desc", "") or "")[:300],
     )
-    result = call_ai(prompt)
+    result, model_used = call_ai(prompt)
     if not result:
         return None
 
@@ -195,7 +196,7 @@ def generate_editorial(resource, prompt_variant="A"):
         "target_audience": str(result.get("target_audience", "")),
         "strengths": result.get("strengths", []) if isinstance(result.get("strengths"), list) else [],
         "caveats": result.get("caveats", []) if isinstance(result.get("caveats"), list) else [],
-        "ai_model": FALLBACK_MODELS[0],
+        "ai_model": model_used,
     }
 
 
