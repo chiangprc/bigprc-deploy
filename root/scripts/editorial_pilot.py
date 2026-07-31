@@ -217,14 +217,14 @@ def get_pilot_resources(conn, limit=50, tier=None, force=False):
         where += " AND c.quality IN ('CORE', 'SOLID')"
 
     query = f"""
-        SELECT r.id, r.title, r.category, r.file_size, r.platform,
+        SELECT r.res_id, r.title, r.category, r.file_size, r.platform,
                r.version, r.seo_desc,
                GROUP_CONCAT(c.title, ', ') as coll_titles
         FROM resources r
-        LEFT JOIN resource_collections rc ON r.id = rc.resource_id
+        LEFT JOIN resource_collections rc ON r.res_id = rc.resource_id
         LEFT JOIN collections c ON rc.collection_id = c.id
         {where}
-        GROUP BY r.id
+        GROUP BY r.res_id
         ORDER BY
             CASE WHEN rc.spotlight = 1 THEN 0 ELSE 1 END,
             CASE WHEN c.quality = 'CORE' THEN 0
@@ -240,7 +240,7 @@ def get_pilot_resources(conn, limit=50, tier=None, force=False):
 def insert_editorial(conn, res_id, data, dry_run=False):
     """Write editorial content to database. Only if editorial_status IS NULL."""
     cur = conn.cursor()
-    cur.execute("SELECT editorial_status FROM resources WHERE id=?", (res_id,))
+    cur.execute("SELECT editorial_status FROM resources WHERE res_id=?", (res_id,))
     row = cur.fetchone()
     if row and row[0] is not None:
         return False, "Already has editorial content"
@@ -274,7 +274,7 @@ def insert_editorial(conn, res_id, data, dry_run=False):
 def publish_editorial(conn, res_id):
     """Set status to published (after human review)."""
     cur = conn.cursor()
-    cur.execute("SELECT editorial_status FROM resources WHERE id=?", (res_id,))
+    cur.execute("SELECT editorial_status FROM resources WHERE res_id=?", (res_id,))
     row = cur.fetchone()
     if not row or row[0] is None:
         return False, "No editorial content to publish"
@@ -434,17 +434,17 @@ def export_review_data(conn, out_path):
     """Export pending/reviewed editorial data for admin UI consumption."""
     cur = conn.cursor()
     cur.execute("""
-        SELECT r.id, r.title, r.category,
+        SELECT r.res_id, r.title, r.category,
                r.editor_recommendation, r.target_audience,
                r.strengths, r.caveats,
                r.editorial_status, r.generated_at, r.reviewed_at,
                r.ai_model,
                GROUP_CONCAT(c.title, ', ') as collections
         FROM resources r
-        LEFT JOIN resource_collections rc ON r.id = rc.resource_id
+        LEFT JOIN resource_collections rc ON r.res_id = rc.resource_id
         LEFT JOIN collections c ON rc.collection_id = c.id
         WHERE r.editorial_status IN ('draft', 'reviewed')
-        GROUP BY r.id
+        GROUP BY r.res_id
         ORDER BY
             CASE r.editorial_status WHEN 'draft' THEN 0 ELSE 1 END,
             r.generated_at DESC
@@ -502,7 +502,7 @@ def main():
             ORDER BY generated_at
         """)
         for r in cur.fetchall():
-            print(f"\n── {r['id']} ──")
+            print(f"\n── {r['res_id']} ──")
             print(f"Title: {r['title']}")
             print(f"Rec:   {r['editor_recommendation'][:100]}...")
             print(f"Aud:   {r['target_audience']}")
@@ -531,14 +531,14 @@ def main():
         print(f"Selected {len(resources)} resources (tier={args.tier or 'all'}, prompt={args.prompt}, limit={args.limit})")
         if args.dry_run:
             for i, r in enumerate(resources[:10]):
-                print(f"  {i+1}. [{r['id']}] {r['title'][:60]}")
+                print(f"  {i+1}. [{r['res_id']}] {r['title'][:60]}")
             if len(resources) > 10:
                 print(f"  ... and {len(resources)-10} more")
             return
 
         ok, fail, skip = 0, 0, 0
         for i, r in enumerate(resources):
-            rid = r['id']
+            rid = r['res_id']
             title = r['title'][:50]
             print(f"[{i+1}/{len(resources)}] {rid} {title}")
 

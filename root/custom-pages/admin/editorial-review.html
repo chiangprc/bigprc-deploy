@@ -112,7 +112,7 @@ function renderCards(){
 
         h+='<div class=ed-actions>';
         if(r.editorial_status==='draft'){
-            h+='<span class=hint>'+BPRC.icon('cli',{color:'muted'})+' python3 editorial_pilot.py --publish '+r.id+'</span>';
+            h+='<span class=hint>'+BPRC.icon('cli',{color:'muted'})+' python3 editorial_pilot.py --publish '+r.res_id+'</span>';
         }
         h+='</div>';
         h+='</div></div>';
