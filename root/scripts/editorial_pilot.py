@@ -25,10 +25,9 @@ Rules (from PHASE10_8_1_EDITORIAL_WRITING_GUIDELINE.md):
 
 import os, sys, json, sqlite3, re, time, logging
 from datetime import datetime
-from pathlib import Path
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-DB_FILE = os.getenv("DB_FILE", str(SCRIPT_DIR / "database.db"))
+from db_helper import get_db
+DB_FILE = get_db()
 API_BASE_URL = os.getenv("API_BASE_URL")
 API_KEY = os.getenv("API_KEY")
 
@@ -46,7 +45,7 @@ def get_client():
     return _client
 
 FALLBACK_MODELS = ["gpt-4o", "gpt-4o-mini"]
-ERROR_LOG = SCRIPT_DIR / "editorial_generation_errors.log"
+ERROR_LOG = "/root/scripts/editorial_generation_errors.log"
 logging.basicConfig(filename=str(ERROR_LOG), level=logging.WARNING,
                     format='%(asctime)s %(message)s')
 
