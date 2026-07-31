@@ -207,14 +207,12 @@ def get_pilot_resources(conn, limit=50, tier=None, force=False):
         where += " OR r.editorial_status = 'rejected'"
     where += ")"
 
-    tier_clause = ""
     if tier == 'spotlight':
         where += " AND rc.spotlight = 1"
-    elif tier == 'core':
-        where += " AND c.quality = 'CORE'"
-        tier_clause = ""
-    elif tier == 'solid':
-        where += " AND c.quality IN ('CORE', 'SOLID')"
+    elif tier in ('core', 'solid'):
+        # core/solid: resources assigned to at least one collection
+        # (quality tier mapping TBD — no c.quality column in current schema)
+        where += " AND rc.collection_id IS NOT NULL"
 
     query = f"""
         SELECT r.res_id, r.title, r.category, r.file_size, r.platform,
@@ -227,9 +225,6 @@ def get_pilot_resources(conn, limit=50, tier=None, force=False):
         GROUP BY r.res_id
         ORDER BY
             CASE WHEN rc.spotlight = 1 THEN 0 ELSE 1 END,
-            CASE WHEN c.quality = 'CORE' THEN 0
-                 WHEN c.quality = 'SOLID' THEN 1
-                 ELSE 2 END,
             RANDOM()
         LIMIT ?
     """
