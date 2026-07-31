@@ -26,6 +26,9 @@ Rules (from PHASE10_8_1_EDITORIAL_WRITING_GUIDELINE.md):
 import os, sys, json, sqlite3, re, time, logging
 from datetime import datetime
 
+from dotenv import load_dotenv
+load_dotenv("/root/scripts/.env")
+
 from db_helper import get_db
 DB_FILE = get_db()
 API_BASE_URL = os.getenv("API_BASE_URL")
